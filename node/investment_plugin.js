@@ -112,6 +112,7 @@ var timer_payDividends = function* () {
 	var newestQuerySQL = "SELECT * FROM `gaming`.`investment_txs` WHERE `last_update` BETWEEN \""+startPeriodAlt+"\" AND \""+endPeriodAlt+"\" ORDER BY  `last_update` DESC";
 	var affiliateQuerySQL = "SELECT * FROM `gaming`.`affiliates` WHERE `last_update` BETWEEN \""+startPeriodAff+"\" AND \""+endPeriodAff+"\" ORDER BY `last_update` ASC";
 	var newestTxQueryResult = yield db.query(newestQuerySQL, generator);
+	//var investmentQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `id`=\"smb\" ORDER BY `index` DESC LIMIT 1", generator);
 	var investmentsQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`investments` GROUP BY `id`)", generator);
 	var affiliateQueryResult = yield db.query(affiliateQuerySQL, generator);
 	if (txQueryResult.error != null) {
@@ -184,6 +185,9 @@ var timer_payDividends = function* () {
 					validResult.bankroll_multiplier = 1;
 				}
 				var matchingInvestment = findInvestment(investmentsQueryResult.rows[invCount].id, validResult.investments);	
+			//	trace ("investmentsQueryResult.rows[invCount].id="+investmentsQueryResult.rows[invCount].id);
+			//	trace ("validResult.investments="+JSON.stringify(validResult.investments));
+			//	trace ("matchingInvestment="+JSON.stringify(matchingInvestment));
 				if (matchingInvestment != null) {
 					if ((matchingInvestment["bankroll_multiplier"] == null) || (matchingInvestment["bankroll_multiplier"] == undefined) || (matchingInvestment["bankroll_multiplier"] == "") || (matchingInvestment["bankroll_multiplier"] == "")) {
 						matchingInvestment.bankroll_multiplier = 1;
@@ -1365,9 +1369,15 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 			if ((currentRow.btc_gains == null) || (currentRow.btc_gains == "") || (currentRow.btc_gains == undefined) || (currentRow.btc_gains == "NULL") || (currentRow.btc_gains == "null")) {
 				currentRow.btc_gains = "0";
 			}
-			investmentStatusObj[currentRow.id].base_deposit = new BigNumber(currentRow.btc_balance);
-			investmentStatusObj[currentRow.id].total_balance = new BigNumber(currentRow.btc_total_balance);
-			investmentStatusObj[currentRow.id].current_gains = new BigNumber(currentRow.btc_gains);
+			investmentStatusObj[currentRow.id].base_deposit = new BigNumber(0);
+			investmentStatusObj[currentRow.id].total_balance = new BigNumber(0);
+			investmentStatusObj[currentRow.id].current_gains = new BigNumber(0);
+			try {
+				investmentStatusObj[currentRow.id].base_deposit = new BigNumber(currentRow.btc_balance);
+				investmentStatusObj[currentRow.id].total_balance = new BigNumber(currentRow.btc_total_balance);
+				investmentStatusObj[currentRow.id].current_gains = new BigNumber(currentRow.btc_gains);
+			} catch (err) {
+			}
 			investmentStatusObj[currentRow.id].previousRow = currentRow;
 		}
 		for (var investmentID in investmentStatusObj) {
