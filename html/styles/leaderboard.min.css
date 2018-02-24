@@ -1,0 +1,4 @@
+body{font-size:16px;}
+#betsScroller{position:relative;height:400px;}
+#scrollContainer{position:absolute;left:0;right:0;border:1px solid #000;overflow:auto;top:10px;bottom:3em;}
+

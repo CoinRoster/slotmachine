@@ -1,0 +1,1352 @@
+
+
+
+
+
+}body {
+
+    width:100%;
+    height:100%;
+
+}
+
+
+.content #buttonsDiv #divDecrease{
+    padding: 0px;
+}
+
+
+
+.content #header {
+
+    top: 8px;
+}
+
+.content #headerBar {
+    top: -10px;
+    font-family: sans-serif;
+    font-size: 12px;
+
+    background-color: yellow;
+
+    width: 100%;
+    position: relative;
+    display: inline-block;
+}
+
+.content #footerBar {
+
+    top: 740px;
+    font-family: sans-serif;
+    font-size: 12px;
+    background-color: yellow;
+    width: 100%;
+}
+
+
+/*
+.content #reels {
+
+top: 60px;
+left: 20px;
+}*/
+
+
+
+
+.content #gameUI #checkDepositButton {
+    width: 100%;
+    font-size: 15px;
+    margin-top: 4px;
+}
+
+
+
+
+
+.content #gameUI #resultSelectors {
+
+    left: 253px;
+    top: -120px;
+    z-index: 8000;
+    font-family: sans-serif;
+    font-size: 24px;
+}
+
+.content #gameUI #resultSelectors dialog {
+    width:550px;
+    height:250px;
+}
+
+.content #gameUI #resultSelectors select {
+    font-size: 28px;
+}
+
+.content #gameUI #resultSelectors #selectCommitButton {
+    width:140px;
+}
+
+.content #gameUI #paytableButton {
+
+    width: 100%;
+    height: 58px;
+    font-size: 15px;
+    margin-bottom: 2px;
+    margin-top: 0px;
+
+}
+
+.content #gameUI #depositButton {
+
+
+    width: 100%;
+    height: 40px;
+    font-size: 15px;
+    margin-bottom: 5px;
+    margin-top: 0px;
+
+}
+
+.content #gameUI #cashoutButton {
+
+    width: 100%;
+    height: 57px;
+    font-size: 15px;
+    margin-bottom: 5px;
+    margin-top: 0px;
+}
+
+.content #gameUI #autoSelectResults {
+
+    top: 476px;
+    left: 250px;
+    width: 200px;
+}
+
+.content #gameUI #autoSelectResults #autoSelectResultsCheck {
+    width:20px;
+    height:20px;
+}
+
+.content #gameUI #autoSelectResults label {
+    position: relative;
+    top:-6px;
+    font-family:sans-serif;
+    font-size:12px;
+}
+
+.content #gameUI #spinButton {
+    width: 100%;
+    height: 85px;
+    font-size: 26px;
+    margin-bottom:0px;
+}
+.content #gameUI #gameValidationButton {
+
+    top: 372px;
+    left: 655px;
+    font-family: sans-serif;
+    font-size: 11px;
+    width: 150px;
+    height: 40px;
+}
+
+
+.content #gameUI #gameValidationCopyButton {
+    top: 415px;
+    left: 655px;
+    font-family: sans-serif;
+    font-size: 9px;
+    width: 150px;
+    height: 40px;
+}
+.content #paytable {
+    display: inline-block;
+    top: 10px;
+    left: 0px;
+    z-index: 9000;
+    z-index: 9000;
+   /* width: 500px;
+    height: 560px;*/
+	width: 100%;
+    height: 400px;
+}
+
+.content #paytable #container {
+	width: 100%;
+}
+
+.content #paytable table {
+    background-color: rgba(255,255,255, 1) !important;
+	width: 100%;
+}
+
+.content #paytable #header #coins {
+   left: 15px;
+   position: relative;
+}
+
+.content #paytable #header #coinAmount {
+    font-family: sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.content #paytable #closePaytableButton {
+
+    display: inline-block;
+    font-size: 24px;
+    width: 100%;
+    height: 45px;
+    left: 0px;
+}
+
+.content #paytable #container tr td  {
+    font-family: sans-serif;
+    font-size: 20px;
+
+}
+
+.content #paytable #container #multiplier {
+    font-family: sans-serif;
+    font-size: 40px;
+    font-weight: bold;
+}
+
+.content #paytable #container #jackpot {
+    font-family: sans-serif;
+    font-size: 42px;
+    font-weight: bold;
+    -webkit-text-stroke: 3px black;
+    color: yellow;
+	background-image: url("../assets/jackpot_highlight.png");
+	background-size: 100% 100%;
+}
+
+.content #paytable #container #jackpot #multiplier {
+    font-family: sans-serif;
+    font-size: 50px;
+    font-weight: bold;
+    -webkit-text-stroke: 3px black;
+    color: yellow;
+}
+
+.content #paytable #container #jackpot #value {
+    font-family: sans-serif;
+    font-size: 16px;
+    font-weight: bolder;
+    -webkit-text-stroke: 0px;
+    color: #000000;
+}
+
+.content #depositAddress {
+
+    top: 640px;
+    left: 0px;
+}
+
+.content #depositAddress #prompt {
+    font-family: sans-serif;
+    font-size: 15px;
+    display: inline-block;
+}
+
+.content #depositAddress #value {
+    display: inline-block;
+    font-family: sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    word-wrap: break-word;
+}
+
+.content #cashOutDialog {
+
+    font-family: sans-serif;
+    font-size: 24px;
+}
+
+
+
+.content #cashOutDialog button {
+    font-size: 24px;
+    font-weight: bolder;
+}
+
+.content #dialog {
+    position:relative;
+    z-index:9990;
+}
+
+.content #gameUI #bet #amount {
+    font-family: sans-serif;
+    font-size: 25px;
+    font-weight: bolder;
+    left: 5px;
+    top: 7px;
+    text-align: center;
+    width: 45px;
+}
+
+
+.content #gameUI #balance {
+    display: inline-block;
+    text-align: center;
+}
+
+.content #gameUI #balance #prompt {
+    font-family:sans-serif;
+    font-size:17px;
+    margin-left:0px;
+    vertical-align: middle;
+    width: 100%;
+}
+
+.content #gameUI #balance #amount {
+    font-family:sans-serif;
+    font-size:17px;
+    vertical-align: middle;
+    width: 100%;
+    font-family: sans-serif;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 1px solid #99c0ff;
+}
+
+.content #header {
+    float: none;
+    margin-left: 10px;
+    text-align: center;
+}
+.content #header #winHeader {
+
+    display: inline-block;
+    font-family: sans-serif;
+    font-size: 17px;
+    vertical-align: middle;
+    width: 100%;
+
+}
+
+.content #balanceDiv #buttonsDiv{
+    padding-top: 10px;
+}
+
+.content #header #winAmount {
+
+    display: inline-block;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 17px;
+    padding-left: 0px;
+    vertical-align: middle;
+    width: 100%;
+    border-radius: 20px;
+    border: 1px solid #99c0ff;
+
+}
+
+.content #gameUI #bet {
+    display: inline-block;
+    top: 320px;
+    left: 458px;
+    width: 100%;
+}
+
+.content #gameUI #bet #increaseBetButton {
+
+    display: inline-block;
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bolder;
+    width: 40px;
+    height: 40px;
+    left: 115px
+}
+
+
+
+.content #gameUI #bet #decreaseBetButton {
+
+    display: inline-block;
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bolder;
+    width: 40px;
+    height: 40px;
+    left: 0px;
+    top: 0px;
+}
+
+.content #gameUI {
+    display: inline-block;
+    left: -285px;
+    top: 261px;
+}
+
+.navbar .navbar-nav {
+    display: inline-block;
+    float: center;
+    vertical-align: top;
+}
+
+.navbar .navbar-collapse {
+    text-align: center;
+    float: center;
+}
+
+body .navbar {
+    margin-bottom: 5px;
+}
+
+.content #paytableModal .modal-dialog .modal-content .modal-body #payable table{
+    height:100%;
+    width: 100%;
+}
+
+body .row{
+    margin: 0px;
+
+}
+
+.navbar .container .navbar-content {
+    padding-left: 28%;
+    padding-right: 28%;
+}
+
+
+
+.content #progressive #container #multiplier {
+    font-family: sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.content #progressive #container #jackpot {
+    font-family: sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    -webkit-text-stroke: 1px black;
+    color: yellow;
+}
+
+
+.content #progressive #container #jackpot #multiplier {
+    font-family: sans-serif;
+    font-size:20px;
+    font-weight: bold;
+    -webkit-text-stroke: 1px black;
+    color: yellow;
+}
+
+.content #progressive #container #jackpot #value {
+    font-family: sans-serif;
+    font-size: 10px;
+    font-weight: bolder;
+    -webkit-text-stroke: 0px;
+    color: #000000;
+}
+
+.content #progressive #container #jackpot #disclaimer {
+    font-family: sans-serif;
+    font-size:8px;
+    font-weight: bold;
+    color: black;
+}
+
+.content #progressive table img {
+    height: 50px;
+    width: 50px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+.content #progressive td {
+    height: 0px;
+    width: 20px;
+
+}
+.content #gameUI #menuButton {
+
+    width: 100%;
+    height: inherit;
+    font-size: 19px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+.content #desktopProgressive #progressiveTitle {
+    font-family: 'Carter One';
+    font-size: 15px;
+    font-weight: bold;
+    -webkit-text-stroke: 0.5px #b30000;
+    color: yellow;
+    margin: 0px;
+}
+
+.content #desktopProgressive{
+    border-style: solid;
+    border-width: 2.5px; 
+    border-color: #ffff33;
+}
+
+
+
+/*********** MENU MODAL STYLES ******************/
+
+.content #menuModal .modal-dialog {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.content #menuModal .modal-content {
+    height: auto;
+    min-height: 100%;
+    border-radius: 0;
+}
+.content #menuModal .modal-content .modal-header button{
+    font-size: 20px;
+}
+
+.content #menuModal .modal-content  #big{
+    font-size: 50px;
+}
+.content #progressiveMenu #container #multiplier {
+    font-family: sans-serif;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.content #progressiveMenu #container #jackpot {
+    font-family: sans-serif;
+    font-size: 35px;
+    font-weight: bold;
+    -webkit-text-stroke: 1px black;
+    color: yellow;
+}
+
+.content #progressiveMenu #container #jackpot #multiplier {
+    font-family: sans-serif;
+    font-size: 35px;
+    font-weight: bold;
+    -webkit-text-stroke: 1px black;
+    color: yellow;
+}
+
+.content #progressiveMenu #container #jackpot #value {
+    font-family: sans-serif;
+    font-size: 15px;
+    font-weight: bolder;
+    -webkit-text-stroke: 0px;
+    color: #000000;
+}
+.content #progressiveMenu table img {
+    height: 60px;
+    width: 60px;
+
+}
+.content #progressiveMenu td {
+    height: 0px;
+    width: 50px;
+
+}
+
+.content #menuModal  #menuPayTable, .content #menuModal #menuCheckDeposit,.content #menuModal .modal-content #autoSelectResults,.content #menuModal .modal-content #menuTerms{
+    width: 100%;
+    margin-top: 10px;
+
+}
+
+.content #menuModal .modal-content .modal-body #progressiveStyle #progressiveMenuTitle {
+    font-family: 'Carter One';
+    font-size: 30px;
+    font-weight: bold;
+    -webkit-text-stroke: 0.5px #b30000;
+    color: yellow;
+}
+
+.content #menuModal .modal-content .well{
+    border-style: solid;
+    border-width: 5px; 
+    border-color: #ffff33;
+    padding: 0px;
+}
+
+.content #desktopProgressive {
+    padding: 5px;
+    margin-left: 16%;
+    margin-right: 16%;
+}
+
+.content #menuModal .modal-content input[type=checkbox] {
+    transform: scale(2);
+    margin-right: 10px;
+
+}
+
+
+.content #menuModal .modal-content #menuTerms {
+    width: 100%;
+    font-size: 15px;
+
+}
+
+
+.content #playCash{
+    padding-right: 0px;
+}
+.content #balanceSpin{
+    padding-left: 5px;
+}
+
+
+/*********** MENU MODAL STYLES ENDS ******************/
+
+.content #autoSel{
+    padding-right: 0px;
+} 
+.content #autoSelectResults{
+    float: right;
+    padding-right: 0px;
+} 
+.content #terms >p{
+
+    text-align: left;
+}
+
+nav .navbar-header .navbar-brand{
+    font-size: 15px;
+}
+
+nav #navbarTop li{
+    font-size: 12px;
+}
+nav #navbarTop li a{
+    padding-left: 2px;
+}
+
+
+canvas{
+        height: auto;
+        width: 16%;
+        border: 0px;
+        padding: 0px;
+    }
+
+.content #desktopProgressive #progressive: hover{
+    background-color: aqua;
+}
+
+.content #desktopProgressive #progressiveTitle i, .content #desktopProgressive #progressiveTitle i{
+    font-size: 20px;
+    font-weight: bold;
+    float: right;
+    
+}
+    
+
+
+
+
+
+/* ************* 1200 ************/
+@media (max-width: 1200px) {
+
+    .navbar .container .navbar-content {
+        padding-left: 25%;
+        padding-right:25%;
+    }
+    .content #desktopProgressive {
+        padding: 5px;
+        margin-left: 10%;
+        margin-right: 10%;
+    }
+}
+/* ************* 991 ************/
+@media (max-width: 991px) {
+
+    .content #desktopProgressive {
+        padding: 5px;
+        margin-left: 8%;
+        margin-right: 8%;
+    }
+
+    .content #depositDiv .col-xs-12{
+        padding-right: 0px;
+    }
+    .content #depositDiv {
+        padding-left: 0px;
+        padding-right: 12px;
+    }
+
+    .content #autoSelectResults, .content #terms >p{
+        float: none;
+        text-align: center;
+    }
+      .navbar .container .navbar-content {
+        padding-left: 0%;
+        padding-right:0%;
+    }
+}
+/* ************* 767 ************/
+
+@media (max-width: 767px) {
+
+    body .navbar{
+        margin: 0px;
+    }
+
+    .content{
+        padding: 0px;
+    }
+    .container{
+        padding: 0px;
+    }
+    .container #view{
+        padding:0px;
+    }
+    canvas{
+        height: auto;
+        width: 16%;
+        border: 0px;
+        padding: 0px;
+    }
+    .content #paytableModal .modal-dialog .modal-content .modal-body #payable table{
+        height:40px;
+        width: 50px;
+    }
+
+    .content #depositAddress #prompt {
+        font-family: sans-serif;
+        font-size: 12px;
+        display: inline-block;
+    }
+
+    .content #depositAddress #value {
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .content #paytable #container #multiplier {
+        font-family: sans-serif;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .content #paytable #container #jackpot {
+        font-family: sans-serif;
+        font-size: 30px;
+        font-weight: bold;
+        -webkit-text-stroke: 1px black;
+        color: yellow;
+    }
+
+    .content #paytable #container #jackpot #multiplier {
+        font-family: sans-serif;
+        font-size: 20px;
+        font-weight: bold;
+        -webkit-text-stroke: 1px black;
+        color: yellow;
+    }
+
+    .content #paytable #container #jackpot #value {
+        font-family: sans-serif;
+        font-size: 16px;
+        font-weight: bolder;
+        -webkit-text-stroke: 0px;
+        color: #000000;
+    }
+
+    .content #paytable table img {
+        height: 80px;
+        width: 80px;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    .content #paytable td {
+        height: 5px;
+        width: 5px;
+
+    }
+
+    .content #paytable #container {
+        float:left;
+    }
+
+    .content #paytable {
+        margin: 0px;
+        float: left;
+    }
+
+	.content #gameUI div{
+        padding: 0px;
+    }
+	
+    .content #gameUI #balanceSpin{
+        display: inline-block;
+        margin: 0px;
+
+    }
+
+    .content #gameUI #balanceSpin #spinDiv{
+        display: inline-block;
+        margin: 5px;
+        padding: 0px;
+        padding-right: 10px;
+    }
+    .content #gameUI #spinButton{
+        margin:5px;
+        margin-left: 0px;
+        padding: 0px;
+        height: 98px;
+        margin-left: 1%;
+        width: 98%;
+        
+    }
+
+    .content #reelsDiv{
+        padding-left: 0px;
+
+    }
+
+    .content #progressive table img {
+        height: 40px;
+        width: 40px;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    .content #progressive td {
+        height: 0px;
+        width: 20px;
+
+    }
+
+    .content #progressive #container #multiplier {
+        font-family: sans-serif;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .content #progressive #container #jackpot {
+        font-family: sans-serif;
+        font-size: 30px;
+        font-weight: bold;
+        -webkit-text-stroke: 1px black;
+        color: yellow;
+    }
+
+    .content #progressive #container #jackpot #multiplier {
+        font-family: sans-serif;
+        font-size: 20px;
+        font-weight: bold;
+        -webkit-text-stroke: 1px black;
+        color: yellow;
+    }
+
+    .content #progressive #container #jackpot #value {
+        font-family: sans-serif;
+        font-size: 16px;
+        font-weight: bolder;
+        -webkit-text-stroke: 0px;
+        color: #000000;
+    }
+    .content #gameUI #bet #amount {
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 29px;
+        font-weight: bolder;
+        left: 0px;
+        top: 0px;
+        text-align: center;
+        width: 100%;
+    }
+
+
+    .content #gameUI #balance {
+
+        text-align: center;
+        float: right;
+    }
+
+    .content #gameUI #balance #prompt {
+        position:relative;
+        display: inline;
+        font-family:sans-serif;
+        font-size:20px;
+        margin-left:0px;
+    }
+
+    .content #gameUI #balance #amount {
+        display: inline-block;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        border-radius: 20px;
+        border: 1px solid #99c0ff;
+        text-align: center;
+        width: 100px;        display: inline-block;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        border-radius: 20px;
+        border: 1px solid #99c0ff;
+        text-align: center;
+        width: 100px;
+    }
+
+    .content  #header {
+        margin: 0px;
+        text-align: center;
+    }
+    .content #header #winHeader {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 20px;
+
+    }
+
+    .content #header #winAmount {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        border-radius: 20px;
+        border: 1px solid #99c0ff;
+        text-align: center;
+        width: 100px;        display: inline-block;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        border-radius: 20px;
+        border: 1px solid #99c0ff;
+        text-align: center;
+        width: 100px;
+
+    }
+
+    .content #gameUI #bet {
+        display: inline-block;
+        padding-top:10px;
+
+    }
+
+    .content #gameUI #bet #increaseBetButton {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 24px;
+        font-weight: bolder;
+        width: 100%;
+        height: 100%;
+        padding: 0px;
+        margin:0px;
+    }
+
+
+
+    .content #gameUI #bet #decreaseBetButton {
+
+        
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 24px;
+        font-weight: bolder;
+        width: 100%;
+        height: 100%;
+        padding: 0px;
+        margin:0px;
+    }
+
+    .content #UI{
+        padding: 0px;
+    }
+
+    .content #gameUI #bet {
+        display: inline-block;
+        top: 320px;
+        left: 0px;
+        width: 130px;
+        
+    }
+
+    .content #gameUI #cashoutButton {
+
+        width: 100%;
+        height: inherit;
+        font-size: 19px;
+        margin-bottom: 5px;
+        margin-top: 5px;
+        padding: 10px;
+        margin-left: 1%;
+
+    }
+    
+    .content #gameUI #depositButton {
+
+        width: 100%;
+        height: inherit;
+        font-size: 19px;
+        margin-bottom: 5px;
+        margin-top: 5px;
+        padding: 10px;
+        margin-left: 2px;
+
+    }
+
+    .content #gameUI #menuButton {
+
+        width: 100%;
+        height: inherit;
+        font-size: 21px;
+        margin-bottom: 5px;
+        margin-top: 0px;
+        margin-left: 2px;
+    }
+
+    .content #gameUI #leftMobileButtons{
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .content #gameUI #rightMobileButton {
+        padding-right:5px;
+    }
+
+}
+
+/* Most mobile phone width */
+/* ************* 479 ************/
+
+@media(max-width:479px){
+        canvas{
+        height: auto;
+        width: 30%;
+        border: 0px;
+        padding: 0px;
+    }
+    
+    .content #paytable table img {
+        height: 50px;
+        width: 50px;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+}
+
+
+
+
+@media (max-width: 375px) {
+    
+ .content #gameUI #bet #increaseBetButton {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 15px;
+        font-weight: bolder;
+        width: 35px;
+        height: 35px;
+        padding: 0px;
+        margin:0px;
+        margin-right: 10px;
+    }
+
+
+
+    .content #gameUI #bet #decreaseBetButton {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 15px;
+        font-weight: bolder;
+        width: 35px;
+        height: 35px;
+        left: 0px;
+        top: 0px;
+        padding: 0px;
+         margin-left: 5px;
+
+    }
+
+
+
+
+
+
+
+    
+}
+
+
+
+@media (max-width: 350px) {
+    .content #paytable table img {
+        height: 40px;
+        width: 40px;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    .content #gameUI #bet #amount {
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 29px;
+        font-weight: bolder;
+        left: 0px;
+        top: 0px;
+        text-align: center;
+        width: 30px;
+    }
+
+
+    .content #gameUI #balance {
+
+        text-align: left;
+
+    }
+
+    .content #gameUI #balance #prompt {
+        position:relative;
+        display: inline;
+        font-family:sans-serif;
+        font-size:24px;
+        margin-left:0px;
+    }
+
+    .content #gameUI #balance #amount {
+        position:relative;
+        display: inline;
+        font-family:sans-serif;
+        font-size:24px;
+        font-weight: bolder;
+
+    }
+
+    .content  #header {
+        width:99%;
+    }
+    .content #header #winHeader {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 20px;
+        width: 95%;
+
+    }
+
+    .content #header #winAmount {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        padding-left: 10px;
+        vertical-align: middle;
+
+    }
+
+    .content #gameUI #bet {
+        display: inline-block;
+        margin-top: 10px;
+
+    }
+
+    .content #gameUI #bet #increaseBetButton {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 24px;
+        font-weight: bolder;
+        width: 40px;
+        height: 40px;
+        padding: 0px;
+        margin:0px;
+    }
+
+
+
+    .content #gameUI #bet #decreaseBetButton {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 24px;
+        font-weight: bolder;
+        width: 40px;
+        height: 40px;
+        left: 0px;
+        top: 0px;
+        padding: 0px;
+    }
+
+    .content #UI{
+        padding: 0px;
+    }
+
+    .content #gameUI #bet {
+        display: inline-block;
+        top: 320px;
+        left: 0px;
+        width: 130px;
+    }
+
+    .content #gameUI #bet #amount {
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 20px;
+        font-weight: bolder;
+        left: 0px;
+        top: 0px;
+        text-align: center;
+        width: 30px;
+    }
+
+
+    .content #gameUI #balance {
+
+        text-align: center;
+    }
+
+    .content #gameUI #balance #prompt {
+        font-family:sans-serif;
+        font-size:12px;
+        margin-left:0px;
+        font-weight: bold;
+          display: inline-block;
+    }
+
+    .content #gameUI #balance #amount {
+        display: inline-block;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        border-radius: 20px;
+        border: 1px solid #99c0ff;
+        text-align: center;
+        width: 100px;
+    }
+
+    .content #header #winHeader {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 12px;
+        font-weight: bold;
+
+
+    }
+
+    .content #header #winAmount {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 20px;
+        border-radius: 20px;
+        border: 1px solid #99c0ff;
+        text-align: center;
+        width: 100%;
+        padding-left: 0px;
+        
+
+    }
+
+    .content #gameUI #bet {
+        display: inline-block;
+        padding-top:10px;
+        padding-right: 5px;
+
+    }
+
+    .content #gameUI #bet #increaseBetButton {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 15px;
+        font-weight: bolder;
+        width: 30px;
+        height: 30px;
+        padding: 0px;
+        margin:0px;
+        margin-right: 10px;
+    }
+
+
+
+    .content #gameUI #bet #decreaseBetButton {
+
+        display: inline-block;
+        font-family: sans-serif;
+        font-size: 15px;
+        font-weight: bolder;
+        width: 30px;
+        height: 30px;
+        left: 0px;
+        top: 0px;
+        padding: 0px;
+    }
+    nav{
+        min-height: 10px;
+    }
+    .content #balanceDiv #buttonsDiv{
+        padding-top: 0px;
+    }
+    
+      .content #gameUI #cashoutButton {
+
+        width: 100%;
+        height: inherit;
+        font-size: 15px;
+        margin-bottom: 5px;
+        margin-top: 5px;
+        padding: 10px;
+        margin-left: 1%;
+
+    }
+    
+    .content #gameUI #depositButton {
+
+        width: 100%;
+        height: inherit;
+        font-size: 15px;
+        margin-bottom: 5px;
+        margin-top: 5px;
+        padding: 10px;
+        margin-left: 2px;
+
+    }
+
+    .content #gameUI #menuButton {
+
+        width: 100%;
+        height: inherit;
+        font-size: 17px;
+        margin-bottom: 0px;
+        margin-top: 0px;
+        margin-left: 2px;
+    }
+        .content #gameUI #leftMobileButtons{
+        padding-left: 0px;
+        padding-right: 5px;
+    }
+
+    .content #gameUI #rightMobileButton {
+        padding-right:0px;
+    }
+
+    .content #gameUI #spinButton{
+        margin:1px;
+        margin-left: 0px;
+        padding: 0px;
+        height: 90px;
+        margin-left: 1%;
+        width: 98%;
+        
+    }
+	
+	.content .numericSlider {
+		width: 250px;
+	}
+}

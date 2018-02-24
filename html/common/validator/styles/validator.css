@@ -1,0 +1,35 @@
+body {
+	font-family: sans-serif;
+	font-size: 12px;
+}
+
+#result {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+#thumbsUp {
+	position: absolute;
+    top: 55px;    
+    left: 460px;
+	width: 200px;
+    height: 200px;
+}
+
+#thumbsDown {
+	position: absolute;
+    top: 55px;    
+    left: 460px;
+    width: 200px;
+    height: 200px;
+}
+
+#download {
+	position: absolute;
+    top: 245px;
+    left: 490px;
+    width: 200px;
+    height: 200px;
+    font-size: 10px;
+}

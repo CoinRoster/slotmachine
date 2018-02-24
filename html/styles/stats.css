@@ -1,0 +1,28 @@
+table {
+	border: 1px solid #AFAFAF;
+	width: 100%l
+	font-size: 14px;
+}
+
+td, th {
+	border: 1px solid #AFAFAF;
+	padding: 15px;
+    text-align: left;
+}
+
+.investment_header {
+	font-size: 14px;
+	color:#505050;
+}
+
+.investment_value {
+	border: 1px solid black;
+	font-size: 15px;
+	font-weight:bold;
+}
+
+td.total {	
+	font-size: 15px;
+	font-weight:bolder;
+	color: #0A0A0A;
+}

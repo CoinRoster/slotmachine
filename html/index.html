@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>3-Reel Fruit Slot</title>
+  <!-- hide mobile highlights -->
+  <style>
+  * {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  }
+
+  </style>
+
+  <!-- Added for bootstrap styling-->
+  <link rel="stylesheet" href="./common/styles/bootstrap.min.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+
+<!-- jQuery -->
+<script language="JavaScript" src="./common/js/libs/jquery-3.2.1.min.js"></script>
+<!-- jQuery UI -->
+<script language="JavaScript" src="./common/js/libs/jquery-ui.min.js"></script>
+<!-- jQuery Mobile-->
+<!-- script language="JavaScript" src="../common/js/libs/jquery.mobile-1.4.5.min.js"></script -->
+<!-- EaselJS (CreateJS) -->
+<script language="JavaScript" src="./common/js/libs/easeljs-0.8.2.min.js"></script>
+<!-- TweenJS (CreateJS) -->
+<script language="JavaScript" src="./common/js/libs/tweenjs-0.6.2.min.js"></script>
+<!-- SoundJS (CreateJS) -->
+<script language="JavaScript" src="./common/js/libs/soundjs-0.6.2.min.js"></script>
+<!-- PreloadJS (CreateJS) -->
+<script language="JavaScript" src="./common/js/libs/preloadjs-0.6.2.min.js"></script>
+<!-- BigNumber library -->
+<script language="JavaScript" src="./common/js/libs/bignumber.min.js"></script>
+<!-- Slots game code -->
+<script language="JavaScript" src="./common/js/slotsgame.js"></script>
+<!-- Currency formatter -->
+<script language="JavaScript" src="./common/js/currencyformat.js"></script>
+
+<!-- jQuery styles -->
+<link rel="stylesheet" href="./common/styles/jquery-ui.theme.css">
+
+<!-- Font Awesome Icons-->
+<link rel="stylesheet" href="./common/styles/font-awesome.min.css">
+
+<!-- Fonts -->
+<link href='./common/styles/CarterOne.css' rel='stylesheet'>
+
+
+<!-- Game styles -->
+<link rel="stylesheet" href="./styles/game.css">
+
+<!-- Bootstrap JS-->
+<script src="./common/js/libs/bootstrap.min.js"></script>
+
+
+
+<body onload="start()">
+
+
+  <!-- NavBar /Header -->
+  
+  <!-- Id of headerbar-->
+  <nav class="navbar navbar-inverse navbar-static-top" role="navigation" >
+    <div class="container">
+      <div class="navbar-content">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbarTop">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand">Fruit Slots</a>
+        </div>
+        <div id="navbarTop" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">FAQ</a></li>
+			<li><a href="affiliates.php" target="_blank">Affiliates</a></li>
+            <li><a href="stats.php">Stats</a></li>
+            <li><a href="leaderboard.php">Leaderboard</a></li>
+            <li><a href="#">Contact Us</a></li>
+            <li id="logInHeaderButton"> <a href="#" data-toggle="modal" data-target="#at-login" ><span id="playerName"> <i class="fa fa-sign-in" aria-hidden="true"></i> Log In / Register</span>  </a></li>
+            <li id="accountHeaderDropdown" class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#"> <span id="playerName"> Player Name</span>
+                <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="account.php">My Account</a></li>
+                  <li><a href="#">Settings</a></li>
+                  <li role="separator" class="divider"></li>
+                  <li><a href="#" data-toggle="modal" data-target="#logOutModal"> <i class="fa fa-sign-out" aria-hidden="true"></i>Log out</a></li>
+                </ul>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </nav>
+
+      <div class="container">
+        <div class="row">
+          <!-- LEFT SIDE SPACE --->
+          <div class="col-xs-12 col-sm-2 hidden-xs">
+            <!-- Can add content here -->
+          </div>
+          <!-- GAME SPACE -->
+          <div id="view" class="col-xs-12 col-sm-8" align="center">
+            <div class="content">
+
+              <!-- Header / winHeader -->
+              <div class="row row-content hidden-xs " id="desktopProgressive">
+                <div class ="row ">
+                  <p id="progressiveTitle"> Progressive Bonus Slot 
+                      <i class="fa fa-caret-square-o-down" aria-hidden="true" id="show"></i> 
+                      <i class="fa fa-caret-square-o-up" aria-hidden="true" id="hide"></i>
+                      
+                  </p>
+                </div>
+                <div id="progressive" >
+                  <table cellspacing="0" id="container">
+                    <tr>
+                      <td>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+              <!-- Slots -->
+              <div class="row row-content">
+                <div id="reelsDiv" class="col-xs-12 ">
+                  <div id="reels">
+                    <canvas id="reel1" width="128" height="438">CANVAS NOT SUPPORTED</canvas>
+                    <canvas id="reel2" width="128" height="438">CANVAS NOT SUPPORTED</canvas>
+                    <canvas id="reel3" width="128" height="438">CANVAS NOT SUPPORTED</canvas>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Game UI -->
+              <div class="row row-content">
+                <div id="UI" class="col-xs-12" style="margin: 0 auto">
+                  <div id="gameUI" style="z-index:100;">
+                    <div id="resultSelectors" style="display:none;">
+                      <dialog open>
+                        <label for="reel1Result">Reel 1 result:</label>
+                        <select name="reel1Result" id="reel1Result">
+                          <option value="NONE">NONE</option>
+                        </select>
+                        <br/>
+                        <label for="reel2Result">Reel 2 result:</label>
+                        <select name="reel2Result" id="reel2Result">
+                          <option value="NONE">NONE</option>
+                        </select>
+                        <br/>
+                        <label for="reel3Result">Reel 3 result:</label>
+                        <select name="reel3Result" id="reel3Result">
+                          <option value="NONE">NONE</option>
+                        </select>
+                        <br/><br/>
+                        <button id="selectCommitButton">CONFIRM</button>
+                      </dialog>
+                    </div>
+
+                    <div class="row">
+                      <div id="balanceDiv" class="col-xs-12">
+                        <div class="row">
+                          <div class="col-xs-4 ">
+                            <!-- Win Amount -->
+                            <div id="header" class="row">
+                              <div class="col-xs-12 ">
+                                <div id="winHeader" >WIN</div>
+                              </div>
+                              <div class="col-xs-12" >
+                                <div id="winAmount">0</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-xs-4 ">
+                            <div id="buttonsDiv" class="row">
+                              <!-- descrease/increase ammount-->
+                              <div id="bet" style="width:100%;" >
+                                <div class="row">
+                                  <div id="divDecrease" class="col-xs-4">
+                                    <button class="btn btn-default btn-lrg" id="decreaseBetButton">-</button>
+                                  </div>
+                                  <div  id="divDecrease" class="col-xs-4">
+                                    <div id="amount">0</div>
+                                  </div>
+                                  <div id="divDecrease" class="col-xs-4">
+                                    <button class="btn btn-default btn-lrg" id="increaseBetButton">+</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-xs-4 ">
+                            <!-- Balance Ammount -->
+                            <div id="balance" class="row">
+                              <div  class="col-xs-12">
+                                <div id="prompt">Balance: </div>
+                              </div>
+                              <div  class="col-xs-12">
+                                <div id="amount">0</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row">
+
+
+                      <!-- Paytable / Cashout -->
+                      <div id="playCash" class="col-xs-12 col-sm-6">
+                        <div class="row">
+                          <div id="paycashmenu" class="col-xs-6 col-sm-12" style="padding: 0px;">
+                              <!-- Deposit /Cashout -->
+                            <div class="row" id="leftMobileButtons">
+                              <button id="depositButton" type="button" class="btn btn-info btn-lg">DEPOSIT</button>
+                              <!-- button id="cashoutButton" type="button" class="btn btn-info btn" data-toggle="modal" data-target="#cashoutModal">CASH OUT</button -->
+							  <button id="cashoutButton" type="button" class="btn btn-info btn" data-toggle="modal">CASH OUT</button>
+                              <div class="row  hidden-sm hidden-md hidden-lg">
+                                <button id="menuButton" type="button" class="btn btn-info btn" data-toggle="modal" data-target="#menuModal">MENU</button>
+                              </div>
+
+                            </div>
+                            <!-- PayTable -->
+                            <div class="row hidden-xs">
+                              <button id="paytableButton" type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#paytableModal">PAYTABLE</button>
+                            </div>
+                          </div>
+
+                          <div class="col-xs-6 col-sm-12 hidden-sm hidden-md hidden-lg" id="rightMobileButton">
+                            <div id="spinDiv"class="col-xs-12 col-sm-7 ">
+								<button class="btn btn-primary btn-lg" id="spinButton">SPIN</button>
+								<div id="autospinContainer" style="padding:5px 0 0 0;text-align: center;">
+									<button class="btn btn-info btn-sm" id="autospinButton" style="width:49%;">START AUTOSPIN</button>
+									<button class="btn btn-info btn-sm" id="autospinSettingsButton" style="width:49%;">SETTINGS</button>
+								</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- balance / spin-->
+                      <div id="balanceSpin" class="col-xs-12 col-sm-6 hidden-xs">
+                        <button class="btn btn-primary" id="spinButton">SPIN</button>
+						<div id="autospinContainer" style="padding:5px 0 0 0;text-align: center;">
+							<button class="btn btn-info btn-sm" id="autospinButton" style="width:49%;">START AUTOSPIN</button>
+							<button class="btn btn-info btn-sm" id="autospinSettingsButton" style="width:49%;">SETTINGS</button>
+						</div>
+                      </div>
+                    </div>
+                    <div id="depositDiv"class="row">
+                      <div class="col-xs-12">
+                        <button type="button" class="btn btn-success btn-lg hidden-xs" id="checkDepositButton">DEPOSIT</button>
+                      </div>
+                      <button id="gameValidationButton">Click to validate last game</button>
+                      <button id="gameValidationCopyButton">Copy validation data to clipboard</button>
+                      <!-- Auto Select Results -->
+                    </div>
+                  </div>
+                </div>
+                <!-- Deposit Address -->
+                <div class="row row-content">
+                  <div class="col-xs-12">
+                    <div id="depositAddress">
+                      <div id="prompt"></div>
+                      <div id="value"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- *******************  Footer Area *************************** -->
+                <!-- Id of Footer Bar but IDK what is happening-->
+
+                <div class="row row-content  hidden-xs ">
+                  <div class="col-xs-12 col-sm-12 col-md-5" id="autoSel">
+                    <div id="autoSelectResults" >
+                      <input class="ui-checkbox" type="checkbox" id="autoSelectResultsCheck" name="autoSelectResultsCheck" value="autoSelectResultsCheck" checked>
+                      <label for="autoSelectResultsCheck">Auto-select results</label>
+                    </div>
+                  </div>
+                  <div id="terms" class="col-xs-12 col-sm-12 col-md-7" >
+                    <p><a href="https://www.quadrigacx.com/?ref=kse8sj4qxg7wiqm703zjexb9" target="_blank">Buy&nbsp;Bitcoins</a>&nbsp;&nbsp;|&nbsp;&nbsp;(C)opyright 2017</p>
+                  </div>
+                </div>
+
+
+                <!-- dialog -->
+
+                <div class="row row-content">
+                  <div class="col-xs-12">
+                    <div id="dialog" style="position:relative;z-index:9999;">
+                      <div id="message"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- *******************  Footer Area ENDS *************************** -->
+
+
+                <!--- ****************************** MODAL LOCATIONS *******************************   -->
+                <!-- Paytable Modal -->
+                <div id="paytableModal" class="modal fade" role="dialog">
+                  <div class="modal-dialog modal-lg">
+                    <!-- Paytable Modal content-->
+                    <div class="modal-content">
+                      <div class="modal-header hidden-xs">
+                        <button type="button" class="close" data-dismiss="modal" id="closePaytableButton">&times;</button>
+                        <h4 class="modal-title">Paytable</h4>
+                      </div>
+                      <div class="modal-body">
+                        <button type="button" class="close hidden-sm hidden-md hidden-lg" data-dismiss="modal" id="closePaytableButton">&times;</button>
+                        <div class="row row-content">
+                          <div class="col-xs-12">
+                            <div id="paytable" style="display:none;">
+                              <table id="container">
+                                <tr>
+                                  <td>
+                                  </td>
+                                </tr>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="modal-footer  hidden-xs">
+                          <button class="btn btn-danger btn-lrg" id="closePaytableButton" data-dismiss="modal">CLOSE</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Paytable Modal Ends -->
+
+                <!-- Cashout Modal -->
+                <div id="cashoutModal" class="modal fade" role="dialog">
+                  <div class="modal-dialog">
+
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" id="cancelCashOutButton">&times;</button>
+                        <h4 class="modal-title">Cashout</h4>
+                      </div>
+                      <div class="modal-body">
+                        <div class="row row-content">
+                          <div class="col-xs-12">
+                            <div id="cashOutDialog" style="display:none;">
+								<div class="row">
+                                <label for="amountField">Withdrawal amount (BTC):</label>
+                              </div>
+                              <div class="row">
+                                <div class="col-xs-12">
+                                  <input type="text" style="width:100%; margin: 5px;" name="withdrawAmountField" id="withdrawAmountField">
+                                </div>
+                              </div>
+                              <div class="row">
+                                <label for="addressField">Withdrawal address:</label>
+                              </div>
+                              <div class="row">
+                                <div class="col-xs-12">
+                                  <input type="text" style="width:100%; margin: 5px;" name="addressField" id="addressField">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button data-dismiss="modal" class="btn btn-danger btn-lg" id="cancelCashOutButton">CANCEL</button>
+                          <button class="btn btn-success btn-lg" id="doCashOutButton" data-dismiss="modal" >CASHOUT</button>
+
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+                <!-- Cashout Modal Ends -->
+
+                <!-- Cashout Dialog Result Modal -->
+                <div id="cashoutResult" class="modal fade" role="dialog">
+                  <div class="modal-dialog modal-sm">
+
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" id="cashoutResultDialogButtonCancel">&times;</button>
+                        <h4 class="modal-title">Make a deposit</h4>
+                      </div>
+                      <div class="modal-body">
+                        <div id="cashoutResultDialog"> </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-danger btn-lg" id="cashoutResultDialogButtonCancel"data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success btn-lg" id="cashoutResultDialogButtonOkay" data-dismiss="modal" >Okay</button>
+
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+                <!-- Cashout Dialog Result Modal Ends -->
+
+
+
+                <!--  Error Modal -->
+                <div id="errorModal" class="modal fade" role="dialog">
+                  <div class="modal-dialog">
+
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" >&times;</button>
+                        <h4 id="modalTitle"class="modal-title"> </h4>
+                      </div>
+                      <div class="modal-body">
+                        <p id="error">  </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-success btn-lg" data-dismiss="modal" >Okay</button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+                <!--  Error Modal Ends -->
+
+
+                <!-- MODAL LOGIN -->
+                <div class="modal fade" id="at-login" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Log in &amp; Register</h4>
+                      </div>
+                      <div class="modal-body">
+                        <form autocomplete="off">
+                          <div class="form-group">
+                            <input type="email" class="form-control-form " id="emailAddressInput" autocomplete="off" placeholder="Email">
+                          </div>
+                          <div class="form-group">
+                            <input type="password" class="form-control-form " id="passwordInput" autocomplete="off" placeholder="Password">
+                          </div>
+                          <button id="logInButton" data-dismiss="modal" type="submit" class="btn btn-success">Login</button>
+						  <button id="playAnonymouslyButton" data-dismiss="modal" type="submit" class="btn btn-success">Play Anonymously</button>
+						  <button id="registerButton" data-dismiss="modal" type="submit" class="btn btn-success">Register</button>
+                        </form>
+                      </div>
+                      <div class="modal-footer">
+                        <div class="row">
+                          <div>
+                            <p><small><a href="#" onclick="onResetPasswordClick()">RESET PASSWORD</a></small></p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- MODAL LOGIN ENDS -->
+						  
+				<!-- MODAL PASSWORD RESET -->
+                <div class="modal fade" id="at-pwreset" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Reset Password</h4>
+                      </div>
+                      <div class="modal-body">
+                        <form autocomplete="off">
+                          <div class="form-group">
+                            <input type="email" class="form-control-form " id="resetEmailAddressInput" autocomplete="off" placeholder="Email">
+                          </div>
+                          <div class="form-group">
+                            <input type="password" class="form-control-form " id="resetPasswordInput" autocomplete="off" placeholder="New Password">
+                          </div>
+						  <div class="form-group">
+                            <input type="password" class="form-control-form " id="resetPasswordConfirmInput" autocomplete="off" placeholder="Confirm New Password">
+                          </div>
+                          <button id="resetPasswordButton" data-dismiss="modal" type="submit" class="btn btn-success">Reset Password</button>
+                        </form>
+                      </div>
+                      <div class="modal-footer">
+                        <div class="row">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- MODAL PASSWORD RESET ENDS -->
+						  
+				 <!-- MODAL LOGIN CONFIRM -->
+                <div class="modal fade" id="at-login-confirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Are you sure?</h4>
+                      </div>
+                      <div class="modal-body">
+                        <form autocomplete="off">
+                          <div>This will clear the current Bitcoin address and cannot be undone. Are you sure you want to do this?</div>
+                          <button id="logInConfirmButton" data-dismiss="modal" type="submit" class="btn btn-danger">Yes</button>
+						  <button id="loginCancelButton" data-dismiss="modal" type="submit" class="btn btn-success">No</button>
+                        </form>
+                      </div>
+                      <div class="modal-footer">
+                        <div class="row">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- MODAL LOGIN CONFIRM  -->
+						  
+				 <!-- MODAL REGISTER -->
+                <div class="modal fade" id="at-register" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Register</h4>
+                      </div>
+                      <div class="modal-body">
+                        <form autocomplete="off">
+                          <div class="form-group">
+                            <input type="email" class="form-control-form " id="emailAddressRegInput" autocomplete="off" placeholder="Email">
+                          </div>
+                          <div class="form-group">
+                            <input type="password" class="form-control-form " id="passwordRegInput" autocomplete="off" placeholder="Password">
+                          </div>
+						   <div class="form-group">
+                            <input type="password" class="form-control-form " id="confirmPasswordRegInput" autocomplete="off" placeholder="Confirm Password">
+                          </div>
+						  <input id="use2FAECheckbox" type="checkbox" checked></input><label for="use2FAECheckbox">Use 2-Factor Authentication (email)</label><br/>
+						  <button id="doRegisterButton" type="submit" class="btn btn-success">Register</button>
+                        </form>
+                      </div>
+                      <div class="modal-footer">
+                        <div class="row">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- MODAL REGISTER ENDS -->
+
+                <!-- LOG OUT MODAL-->
+                <div id="logOutModal" class="modal fade" role="dialog">
+                  <div class="modal-dialog">
+
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" >&times;</button>
+                        <h4 class="modal-title">Logout <i class="fa fa-lock" aria-hidden="true"></i></h4>
+                      </div>
+                      <div class="modal-body">
+                        <h4><i class="fa fa-question-circle" aria-hidden="true"></i> Are you sure you want to log-off?</h4>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-danger btn-lg" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success btn-lg" data-dismiss="modal"  id="logOutButton" >Logout</button>
+
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+						  
+				 <!-- AUTOSPIN SETTINGS MODAL-->
+                <div id="autospinSettingsModal" class="modal fade" role="dialog">
+                  <div class="modal-dialog">
+
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" >&times;</button>
+                        <h4 class="modal-title">Autospin Settings</h4>
+                      </div>
+                      <div class="modal-body">
+						<form id="settings">
+							<label for="spinsValue">Number of spins:</span><span id="spinsValue"></label><br/><input class="numericSlider" id="numSpins" type="range" min="0" max="500" step="1">
+							<label for="minimumBalance">Minimum available balance (BTC):</label><br/><input id="minumBalance" type="number" name="minimumBalance" value="0.01" step="0.01">
+						</form>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-success btn-lg" data-dismiss="modal">OK</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+
+                <!-- Menu MODAL-->
+                <div id="menuModal" class="modal fade" role="dialog">
+                  <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times; </button>
+                        <h4 class="modal-title">Fruit Slots</h4>
+                      </div>
+                      <div class="modal-body">
+                        <div class="row well well-sm" id="progressiveStyle">
+                          <div class="row">
+                            <p id="progressiveMenuTitle"> Progressive Bonus</p>
+                          </div>
+
+                          <div class="row">
+                            <div id="progressiveMenu" >
+                              <table id="container">
+                                <tr>
+                                  <td>
+                                  </td>
+                                </tr>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <button id="menuPayTable" type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#paytableModal" data-dismiss="modal">PAYTABLE</button>
+                        </div>
+                        <div class="row">
+                          <button type="button" class="btn btn-success btn-lg " data-dismiss="modal" id="menuCheckDeposit">CHECK FOR DEPOSIT</button>
+                        </div>
+                        <div class="row">
+
+                        </div>
+                        <div class="row">
+                          <div id="autoSelectResults" >
+                            <input class="ui-checkbox" type="checkbox" id="menuAutoSelectResultsCheck" name="autoSelectResultsCheck" value="autoSelectResultsCheck" checked>
+                            <label for="autoSelectResultsCheck">Auto-select results</label>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div >
+                            <p id="menuTerms" >Terms &amp; Conditions&nbsp;&nbsp;|&nbsp;&nbsp;(C)opyright 2017</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- *************** MODAL ENDS ******************** -->
+              </div>
+            </div>
+          </div>
+          <!-- RIGHT SIDE SPACE -->
+          <div class="col-xs-12 col-sm-2 hidden-xs">
+            <!-- Can add content here -->
+          </div>
+        </div>
+
+        <input id="clipboardProxy" style="position:absolute;left:-9999px;top:-9999px;opacity: 0;" value="">
+      </div>
+
+    </body>
+
+    </html>

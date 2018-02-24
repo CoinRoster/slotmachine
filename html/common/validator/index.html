@@ -1,0 +1,38 @@
+<!DOCTYPE html>	
+<html>
+	
+	<head>
+		<title>Provably Fair Slot Machine Game Validator (AES version)</title>
+		<!-- hide mobile highlights -->
+		<style>*{-webkit-tap-highlight-color: rgba(0, 0, 0, 0);}</style>
+	</head>
+		
+	<!-- jQuery -->
+	<script language="JavaScript" src="../js/libs/jquery-3.2.1.min.js"></script>	
+	<!-- jQuery UI -->
+	<script language="JavaScript" src="../js/libs/jquery-ui.min.js"></script>
+	<!-- jQuery UI -->
+	<script language="JavaScript" src="../js/libs/jquery-ui.min.js"></script>
+	<!-- BigNumber.js -->
+	<script language="JavaScript" src="../js/libs/bignumber.min.js"></script>
+	<!-- aes-js -->
+	<script language="JavaScript" src="../js/libs/aes-js.js"></script>
+	<!-- Main validator script -->
+	<script language="JavaScript" src="js/validator.js"></script>	
+			
+	<!-- jQuery styles -->
+	<link rel="stylesheet" href="../styles/jquery-ui.theme.css">
+	<!-- Main validator style -->
+	<link rel="stylesheet" href="styles/validator.css">
+	
+	<body onload="start()">
+		<div id="inputField">Paste validation data here: <input type="text" id="validationData" name="validationData" value="{VALIDATIONDATA}"></div>
+		<br>
+		<input type="submit" id="submit" value="Check Now!">
+		<div id="result"></div>
+		<br>
+		<img id="thumbsUp" src="assets/thumbsup.png"/>
+		<img id="thumbsDown" src="assets/thumbsdown.png"/>
+		<img id="warning" src=""/>
+	</body>
+</html>
