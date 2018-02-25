@@ -810,11 +810,15 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
 		return;
 	}
-	if (investmentQueryResult.rows.length == 0) {
-		trace ("No investment record found for ID: \""+serverConfig.gameConfigs[requestData.params.gameID].bankrollID+"\"");
-		var bankroll_balance_btc = new BigNumber(0);
-	} else {
-		bankroll_balance_btc = new BigNumber(investmentQueryResult.rows[0].btc_balance);
+	try {
+		if (investmentQueryResult.rows.length == 0) {
+			trace ("No investment record found for ID: \""+serverConfig.gameConfigs[requestData.params.gameID].bankrollID+"\"");
+			var bankroll_balance_btc = new BigNumber(0);
+		} else {
+			bankroll_balance_btc = new BigNumber(investmentQueryResult.rows[0].btc_balance);
+		}
+	} catch (err) {
+		bankroll_balance_btc = new BigNumber(0);
 	}
 	
 	var maxBet = eval(serverConfig.gameConfigs[requestData.params.gameID].maxBet);
