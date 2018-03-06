@@ -202,7 +202,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 					message += "Confirmed blockchain balance (BTC): "+String(bitcoinAmount)+"\n";
 					message += "Unconfirmed blockchain balance (BTC): "+String(bitcoinAmount)+"\n";
 					message += "Available balance (BTC): "+btcDeposited;
-					accountPlugin.sendEmail("myfruitgame@gmail.com", queryResult.rows[0].email, "New Deposit", message);						
+					accountPlugin.sendEmail("myfruitgame@gmail.com", queryResult.rows[0].email, "New Deposit", message);
 				}
 				global.logTx("Detected blockchain balance change for account: "+requestData.params.account);
 				global.logTx("   Last live API update of balances: "+queryResult.rows[0].last_deposit_check);
@@ -2898,7 +2898,16 @@ function startRPCServer() {
 		plugins.registerTimerFunction({"time":time,"func":"backupDatabase","plugin":global});
 	} catch (err) {
 		trace ("The requested port ("+serverConfig.rpc_options.port+") is already in use.");
-	}	
+	}
+	try {
+		var now = new Date();
+		time = now.getHours()+":"+now.getMinutes();
+		var message = "The game server was started at: "+time;
+		for (var count=0; count < serverConfig.adminEmails.length; count++) {
+			accountPlugin.sendEmail("myfruitgame@gmail.com", serverConfig.adminEmails[count], "Game Server Startup", message);
+		}
+	} catch (err) {
+	}
 }
 
 

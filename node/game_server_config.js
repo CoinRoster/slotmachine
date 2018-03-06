@@ -20,12 +20,15 @@ exports.allowUnconfirmedDeposit = true; //should uncofirmed Bitcoin deposits be 
 exports.allowUnconfirmedWithdrawal = false; //should withdrawals be allowed if deposits are unconfirmed? (false is highly recommended).
 exports.depositCheckInterval = 20; //the number of seconds required to elapse between successive external deposit check API calls
 
+exports.adminEmails = ["patrickbayca@gmail.com", "james@markdalemanagement.com"];
+exports.largeWithdrawalNotificationEmails = ["patrickbayca@gmail.com", "james@markdalemanagement.com"];
+
 //maximum withdrawal limits and related settings
 exports.maxWithdrawal = {
 	//maximum unapproved BTC withdrawal amount (up to and including)
 	"btc": new BigNumber("2"),
 	//contacts to notify of large withdrawal(s) request
-	"emails":["patrickbayca@gmail.com", "james@markdalemanagement.com"]
+	"emails": exports.largeWithdrawalNotificationEmails;
 }
 
 //accounts used for withdrawals that exceed original deposit amount (bankroll accounts)
