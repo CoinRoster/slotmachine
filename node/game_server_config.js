@@ -28,7 +28,7 @@ exports.maxWithdrawal = {
 	//maximum unapproved BTC withdrawal amount (up to and including)
 	"btc": new BigNumber("2"),
 	//contacts to notify of large withdrawal(s) request
-	"emails": exports.largeWithdrawalNotificationEmails;
+	"emails": exports.largeWithdrawalNotificationEmails
 }
 
 //accounts used for withdrawals that exceed original deposit amount (bankroll accounts)
