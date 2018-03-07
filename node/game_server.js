@@ -703,6 +703,8 @@ function *RPC_getAccountTransactions (postData, requestObj, responseObj, batchRe
 		}
 		for (var count = startIndex; count <= endIndex; count++) {
 			var currentResult = betsWinsQueryResult.rows[count];
+			//trace ("currentResult="+querystring.unescape(currentResult.results));
+			trace ("currentResult="+JSON.stringify(currentResult));
 			if (currentResult != undefined) {
 				var resultObjB = new Object();
 				var resultObjW = new Object();
@@ -2763,6 +2765,10 @@ function readGameConfigs(configPaths) {
 			}
 			ID = String(ID);
 			configs[ID] = newConfig;
+			trace ("   Loaded game configuration ("+ID+"):");
+			trace (" ");
+			trace (JSON.stringify(newConfig));
+			trace (" ");
 		} catch (err) {
 			return (null);
 		}
