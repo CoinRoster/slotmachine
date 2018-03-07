@@ -12,7 +12,15 @@ transactionTableOptions.investmentHistory = true;
 transactionTableOptions.affiliateHistory = true;
 var displayCurrency = "tokens";
 var passwordUpdateInterval = 10; //number of minutes that must elapse between subsequent password reset attempts (should reflect server setting)
-BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+var numberFormat = {
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0
+}
+BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR, FORMAT:numberFormat });
 
 function callServerMethod(methodName, params, resultCallback) {	
 	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};			
@@ -234,7 +242,7 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 		if (availBalance.lessThan(0)) {
 			availBalance = new BigNumber(0);
 		}
-		returnHTML += "<tr class=\"static\"><td><b>Available Balance:</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toString(10)+"</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toString(10)+"</b></td><td></td></tr>";
+		returnHTML += "<tr class=\"static\"><td><b>Available Balance:</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td></td></tr>";
 		totalUserInvestmentBase = totalUserInvestmentBase.plus(availBalance);
 		totalInvestmentsBalance = totalInvestmentsBalance.plus(availBalance);
 		for (var count = 0; count < allInvestmentsArr.length; count++) {
@@ -273,11 +281,11 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 			totalUserInvestmentBase = totalUserInvestmentBase.plus(currentBaseValue);			
 			totalInvestmentsBalance = totalInvestmentsBalance.plus(currentTotalValue);
 			totalInvestmentsGains = totalInvestmentsGains.plus(investmentDelta);
-			returnHTML += "<tr><td>"+investmentName+"</td><td>"+convertAmount(userInvestmentBase, "btc", displayCurrency).toString(10)+"</td><td>"+convertAmount(currentTotalValue, "btc", displayCurrency).toString(10)+"</td><td>"+convertAmount(investmentDelta, "btc", displayCurrency).toString(10)+"</td></tr>";
+			returnHTML += "<tr><td>"+investmentName+"</td><td>"+convertAmount(userInvestmentBase, "btc", displayCurrency).toFormat()+"</td><td>"+convertAmount(currentTotalValue, "btc", displayCurrency).toFormat()+"</td><td>"+convertAmount(investmentDelta, "btc", displayCurrency).toFormat()+"</td></tr>";
 		}
 	}
 	try {
-		returnHTML += "<tr class=\"static\"><td><b>TOTALS</b></td><td><b>"+convertAmount(totalUserInvestmentBase, "btc", displayCurrency).toString(10)+"</b></td><td><b>"+convertAmount(totalInvestmentsBalance, "btc", displayCurrency).toString(10)+"</b></td><td><b>"+convertAmount(totalInvestmentsGains, "btc", displayCurrency).toString(10)+"</b></td></tr>";
+		returnHTML += "<tr class=\"static\"><td><b>TOTALS</b></td><td><b>"+convertAmount(totalUserInvestmentBase, "btc", displayCurrency).toFormat()+"</b></td><td><b>"+convertAmount(totalInvestmentsBalance, "btc", displayCurrency).toFormat()+"</b></td><td><b>"+convertAmount(totalInvestmentsGains, "btc", displayCurrency).toFormat()+"</b></td></tr>";
 	} catch (err) {
 	}
 	returnHTML += "</tbody></table>";
@@ -650,10 +658,10 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 							}							
 							if (!winDeposit) {
 								rowHTML += "<td>Deposit</td>";
-								//rowHTML += "<td><span id\"account_deposit\">Balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toString(10)+"</b> "+displayCurrency+" ";
-								//rowHTML += "<small>("+convertAmount(currentTx.change, "btc", displayCurrency).toString(10)+" "+displayCurrency+")</small></span></td>";	
-								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toString(10)+"</b> "+displayCurrency+" </td>";
-								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toString(10)+"</td>";
+								//rowHTML += "<td><span id\"account_deposit\">Balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" ";
+								//rowHTML += "<small>("+convertAmount(currentTx.change, "btc", displayCurrency).toFormat()+" "+displayCurrency+")</small></span></td>";	
+								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
+								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toFormat()+"</td>";
 								rowHTML += "</tr>";	
 								itemsRendered++;
 							} else {
@@ -669,8 +677,8 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 							//only include non-betting withdrawals
 							if (!betWithdrawal) {
 								rowHTML += "<td>Withdrawal</td>";
-								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toString(10)+"</b> "+displayCurrency+" </td>";
-								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toString(10)+"</td>";	
+								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
+								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toFormat()+"</td>";	
 								rowHTML += "</tr>";	
 								itemsRendered++;	
 							} else {
@@ -679,7 +687,7 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 						} else {
 							//do we want to include this? (change is always 0)
 							//rowHTML += "<td>Account Update</td>";
-							//rowHTML += "<td><span id\"account_update\">Balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toString(10)+"</b> "+displayCurrency+" <small>(no change)</small></span></td>";															
+							//rowHTML += "<td><span id\"account_update\">Balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" <small>(no change)</small></span></td>";															
 							//rowHTML += "</tr>";	
 							//itemsRendered++;
 							rowHTML = "";
@@ -707,10 +715,10 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 								var userInvestmentBalanceBTC = currentTx.investments[count2].user_investment_btc;
 								var userInvestmentBaseBTC = currentTx.investments[count2].user_investment_base_btc;
 								rowHTML += "<td>";
-								rowHTML += "\""+investmentID+"\" distribution: <b>"+convertAmount(userInvestmentBaseBTC, "btc", displayCurrency).toString(10)+"</b> "+displayCurrency+" book value / ";
-								rowHTML += "<b>"+convertAmount(userInvestmentBalanceBTC, "btc", displayCurrency).toString(10)+" "+displayCurrency+"</b> current value.";
+								rowHTML += "\""+investmentID+"\" distribution: <b>"+convertAmount(userInvestmentBaseBTC, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" book value / ";
+								rowHTML += "<b>"+convertAmount(userInvestmentBalanceBTC, "btc", displayCurrency).toFormat()+" "+displayCurrency+"</b> current value.";
 								rowHTML += "</td>";
-								rowHTML += "<td><b>"+convertAmount(changeBTC, "btc", displayCurrency).toString(10)+"</b></td>";
+								rowHTML += "<td><b>"+convertAmount(changeBTC, "btc", displayCurrency).toFormat()+"</b></td>";
 								rowHTML += "</tr>";	
 							} 
 						}
@@ -727,7 +735,7 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 						//track previous transaction to determine if it's a deposit or withdrawals
 						rowHTML += "<td>Affiliate Transaction</td>";
 						rowHTML += "<td>Referral: <b>"+currentAffiliateCont.account+"</b></td>";
-						rowHTML += "<td>"+convertAmount(currentAffiliateCont.btc, "btc", displayCurrency).toString(10)+"</td>";
+						rowHTML += "<td>"+convertAmount(currentAffiliateCont.btc, "btc", displayCurrency).toFormat()+"</td>";
 						rowHTML += "</tr>";	
 						previousAffiliateCont = currentTx.balance;
 						itemsRendered++;
@@ -740,7 +748,7 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 						var minusOne = new BigNumber(-1);
 						rowHTML += "<td>Bet</td>";
 						rowHTML += "<td></td>";
-						rowHTML += "<td>"+convertAmount(currentTx.bet.btc, "btc", displayCurrency).times(minusOne).toString(10)+"</td>";
+						rowHTML += "<td>"+convertAmount(currentTx.bet.btc, "btc", displayCurrency).times(minusOne).toFormat()+"</td>";
 						rowHTML += "</tr>";	
 						itemsRendered++;
 					} else {
@@ -755,7 +763,7 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 						for (var gameID in currentTx.wins.games) {
 							var currentWin = convertAmount(currentTx.wins.games[gameID].btc, "btc", displayCurrency);
 							totalWins = totalWins.plus(currentWin);
-							rowHTML += "<td>"+currentWin.toString(10)+"</td>";
+							rowHTML += "<td>"+currentWin.toFormat()+"</td>";
 						}
 						rowHTML += "</tr>";
 						if (totalWins.greaterThan(0)) {
@@ -880,8 +888,8 @@ function collateTransactions(txResults) {
 					var previousBalance = new BigNumber(previousAccountTx.btc_balance);
 					var currentBalance = new BigNumber(currentTx.btc_balance);
 					var delta = currentBalance.minus(previousBalance);
-					currentTx.change = delta.toString(10);
-					currentTx.delta = delta.toString(10);
+					currentTx.change = delta.toFormat();
+					currentTx.delta = delta.toFormat();
 				} else {
 					currentTx.delta = "0";
 					currentTx.change = "0";
@@ -922,11 +930,11 @@ function insertInvestmentDeltas(previousInvestmentsTx, currentInvestmentsTx) {
 				currentInvBalance = new BigNumber(currentTx.user_investment_btc);
 				currentTx.delta = currentInvBalance.minus(previousInvBalance);
 				if (currentTx.delta.greaterThan(0)) {
-					currentTx.change = "+"+currentTx.delta.toString(10);
+					currentTx.change = "+"+currentTx.delta.toFormat();
 				} else {
-					currentTx.change = currentTx.delta.toString(10);
+					currentTx.change = currentTx.delta.toFormat();
 				}
-				currentTx.delta = currentTx.delta.toString(10);
+				currentTx.delta = currentTx.delta.toFormat();
 			}
 		}
 	}
@@ -988,7 +996,7 @@ function onGetAffiliateInfo(returnData) {
 				case "tokens": totalEarnings += "tokens"; break;
 				default: break;
 			}
-			totalEarnings += "):</b> "+convertAmount(returnData.result.info[0].balance.btc, "btc", displayCurrency).toString(10)+"</div><br/>";
+			totalEarnings += "):</b> "+convertAmount(returnData.result.info[0].balance.btc, "btc", displayCurrency).toFormat()+"</div><br/>";
 			infoTable = "<div id=\"details\"><table id=\"affiliateContributionsTable\" class=\"tablesorter-blue\">";
 			infoTable += "<thead><tr>";
 			infoTable += "<th class=\"header\"><b>Referral</b></th>";
@@ -1007,7 +1015,7 @@ function onGetAffiliateInfo(returnData) {
 				for (var item in balanceInfoObj) {
 					infoTable += "<tr>";
 					infoTable += "<td><a href=\"#\" onclick=\"getReferralInfo('"+item+"')\"> "+item+"</a></td>";
-					infoTable += "<td>"+convertAmount(balanceInfoObj[item].btc_total, "btc", displayCurrency).toString(10)+"</td>";
+					infoTable += "<td>"+convertAmount(balanceInfoObj[item].btc_total, "btc", displayCurrency).toFormat()+"</td>";
 					infoTable += "</tr>";
 				}
 			}

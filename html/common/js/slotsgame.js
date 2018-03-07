@@ -52,6 +52,16 @@ SLOTSGAME.reelsSpinning = false; //are any reels spinning?
 SLOTSGAME.reelSpinning = new Array(); //is a specific reel spinning?
 SLOTSGAME.autologoutTime = "00:08:00:00"; //automatically log player out every 8 hours (format is: "days:hours:minutes:seconds", leading 0s can be omitted if desired)
 
+var numberFormat = {
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0
+}
+BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR, FORMAT:numberFormat });
+
 var popupWindow = null; //reference to any currently active pop-up window
 
 var autologoutTimerID = null; //timer ID of the current autologout timer tick
@@ -681,7 +691,7 @@ function buildPaytable(imageScale) {
 	}
 	//add available coin amounts to header...
 	for (count = 0; count < SLOTSGAME.config.bets.length; count++) {
-		headerRow += "<td id=\"coinAmount\" align=\"center\" width=\""+imageScale+"\" valign=\"middle\">"+convertAmount(SLOTSGAME.config.bets[count], "tokens", SLOTSGAME.displayCurrency).toString(10)+"</td>";
+		headerRow += "<td id=\"coinAmount\" align=\"center\" width=\""+imageScale+"\" valign=\"middle\">"+convertAmount(SLOTSGAME.config.bets[count], "tokens", SLOTSGAME.displayCurrency).toFormat()+"</td>";
 	}
 	headerRow += "</tr>";
 	$(".content .modal-dialog .modal-content .modal-body #paytable #container tr:last").before(headerRow);
@@ -719,9 +729,9 @@ function buildPaytable(imageScale) {
 				winAmount = convertAmount(winAmount, "tokens", SLOTSGAME.displayCurrency);
 				if ((combo["jackpot"] != null) && (combo["jackpot"] != undefined) && (combo["jackpot"] != "") && (coinCount == (SLOTSGAME.config.bets.length - 1))) {
 					SLOTSGAME.baseJackpotAmount = new BigNumber(String(combo.multiplier));
-					comboRow += "<td id=\"jackpot\" align=\"center\" valign=\"middle\"><div id=\"multiplier\">"+winAmount.toString(10)+"</div><div id=\"value\"></div></td>";				
+					comboRow += "<td id=\"jackpot\" align=\"center\" valign=\"middle\"><div id=\"multiplier\">"+winAmount.toFormat()+"</div><div id=\"value\"></div></td>";				
 				} else {
-					comboRow += "<td id=\"multiplier\" align=\"center\" valign=\"middle\">"+winAmount.toString(10)+"</td>";
+					comboRow += "<td id=\"multiplier\" align=\"center\" valign=\"middle\">"+winAmount.toFormat()+"</td>";
 				}			
 			}
             comboRow += "</tr>";
@@ -742,9 +752,9 @@ function buildPaytable(imageScale) {
 				winAmount = convertAmount(winAmount, "tokens", SLOTSGAME.displayCurrency);
 				if ((combo["jackpot"] != null) && (combo["jackpot"] != undefined) && (combo["jackpot"] != "") && (coinCount == (SLOTSGAME.config.bets.length - 1))) {
 					SLOTSGAME.baseJackpotAmount = new BigNumber(String(combo.multiplier));
-					comboRow += "<td id=\"jackpot\" align=\"center\" valign=\"middle\"><div id=\"multiplier\">"+winAmount.toString(10)+"</div><div id=\"value\"></div></td>";				
+					comboRow += "<td id=\"jackpot\" align=\"center\" valign=\"middle\"><div id=\"multiplier\">"+winAmount.toFormat()+"</div><div id=\"value\"></div></td>";				
 				} else {
-					comboRow += "<td id=\"multiplier\" align=\"center\" valign=\"middle\">"+winAmount.toString(10)+"</td>";
+					comboRow += "<td id=\"multiplier\" align=\"center\" valign=\"middle\">"+winAmount.toFormat()+"</td>";
 				}
 			}
             comboRow += "</tr>";
@@ -768,9 +778,9 @@ function updatePaytableJackpot() {
     }	
 	var totalJackpotAmount = SLOTSGAME.baseJackpotAmount.times(highestBet).plus(SLOTSGAME.currentJackpotAmount);
 	totalJackpotAmount = convertAmount(totalJackpotAmount, "tokens", SLOTSGAME.displayCurrency);
-	$(".content #paytable #container #jackpot #multiplier").html(totalJackpotAmount.toString(10));
-    $(".content #progressive #container #jackpot #multiplier").html(totalJackpotAmount.toString(10));
-    $(".content #progressiveMenu #container #jackpot #multiplier").html(totalJackpotAmount.toString(10));
+	$(".content #paytable #container #jackpot #multiplier").html(totalJackpotAmount.toFormat());
+    $(".content #progressive #container #jackpot #multiplier").html(totalJackpotAmount.toFormat());
+    $(".content #progressiveMenu #container #jackpot #multiplier").html(totalJackpotAmount.toFormat());
 }
 
 /**
@@ -1098,7 +1108,7 @@ function onDoCashOutClick(event) {
 	SLOTSGAME.cashoutAmount = cashoutBTCAmount;
     var fee = new BigNumber(SLOTSGAME.serverFees.bitcoin);
     var withdrawalAmount = new BigNumber(cashoutBTCAmount).plus(fee);
-    var dialogMsg = "<div id=\"cashoutResultDialog\"><p>A miner's fee of BTC "+SLOTSGAME.serverFees.bitcoin+" will be deducted from the withdrawal amount.</p><p>Total withdrawal: BTC "+withdrawalAmount.toString()+"</p></div>";
+    var dialogMsg = "<div id=\"cashoutResultDialog\"><p>A miner's fee of BTC "+SLOTSGAME.serverFees.bitcoin+" will be deducted from the withdrawal amount.</p><p>Total withdrawal: BTC "+withdrawalAmount.toFormat()+"</p></div>";
     //Changed to Modal for mobile friendly
     $(".content #cashoutResult .modal-dialog .modal-content .modal-body #cashoutResultDialog").replaceWith(dialogMsg);
     $('.content #cashoutResult').modal('show');
@@ -1476,7 +1486,7 @@ function updateGameResults(resultsObject) {
     var balanceInfo = resultsObject.balance;
     SLOTSGAME.currentJackpotAmount = new BigNumber(resultsObject.jackpot.tokens);
     SLOTSGAME.currentJackpotBTCAmount = new BigNumber(resultsObject.jackpot.bitcoin);
-    $(".content #header #winAmount").replaceWith( "<div id=\"winAmount\">"+convertAmount(winInfo.tokens, "tokens", SLOTSGAME.displayCurrency).toString(10)+"</div>" );
+    $(".content #header #winAmount").replaceWith( "<div id=\"winAmount\">"+convertAmount(winInfo.tokens, "tokens", SLOTSGAME.displayCurrency).toFormat()+"</div>" );
     SLOTSGAME.currentBalance = new BigNumber(balanceInfo.tokens);
     updateBalance(balanceInfo.tokens);
     updatePaytableJackpot();
@@ -1682,7 +1692,7 @@ function show2FAIncompleteDialog() {
   * @param amount The token balance amount to update the UI with.
   */
 function updateBalance(amount) {	
-	$("#gameUI #balance #amount").replaceWith( "<div id=\"amount\">"+convertAmount(amount, "tokens", SLOTSGAME.displayCurrency).toString(10)+"</div>" );
+	$("#gameUI #balance #amount").replaceWith( "<div id=\"amount\">"+convertAmount(amount, "tokens", SLOTSGAME.displayCurrency).toFormat()+"</div>" );
 }
 
 /**
@@ -1693,7 +1703,7 @@ function updateBalance(amount) {
   */
 function updateBet(betIndex) {	
     var amount = SLOTSGAME.config.bets[betIndex];	
-	var amountStr = convertAmount(amount, "tokens", SLOTSGAME.displayCurrency).toString(10);	
+	var amountStr = convertAmount(amount, "tokens", SLOTSGAME.displayCurrency).toFormat();	
 	var sizeMultiplier = 0;	
 	switch (SLOTSGAME.displayCurrency) {
 		case "btc": 			

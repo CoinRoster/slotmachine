@@ -4,6 +4,15 @@ var rpcMsgID = 0;
 var availableInvestments = new Object();
 var displayCurrency = "tokens";
 var lastBetDateTime = new Date(1970,0,0,0,0,0); //Date object containing the last bet date/time recorded from a server message
+var numberFormat = {
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0
+}
+BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR, FORMAT:numberFormat });
 
 function callServerMethod(methodName, params, resultCallback) {	
 	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};			
@@ -34,11 +43,11 @@ function populateLeaderboard(leaderboardData) {
 	for (var gameID in leaderboardData.games) {
 		var dateObj = new Date(leaderboardData.games[gameID].timestamp);
 		var dateStr = dateObj.getFullYear()+"-"+(dateObj.getMonth()+1)+"-"+dateObj.getDate();
-		winHTML += "<span id=\"win\">"+getGameNameByID(gameID)+" paid "+convertAmount(leaderboardData.games[gameID].btc, "btc", displayCurrency).toString(10)+" "+displayCurrency+" @ "+dateStr+"&nbsp;&nbsp;</span>";
+		winHTML += "<span id=\"win\">"+getGameNameByID(gameID)+" paid "+convertAmount(leaderboardData.games[gameID].btc, "btc", displayCurrency).toFormat()+" "+displayCurrency+" @ "+dateStr+"&nbsp;&nbsp;</span>";
 	}
 	var leaderboardHTML = "<div id=\"leaderboard\">";
 	leaderboardHTML += "<div id=\"biggestWin\">"+winHTML+"</small></div>";
-	leaderboardHTML += "<div id=\"biggestAffiliate\"><span id=\"prompt\">Biggest affiliate: </span>"+convertAmount(leaderboardData.affiliate.btc, "btc", displayCurrency).toString(10)+" "+displayCurrency+" <small>(affiliate ID: "+leaderboardData.affiliate.id+")</small></div>";
+	leaderboardHTML += "<div id=\"biggestAffiliate\"><span id=\"prompt\">Biggest affiliate: </span>"+convertAmount(leaderboardData.affiliate.btc, "btc", displayCurrency).toFormat()+" "+displayCurrency+" <small>(affiliate ID: "+leaderboardData.affiliate.id+")</small></div>";
 	leaderboardHTML += "</div>";
 	$("#leaderboard").replaceWith(leaderboardHTML);
 	for (var count =0; count< leaderboardData.last_bet.length; count++) {
@@ -49,7 +58,7 @@ function populateLeaderboard(leaderboardData) {
 				lastBetDateTime = currentBetDateTime;
 				var dateStr = createDateTimeString(lastBetDateTime);
 				if ((currentBetItem.btc != null) && (currentBetItem.btc != undefined)) {
-					var newBetHTML = "<p id=\"bet\">Game: "+getGameNameByID(currentBetItem.gameID)+"&nbsp;&nbsp;--&nbsp;&nbsp;Bet: "+convertAmount(currentBetItem.btc, "btc", displayCurrency).toString(10)+" "+displayCurrency+" @ "+dateStr+"</bet>";
+					var newBetHTML = "<p id=\"bet\">Game: "+getGameNameByID(currentBetItem.gameID)+"&nbsp;&nbsp;--&nbsp;&nbsp;Bet: "+convertAmount(currentBetItem.btc, "btc", displayCurrency).toFormat()+" "+displayCurrency+" @ "+dateStr+"</bet>";
 				}
 				$("#betsScroller #scrollContainer").prepend(newBetHTML);
 			}

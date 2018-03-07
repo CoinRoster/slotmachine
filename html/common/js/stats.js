@@ -4,7 +4,15 @@ var rpcMsgID = 0;
 var availableInvestments = new Object();
 var progressiveJackpots = new Array(); //most recently loaded progressive jackpots data
 var displayCurrency = "tokens";
-BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+var numberFormat = {
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0
+}
+BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR, FORMAT:numberFormat });
 
 function callServerMethod(methodName, params, resultCallback) {	
 	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};				
@@ -47,7 +55,7 @@ function onGetInvestmentStats(returnData) {
 			chartOptions.maxYValue = Number.MIN_VALUE;
 			//convert Bitcoin values to currently selected currency
 			for (var count=0; count < gainsChartData[0].data.length; count++) {
-				gainsChartData[0].data[count][1] = Number(convertAmount(gainsChartData[0].data[count][1], "btc", displayCurrency).toString(10)) + currentInvestmentTotal;
+				gainsChartData[0].data[count][1] = Number(convertAmount(gainsChartData[0].data[count][1], "btc", displayCurrency).toFormat()) + currentInvestmentTotal;
 				if (gainsChartData[0].data[count][1] < chartOptions.minYValue) {
 					chartOptions.minYValue = gainsChartData[0].data[count][1];
 				}
@@ -205,8 +213,8 @@ function buildStatsTables(resultObj) {
 			totalProgressiveAmount = totalProgressiveAmount.plus(new BigNumber(resultObj.jackpots[count].btc));
 			returnHTML += "<tr>";												
 			returnHTML += "<td>"+resultObj.jackpots[count].id+"</td>";			
-			returnHTML += "<td>"+totalProgressiveAmount.toString(10)+"</td>";			
-			returnHTML += "<td>"+convertAmount(resultObj.jackpots[count].btc, "btc", displayCurrency).toString(10)+"</td>";			
+			returnHTML += "<td>"+totalProgressiveAmount.toFormat()+"</td>";			
+			returnHTML += "<td>"+convertAmount(resultObj.jackpots[count].btc, "btc", displayCurrency).toFormat()+"</td>";			
 			returnHTML += "<td>"+createDateTimeString(new Date(resultObj.jackpots[count].timestamp))+"</td>";
 			if (userIsLoggedIn()) {
 				returnHTML += "<td><button id=\"\" onclick=\"onProgressiveAlertClick("+String(count)+")\">SET ALERT</button></td>";
@@ -227,8 +235,8 @@ function buildStatsTables(resultObj) {
 	returnHTML += "</tr><thead>";
 	returnHTML += "<tbody class=\"investment_value\"><tr class=\"static\">";
 	returnHTML += "<td><b>In-Game Balances</b></td>";	
-	returnHTML += "<td><b>"+convertAmount(resultObj.user_balances.btc_available_total, "btc", displayCurrency).toString(10)+"</b></td>";
-	returnHTML += "<td><b>"+convertAmount(resultObj.user_balances.btc_available_total, "btc", displayCurrency).toString(10)+"</b></td>";
+	returnHTML += "<td><b>"+convertAmount(resultObj.user_balances.btc_available_total, "btc", displayCurrency).toFormat()+"</b></td>";
+	returnHTML += "<td><b>"+convertAmount(resultObj.user_balances.btc_available_total, "btc", displayCurrency).toFormat()+"</b></td>";
 	returnHTML += "<td></td><td></td></tr>";
 	var usersBalance = new BigNumber(resultObj.user_balances.btc_available_total);
 	var column1Total = new BigNumber(0);
@@ -244,7 +252,7 @@ function buildStatsTables(resultObj) {
 		var baseDeposit = new BigNumber(currentInvestment.btc_base_deposit);
 		var balanceTotal = new BigNumber(currentInvestment.btc_balance_total);
 		if (balanceTotal.equals(0)) {
-			balanceTotal = new BigNumber(baseDeposit.toString(10));
+			balanceTotal = new BigNumber(baseDeposit.toFormat());
 		}
 		var gainsCurrent = new BigNumber(currentInvestment.btc_gains_current);	
 		var gainsTotal = balanceTotal.plus(gainsCurrent);
@@ -253,10 +261,10 @@ function buildStatsTables(resultObj) {
 		column1Total = column1Total.plus(balanceTotal);
 		column2Total = column2Total.plus(gainsTotal);
 		column3Total = column3Total.plus(balanceDelta);
-		returnHTML += "<td><b>"+convertAmount(balanceTotal, "btc", displayCurrency).toString(10)+"<b></td>";		
-		returnHTML += "<td><b>"+convertAmount(gainsTotal, "btc", displayCurrency).toString(10)+"</b></td>";		
-		//returnHTML += "<td><b>"+convertAmount(currentInvestment.btc_gains_total, "btc", displayCurrency).toString(10)+"</b></td>";		
-		returnHTML += "<td><b>"+convertAmount(balanceDelta, "btc", displayCurrency).toString(10)+"</b></td>";	
+		returnHTML += "<td><b>"+convertAmount(balanceTotal, "btc", displayCurrency).toFormat()+"<b></td>";		
+		returnHTML += "<td><b>"+convertAmount(gainsTotal, "btc", displayCurrency).toFormat()+"</b></td>";		
+		//returnHTML += "<td><b>"+convertAmount(currentInvestment.btc_gains_total, "btc", displayCurrency).toFormat()+"</b></td>";		
+		returnHTML += "<td><b>"+convertAmount(balanceDelta, "btc", displayCurrency).toFormat()+"</b></td>";	
 		/*
 		var gains_sum = new BigNumber(currentInvestment.btc_gains_total);
 		var base_deposit = new BigNumber(currentInvestment.btc_base_deposit);		
@@ -289,10 +297,10 @@ function buildStatsTables(resultObj) {
 	column4Total = column4Total.times(precisionVal).floor().dividedBy(precisionVal);
 	returnHTML += "<tr class=\"static\">";
 	returnHTML += "<td>TOTALS</td>";
-	returnHTML += "<td class=\"total\"><b>"+convertAmount(column1Total.toString(10), "btc", displayCurrency).toString(10)+"<b></td>";		
-	returnHTML += "<td class=\"total\"><b>"+convertAmount(column2Total.toString(10), "btc", displayCurrency).toString(10)+"</b></td>";		
-	returnHTML += "<td class=\"total\"><b>"+convertAmount(column3Total.toString(10), "btc", displayCurrency).toString(10)+"</b></td>";	
-	returnHTML += "<td class=\"total\"><b>"+convertAmount(column4Total.toString(10), "btc", displayCurrency).toString(10)+"%</b></td>";
+	returnHTML += "<td class=\"total\"><b>"+convertAmount(column1Total.toFormat(), "btc", displayCurrency).toFormat()+"<b></td>";		
+	returnHTML += "<td class=\"total\"><b>"+convertAmount(column2Total.toFormat(), "btc", displayCurrency).toFormat()+"</b></td>";		
+	returnHTML += "<td class=\"total\"><b>"+convertAmount(column3Total.toFormat(), "btc", displayCurrency).toFormat()+"</b></td>";	
+	returnHTML += "<td class=\"total\"><b>"+convertAmount(column4Total.toFormat(), "btc", displayCurrency).toFormat()+"%</b></td>";
 	returnHTML += "</tr>";
 	returnHTML += "</tbody></table>";
 	returnHTML += generatePagerDiv("investmentsPager");
