@@ -731,28 +731,31 @@ function *loadLeaderboardData() {
 	if (queryResult.error == null) {
 		for (var count=0; count < queryResult.rows.length; count++) {
 			var currentResult = queryResult.rows[count];
-			if (currentResult != null) {
-				if ((currentResult["balance"] != null) && (currentResult["balance"] != undefined)) {
-					currentResult.balance = JSON.parse(currentResult["balance"]);
-					if ((global.leaderboardData["affiliate"] == null) || (global.leaderboardData["affiliate"] == undefined)) {
-						global.leaderboardData["affiliate"] = new Object();
-					}
-					if ((global.leaderboardData.affiliate["id"] == undefined) || (global.leaderboardData.affiliate["id"] == "null") || (global.leaderboardData.affiliate["btc"] == "")) {
-						global.leaderboardData.affiliate.id = null;
-					}
-					if ((global.leaderboardData.affiliate["btc"] == null) || (global.leaderboardData.affiliate["btc"] == undefined) || (global.leaderboardData.affiliate["btc"] == "null") || (global.leaderboardData.affiliate["btc"] == "")) {
-						global.leaderboardData.affiliate.btc = "0";
-					}
-					if ((currentResult.balance["btc"] == null) || (currentResult.balance["btc"] == undefined) || (currentResult.balance["btc"] == "") || (currentResult.balance["btc"] == "null")) {
-						currentResult.balance["btc"] = "0";
-					}
-					var currentHighestAffiliateBalance = new BigNumber(global.leaderboardData.affiliate.btc);
-					var currentAffiliateBalance = new BigNumber(currentResult.balance.btc);
-					if (currentAffiliateBalance.greaterThan(currentHighestAffiliateBalance)) {
-						global.leaderboardData.affiliate.btc = currentResult.balance.btc;
-						global.leaderboardData.affiliate.id = currentResult.id;
+			try {
+				if (currentResult != null) {
+					if ((currentResult["balance"] != null) && (currentResult["balance"] != undefined)) {
+						currentResult.balance = JSON.parse(currentResult["balance"]);
+						if ((global.leaderboardData["affiliate"] == null) || (global.leaderboardData["affiliate"] == undefined)) {
+							global.leaderboardData["affiliate"] = new Object();
+						}
+						if ((global.leaderboardData.affiliate["id"] == undefined) || (global.leaderboardData.affiliate["id"] == "null") || (global.leaderboardData.affiliate["btc"] == "")) {
+							global.leaderboardData.affiliate.id = null;
+						}
+						if ((global.leaderboardData.affiliate["btc"] == null) || (global.leaderboardData.affiliate["btc"] == undefined) || (global.leaderboardData.affiliate["btc"] == "null") || (global.leaderboardData.affiliate["btc"] == "")) {
+							global.leaderboardData.affiliate.btc = "0";
+						}
+						if ((currentResult.balance["btc"] == null) || (currentResult.balance["btc"] == undefined) || (currentResult.balance["btc"] == "") || (currentResult.balance["btc"] == "null")) {
+							currentResult.balance["btc"] = "0";
+						}
+						var currentHighestAffiliateBalance = new BigNumber(global.leaderboardData.affiliate.btc);
+						var currentAffiliateBalance = new BigNumber(currentResult.balance.btc);
+						if (currentAffiliateBalance.greaterThan(currentHighestAffiliateBalance)) {
+							global.leaderboardData.affiliate.btc = currentResult.balance.btc;
+							global.leaderboardData.affiliate.id = currentResult.id;
+						}
 					}
 				}
+			} catch (err) {
 			}
 		}
 	}
