@@ -291,7 +291,7 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 	returnHTML += "</tbody></table>";
 	return (returnHTML);
 }
-
+/*
 function onTxTablePreviousClick() {	
 	//_txTableTopItemIndex--;
 	var txTable = buildTransactionTable(currentTransactionsData, _txTableItemsPerPage, "down");
@@ -303,7 +303,7 @@ function onTxTableNextClick() {
 	var txTable = buildTransactionTable(currentTransactionsData, _txTableItemsPerPage, "up");
 	$("#transactionHistory").replaceWith(txTable);
 }
-
+*/
 function onTxHistoryOptionClick() {
 	var options = new Object();
 	if ($("#transactionHistoryOptions #options #accountTransactions").prop("checked")) {
@@ -419,7 +419,7 @@ function paginateSortableTable(tableSelector, pagerSelector) {
 		theme: 'blue',
 		widthFixed: true,
 		widgets: ['zebra', 'filter', 'staticRow']
-	}).tablesorterPager(pagerOptions); //tablesorterPager(pagerOptions);
+	}).tablesorterPager(pagerOptions);
 }
 
 function onTxTableRefreshClick() {
@@ -598,26 +598,10 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 	returnHTML += "<thead><tr>";
 	returnHTML += "<th class=\"header\">Date</th>";
 	returnHTML += "<th class=\"header\">Type</th>";
+	returnHTML += "<th class=\"header\">Amount</th>";
+	returnHTML += "<th class=\"header\">Balance</th>";
 	returnHTML += "<th class=\"header\">Description</th>";
-	returnHTML += "<th class=\"header\">Amount</th>";	
-	returnHTML += "</tr></thead>";	
-	/*
-	returnHTML += "<tfoot><tr>";
-	if (existsPreviousPage(collatedTxArray)) {		
-		returnHTML += "<td><small><a href=\"#\" onclick=\"onTxTablePreviousClick()\">PREVIOUS</a></small></td>";
-	} else {
-		returnHTML += "<td>&nbsp;</td>";
-	}	
-	returnHTML += "<td><small><a href=\"#\" onclick=\"onTxTableRefreshClick()\">REFRESH</a></small></td>";
-	returnHTML += "<td>&nbsp;</td>";
-	if (existsNextPage(collatedTxArray, itemsPerPage)) {
-		returnHTML += "<td style=\"text-align:right;\"><small><a href=\"#\" onclick=\"onTxTableNextClick()\">NEXT</a></small></td>";
-	} else {
-		returnHTML += "<td>&nbsp;</td>";
-	}		
-	returnHTML += "</tr>";
-	returnHTML += "</tfoot>";
-	*/
+	returnHTML += "</tr></thead>";
 	returnHTML += "<tbody>";
 	var itemsRendered = 0;
 	var previousAffiliateCont = null;
@@ -658,10 +642,9 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 							}							
 							if (!winDeposit) {
 								rowHTML += "<td>Deposit</td>";
-								//rowHTML += "<td><span id\"account_deposit\">Balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" ";
-								//rowHTML += "<small>("+convertAmount(currentTx.change, "btc", displayCurrency).toFormat()+" "+displayCurrency+")</small></span></td>";	
-								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
 								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toFormat()+"</td>";
+								rowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
+								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
 								rowHTML += "</tr>";	
 								itemsRendered++;
 							} else {
@@ -677,19 +660,15 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 							//only include non-betting withdrawals
 							if (!betWithdrawal) {
 								rowHTML += "<td>Withdrawal</td>";
-								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
 								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toFormat()+"</td>";	
+								rowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";	
+								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
 								rowHTML += "</tr>";	
 								itemsRendered++;	
 							} else {
 								rowHTML = "";
 							}
 						} else {
-							//do we want to include this? (change is always 0)
-							//rowHTML += "<td>Account Update</td>";
-							//rowHTML += "<td><span id\"account_update\">Balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" <small>(no change)</small></span></td>";															
-							//rowHTML += "</tr>";	
-							//itemsRendered++;
 							rowHTML = "";
 						}
 					} else {
@@ -710,6 +689,8 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 								rowHTML += createDateTimeString(new Date(currentTx.timestamp));
 								rowHTML += "</td>";		
 								rowHTML += "<td>Investments Transaction</td>";
+								rowHTML += "<td><b>"+convertAmount(changeBTC, "btc", displayCurrency).toFormat()+"</b></td>";
+								rowHTML += "<td>"+convertAmount(userInvestmentBalanceBTC, "btc", displayCurrency).toFormat()+"</td>";
 								var investmentID = currentTx.investments[count2].investment_id;
 								var investmentBalanceBTC = currentTx.investments[count2].investment_balance_btc;
 								var userInvestmentBalanceBTC = currentTx.investments[count2].user_investment_btc;
@@ -718,7 +699,6 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 								rowHTML += "\""+investmentID+"\" distribution: <b>"+convertAmount(userInvestmentBaseBTC, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" book value / ";
 								rowHTML += "<b>"+convertAmount(userInvestmentBalanceBTC, "btc", displayCurrency).toFormat()+" "+displayCurrency+"</b> current value.";
 								rowHTML += "</td>";
-								rowHTML += "<td><b>"+convertAmount(changeBTC, "btc", displayCurrency).toFormat()+"</b></td>";
 								rowHTML += "</tr>";	
 							} 
 						}
@@ -734,8 +714,9 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 						var currentAffiliateCont = getAffiliateContribution(currentTx.balance, previousAffiliateCont);						
 						//track previous transaction to determine if it's a deposit or withdrawals
 						rowHTML += "<td>Affiliate Transaction</td>";
-						rowHTML += "<td>Referral: <b>"+currentAffiliateCont.account+"</b></td>";
 						rowHTML += "<td>"+convertAmount(currentAffiliateCont.btc, "btc", displayCurrency).toFormat()+"</td>";
+						rowHTML += "<td>"+convertAmount(currentAffiliateCont.btc_total, "btc", displayCurrency).toFormat()+"</td>";
+						rowHTML += "<td>Referral: <b>"+currentAffiliateCont.account+"</b></td>";
 						rowHTML += "</tr>";	
 						previousAffiliateCont = currentTx.balance;
 						itemsRendered++;
@@ -747,8 +728,10 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 					if (transactionTableOptions.gameHistory) {
 						var minusOne = new BigNumber(-1);
 						rowHTML += "<td>Bet</td>";
-						rowHTML += "<td></td>";
+						console.log("currentTx="+JSON.stringify(currentTx));
 						rowHTML += "<td>"+convertAmount(currentTx.bet.btc, "btc", displayCurrency).times(minusOne).toFormat()+"</td>";
+						rowHTML += "<td>"+convertAmount(currentTx.bet.btc_user_balance, "btc", displayCurrency).toFormat()+"</td>";
+						rowHTML += "<td></td>";
 						rowHTML += "</tr>";	
 						itemsRendered++;
 					} else {
@@ -758,13 +741,15 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 				case "winsTransactions":
 					if (transactionTableOptions.gameHistory) {
 						rowHTML += "<td>Win</td>";
-						rowHTML += "<td></td>";
 						var totalWins = new BigNumber(0);
 						for (var gameID in currentTx.wins.games) {
 							var currentWin = convertAmount(currentTx.wins.games[gameID].btc, "btc", displayCurrency);
+							var currentTotal = convertAmount(currentTx.wins.games[gameID].btc_user_balance, "btc", displayCurrency);
 							totalWins = totalWins.plus(currentWin);
 							rowHTML += "<td>"+currentWin.toFormat()+"</td>";
+							rowHTML += "<td>"+currentTotal.toFormat()+"</td>";
 						}
+						rowHTML += "<td></td>";
 						rowHTML += "</tr>";
 						if (totalWins.greaterThan(0)) {
 							itemsRendered++;
@@ -785,7 +770,7 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 			//end of available items
 			itemsRendered = itemsPerPage;
 			_txTableTopItemIndex = collatedTxArray.length - 1;
-		}
+		}	
 		if (_txTableTopItemIndex < 0) {
 			itemsRendered = itemsPerPage;
 			_txTableTopItemIndex = 0;
@@ -845,7 +830,7 @@ function collateTransactions(txResults) {
 	var newestTxDate = new Date(1970,0,0);
 	var itemsRemaining = true;
 	var itemExtracted = false;
-	var maxCount = 5000;
+	var maxCount = 50000000;
 	while (itemsRemaining && (maxCount > 0)) {
 		maxCount--;
 		itemsRemaining = false;

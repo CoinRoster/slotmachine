@@ -217,7 +217,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				//var accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+requestData.params.account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
 				var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
 				if (accountUpdateResult.error != null) {
-					trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);		
+					trace ("Database error on RPC_checkAccountDeposit: "+accountUpdateResult.error);		
 					trace ("   Request ID: "+requestData.id);
 					global.logTx ("   Could not record to database!");
 					replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
@@ -245,7 +245,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				//accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+requestData.params.account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
 				accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
 				if (accountUpdateResult.error != null) {
-					trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);		
+					trace ("Database error on RPC_checkAccountDeposit: "+accountUpdateResult.error);		
 					trace ("   Request ID: "+requestData.id);
 					replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 					return;
@@ -831,7 +831,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "Bet exceeds maximum bet amount of "+maxBet.toString(10)+" BTC ("+maxBetTokens.toString(10)+" tokens).", maxBet.toString(10));
 		return;
 	}
-	trace ("maxBet = "+maxBet.toString(10));
+	//trace ("maxBet = "+maxBet.toString(10));
 	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
 	if (queryResult.error != null) {
 		trace ("Database error on RPC_getGameResults: "+queryResult.error);
@@ -924,7 +924,6 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 					global.logTx("   Unconfirmed Bitcoin balance (as reported by API): "+uc_bitcoinAmount.toString(10));
 					global.logTx("   Total Bitcoin balance (as reported by API): "+total_oc_bitcoin.toString(10));
 					//update gaming.accounts
-					//var accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+requestData.params.account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
 					var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
 					if (accountUpdateResult.error != null) {
 						trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);		
@@ -1057,6 +1056,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	requestData.params.bet.btc = new BigNumber(requestData.params.bet.tokens);
 	requestData.params.bet.btc = requestData.params.bet.btc.dividedBy(serverConfig.tokensPerBTC);
 	requestData.params.bet.btc = requestData.params.bet.btc.toString(10);
+	requestData.params.bet.btc_user_balance = currentBTCBalance.toString(10);
 	requestData.params.bet.tokens_per_btc = serverConfig.tokensPerBTC.toString(10);
 	var updateFields = "`account`,`game_id`,`results`,`keys`, `bet`, `complete`,`date_time`";
 	var updateValues = "\""+requestData.params.account+"\", \""+requestData.params.gameID+"\", ";
@@ -1079,7 +1079,6 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	dbUpdates += "`last_login`=NOW()";
 	global.logTx("   New available Bitcoin balance: "+currentBTCBalance.toString(10));
 	//update gaming.accounts
-	//var accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+requestData.params.account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
 	var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
 	if (accountUpdateResult.error != null) {
 		trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);		
@@ -1386,6 +1385,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	winsObj.games[requestData.params.gameID] = new Object();
 	winsObj.games[requestData.params.gameID].tokens = tokensWon.toString(10);
 	winsObj.games[requestData.params.gameID].btc = tokensWon.dividedBy(serverConfig.tokensPerBTC).toString(10);
+	winsObj.games[requestData.params.gameID].btc_user_balance = currentBTCBalance.toString(10);
 	winsObj.games[requestData.params.gameID].tokens_per_btc = serverConfig.tokensPerBTC.toString(10);
 	winsObj.games[requestData.params.gameID].jackpot_win = returnData.win.jackpotWin;
 	selectionsObj.encrypted = returnData.encryptedResults;
