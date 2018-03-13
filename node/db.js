@@ -16,6 +16,8 @@ var connection = mysql.createPool({
 * @param onFail The callback function to invoke when a connection can't be established.
 */
 exports.connect = (onConnect, onFail) => {
+	onConnect({}); //bypass in order to use atomic connectivity
+	/*
 	connection.getConnection(function(err, connectionInstance) {
 	  if (err) {
 		console.log(err);
@@ -24,6 +26,7 @@ exports.connect = (onConnect, onFail) => {
 	  }
 	  onConnect(connectionInstance);
 	});
+	*/
 }
 
 /**
@@ -33,17 +36,30 @@ exports.connect = (onConnect, onFail) => {
 * will be included as the callback's parameter; null will be included if there was an error retrieving the database list.
 */
 exports.getDatabases = (callback) => {
-	connection.query("SELECT SCHEMA_NAME AS `Database` FROM INFORMATION_SCHEMA.SCHEMATA", function (err, results, fields) {
-		if (err == null) {
-			var dbVar = fields[0].name;
-			var returnNames = new Array();
-			for (var item in results) {
-				var currentItem=results[item];
-				returnNames.push(currentItem[dbVar]);
+	connection.getConnection(function(err, connectionInstance) {
+		try {
+			if (err) {
+				console.error(err);
+			} else {
+				connectionInstance.query("SELECT SCHEMA_NAME AS `Database` FROM INFORMATION_SCHEMA.SCHEMATA", function (err, results, fields) {
+					if (err == null) {
+						var dbVar = fields[0].name;
+						var returnNames = new Array();
+						for (var item in results) {
+							var currentItem=results[item];
+							returnNames.push(currentItem[dbVar]);
+						}
+						callback(returnNames);
+					} else {
+					}
+				});
 			}
-			callback(returnNames);
-		} else {
-			return (null);
+		} catch (err) {
+		} finally {
+			try {
+				connectionInstance.release();
+			} catch (err) {
+			}
 		}
 	});
 }
@@ -56,23 +72,35 @@ exports.getDatabases = (callback) => {
 * will be included as the callback's parameter; null will be included if there was an error retrieving the table list.
 */
 exports.getTables = (dbName, generator) => {
-	connection.query("SELECT table_name FROM information_schema.tables where table_schema='"+dbName+"'", function(err, results, fields){
-		if (err == null) {
-			var tableVar = fields[0].name;			
-			var returnNames = new Array();
-			for (var item in results) {
-				var currentItem=results[item];
-				returnNames.push(currentItem[tableVar]);
-			}
-			if (typeof(generator.next) == "function") {
-				generator.next(returnNames);
-			} else if (typeof(generator) == "function") {
-				generator(returnNames);
+	connection.getConnection(function(err, connectionInstance) {
+		try {
+			if (err) {
+				console.error(err);
 			} else {
-				console.error ("Could't invoke handler for result: " +JSON.stringify(returnNames));
+				connectionInstance.query("SELECT table_name FROM information_schema.tables where table_schema='"+dbName+"'", function(err, results, fields){
+					if (err == null) {
+						var tableVar = fields[0].name;			
+						var returnNames = new Array();
+						for (var item in results) {
+							var currentItem=results[item];
+							returnNames.push(currentItem[tableVar]);
+						}
+						if (typeof(generator.next) == "function") {
+							generator.next(returnNames);
+						} else if (typeof(generator) == "function") {
+							generator(returnNames);
+						} else {
+							console.error ("Could't invoke handler for result: " +JSON.stringify(returnNames));
+						}
+					}
+				});
 			}
-		} else {
-			return (null);
+		} catch (err) {
+		} finally {
+			try {
+				connectionInstance.release();
+			} catch (err) {
+			}
 		}
 	});
 }
@@ -85,6 +113,34 @@ exports.getTables = (dbName, generator) => {
 * 			to invoke it in a standard way.
 */
 exports.query = (queryStr, generator) => {
+	connection.getConnection(function(err, connectionInstance) {
+		try {
+			if (err) {
+				console.error(err);
+			} else {
+				connectionInstance.query(queryStr, function (error, rows, columns) {		
+					var queryResultsObject = new Object();
+					queryResultsObject.error = error;
+					queryResultsObject.rows = rows;
+					queryResultsObject.columns = columns;
+					if (typeof(generator.next) == "function") {
+						generator.next(queryResultsObject);
+					} else if (typeof(generator) == "function") {
+						generator(queryResultsObject);
+					} else {
+						console.error ("Could't invoke handler for result: " +JSON.stringify(queryResultsObject));
+					}
+				});
+			}
+		} catch (err) {
+		} finally {
+			try {
+				connectionInstance.release();
+			} catch (err) {
+			}
+		}
+	});
+	/*
 	connection.query(queryStr, function (error, rows, columns) {		
 		var queryResultsObject = new Object();
 		queryResultsObject.error = error;
@@ -98,13 +154,16 @@ exports.query = (queryStr, generator) => {
 			console.error ("Could't invoke handler for result: " +JSON.stringify(queryResultsObject));
 		}
 	});
+	*/
 }
 
 /**
 * Closes all pooled connections to the databse (use with caution).
 */
 exports.closeAll = () => {
-	connection.end(function(){
+	/*
+	connection.release(function(){
 		console.log ("db.js: All pooled connections closed.");
 	});
+	*/
 }

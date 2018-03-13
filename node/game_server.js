@@ -14,6 +14,10 @@ const crypto = require ("crypto");
 const aesjs = require("aes-js");
 const BigNumber = require('bignumber.js');
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+//polyfill for new versions of BigNumber
+BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
+BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.add = BigNumber.prototype.plus;
 const bitcoin = require('bitcoinjs-lib');
 const bip32 = require('bip32-utils');
 
@@ -2956,10 +2960,10 @@ function *loadLeaderboardData() {
 	var generator = yield;
 	trace ("Loading wins leaderboard data...");
 	var queryResult = yield db.query("SELECT * FROM `gaming`.`games`", generator);
+	if ((global.leaderboardData["last_bet"] == null) || (global.leaderboardData["last_bet"] == undefined)) {
+		global.leaderboardData["last_bet"] = new Array();
+	}
 	if (queryResult.error == null) {
-		if ((global.leaderboardData["last_bet"] == null) || (global.leaderboardData["last_bet"] == undefined)) {
-			global.leaderboardData["last_bet"] = new Array();
-		}
 		for (var count=0; count < queryResult.rows.length; count++) {
 			var currentResult = queryResult.rows[count];
 			

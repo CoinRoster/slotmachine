@@ -1050,8 +1050,8 @@ function onGetReferralInfo(returnData) {
 			for (var count=0; count < returnData.result.info.length; count++) {
 				var infoObj = returnData.result.info[count];
 				infoTable += "<tr>";
-				infoTable += "<td>"+convertAmount(infoObj.btc, "btc", displayCurrency)+"</td>";
-				infoTable += "<td>"+convertAmount(infoObj.btc_total, "btc", displayCurrency)+"</td>";
+				infoTable += "<td>"+convertAmount(infoObj.btc, "btc", displayCurrency).toFormat()+"</td>";
+				infoTable += "<td>"+convertAmount(infoObj.btc_total, "btc", displayCurrency).toFormat()+"</td>";
 				infoTable += "<td>"+createDateTimeString(new Date(infoObj.last_update))+"</td>"; //maybe convert to Date object for nicer display?
 				infoTable += "</tr>";
 			}

@@ -10,6 +10,9 @@ const crypto = require ("crypto");
 const aesjs = require("aes-js");
 const BigNumber = require('bignumber.js');
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
+BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.add = BigNumber.prototype.plus;
 const bitcoin = require('bitcoinjs-lib');
 const bip32 = require('bip32-utils');
 

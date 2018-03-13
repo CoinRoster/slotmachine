@@ -5,6 +5,9 @@ const request = require("request");
 const crypto = require('crypto'); //used to hash passwords
 const BigNumber = require('bignumber.js'); //big number calculations
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
+BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.add = BigNumber.prototype.plus;
 var actions = new Array(); //affiliate actions, usually as retrieved from the affiliate_actions table at startup
 const PAP = require ("./portable_account_plugin.js"); //Portable Account Plugin
 
