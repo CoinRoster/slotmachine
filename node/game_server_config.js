@@ -3,6 +3,7 @@ const BigNumber = require('bignumber.js');
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.equals = BigNumber.prototype.isEqualTo;
 BigNumber.prototype.add = BigNumber.prototype.plus;
 
 // *** Game Server Configuration ***

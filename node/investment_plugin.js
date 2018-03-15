@@ -7,6 +7,7 @@ const BigNumber = require('bignumber.js'); //big number calculations
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.equals = BigNumber.prototype.isEqualTo;
 BigNumber.prototype.add = BigNumber.prototype.plus;
 const PAP = require ("./portable_account_plugin.js"); //Portable Account Plugin
 

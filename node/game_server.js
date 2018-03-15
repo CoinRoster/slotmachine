@@ -17,6 +17,7 @@ BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNu
 //polyfill for new versions of BigNumber
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.equals = BigNumber.prototype.isEqualTo;
 BigNumber.prototype.add = BigNumber.prototype.plus;
 const bitcoin = require('bitcoinjs-lib');
 const bip32 = require('bip32-utils');
@@ -31,6 +32,13 @@ var txLogStream = null; //transaction log file stream
 var debugLogStream = null; //debug log file stream
 
 global.leaderboardData = new Object(); //leaderboard data updated by the game server
+
+/**
+* Global handler to process all uncaught exceptions so that server can remain running.
+*/
+process.on('uncaughtException', (err) => {
+	console.error(err);
+});
 
 
 //*************************** RPC FUNCTIONS *************************************
@@ -259,7 +267,6 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 			}
 		}
 	} else {
-		trace ("...else...");
 		if (queryResult.rows[0].deposit_complete) {
 			trace ("Deposit is completed...");
 			var accountInfo=yield checkAccountBalance(generator, requestData.params.account);

@@ -7,6 +7,8 @@ var connection = mysql.createPool({
   user     : 'root',
   password : 'slotmachine'
 });
+var activeConnections = new Array();
+
 
 
 /**
@@ -41,6 +43,7 @@ exports.getDatabases = (callback) => {
 			if (err) {
 				console.error(err);
 			} else {
+				activeConnections.push(connectionInstance);
 				connectionInstance.query("SELECT SCHEMA_NAME AS `Database` FROM INFORMATION_SCHEMA.SCHEMATA", function (err, results, fields) {
 					if (err == null) {
 						var dbVar = fields[0].name;
@@ -77,6 +80,7 @@ exports.getTables = (dbName, generator) => {
 			if (err) {
 				console.error(err);
 			} else {
+				activeConnections.push(connectionInstance);
 				connectionInstance.query("SELECT table_name FROM information_schema.tables where table_schema='"+dbName+"'", function(err, results, fields){
 					if (err == null) {
 						var tableVar = fields[0].name;			
@@ -118,6 +122,7 @@ exports.query = (queryStr, generator) => {
 			if (err) {
 				console.error(err);
 			} else {
+				activeConnections.push(connectionInstance);
 				connectionInstance.query(queryStr, function (error, rows, columns) {		
 					var queryResultsObject = new Object();
 					queryResultsObject.error = error;
