@@ -40,8 +40,17 @@ global.leaderboardData = new Object(); //leaderboard data updated by the game se
 */
 process.on('uncaughtException', (err) => {
 	//add email functionality to notify admins
-	//add timestamp
-	console.error(err);
+	try {
+		var traceMsg = err;
+		traceMsg = serverConfig._log_prefix;
+		if (serverConfig._log_include_timestamp) {
+			traceMsg += "["+createTimeDateStamp()+"] ";
+		}
+		traceMsg += msg;
+		console.error(traceMsg);
+		global.logDebug(msg);
+	} catch (err) {
+	}
 });
 
 
