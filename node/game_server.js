@@ -41,14 +41,24 @@ global.leaderboardData = new Object(); //leaderboard data updated by the game se
 process.on('uncaughtException', (err) => {
 	//add email functionality to notify admins
 	try {
-		var traceMsg = err;
-		traceMsg = serverConfig._log_prefix;
+		var traceMsg = serverConfig._log_prefix;
 		if (serverConfig._log_include_timestamp) {
 			traceMsg += "["+createTimeDateStamp()+"] ";
 		}
-		traceMsg += msg;
+		traceMsg += err;
 		console.error(traceMsg);
-		global.logDebug(msg);
+		global.logDebug(traceMsg);
+	} catch (err) {
+	}
+	try {
+		var accountPlugin = plugins.getPlugin("Portable Account Plugin");
+		var dateStr = getMySQLTimeStamp(new Date());
+		var message = "The server at myfruitgame.com experienced a runtime error @ "+dateStr+":\n\n";
+		message += err;
+		for (var count = 0; count < serverConfig.adminEmails.length; count++) {
+			var currentAdminEmail = serverConfig.adminEmails[count];
+			accountPlugin.sendEmail("myfruitgame@gmail.com", currentAdminEmail, "Server Runtime Error (!)", message);
+		}
 	} catch (err) {
 	}
 });
