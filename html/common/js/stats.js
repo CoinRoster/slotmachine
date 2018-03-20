@@ -207,13 +207,16 @@ function buildStatsTables(resultObj) {
 	if ((resultObj["jackpots"] != null) && (resultObj["jackpots"] != undefined)) {
 		progressiveJackpots = resultObj.jackpots;
 		for (var count=0; count < resultObj.jackpots.length; count++) {
+			/*
 			var tokensPerBTC = new BigNumber("10000"); // get this from game main config / API result
 			var totalProgressiveAmount = new BigNumber(500); //get this from localStorage.config
 			totalProgressiveAmount = totalProgressiveAmount.dividedBy(tokensPerBTC);
 			totalProgressiveAmount = totalProgressiveAmount.plus(new BigNumber(resultObj.jackpots[count].btc));
+			*/
+			var totalProgressiveAmount = new BigNumber(resultObj.jackpots[count].btc);
 			returnHTML += "<tr>";												
 			returnHTML += "<td>"+resultObj.jackpots[count].id+"</td>";			
-			returnHTML += "<td>"+totalProgressiveAmount.toFormat()+"</td>";			
+			returnHTML += "<td>"+convertAmount(totalProgressiveAmount, "btc", displayCurrency).toFormat()+"</td>";			
 			returnHTML += "<td>"+convertAmount(resultObj.jackpots[count].btc, "btc", displayCurrency).toFormat()+"</td>";			
 			returnHTML += "<td>"+createDateTimeString(new Date(resultObj.jackpots[count].timestamp))+"</td>";
 			if (userIsLoggedIn()) {

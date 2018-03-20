@@ -67,14 +67,12 @@ global.tables = {"accounts":
 					 "extra_data":"TEXT"},
 				"jackpots":
 					{"index":{"primary_key":true},
-					//unique jackpot identifier
-					"jackpot_id":"VARCHAR(255)",
+					"jackpot_id":"VARCHAR(255) COMMENT 'The unique jackpot identifier'",
 					//the amount to multiply an appropriate bet by and add to the totals; this may be a JavaScript snippet in the future
 					"bet_multiplier":"MEDIUMTEXT",
 					//the minimum bet required to trigger the jackpot
 					"minimum_bet":"VARCHAR(255)",
-					//total amount of tokens currently in the jackpot
-					"total":"VARCHAR(255)",
+					"btc_base":"VARCHAR(255) COMMENT 'Base or starting amount of Bitcoin for the jackpot; btc_total is reset to this value when the associated jackpot is won'",
 					//total amount of Bitcoin currently in the jackpot
 					"btc_total":"VARCHAR(255)",
 					//the last time that the jackpot information changed

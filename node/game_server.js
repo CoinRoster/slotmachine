@@ -17,6 +17,8 @@ BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNu
 //polyfill for new versions of BigNumber
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.greaterThanOrEqualTo = BigNumber.prototype.isGreaterThanOrEqualTo;
+BigNumber.prototype.lessThanOrEqualTo = BigNumber.prototype.isLessThanOrEqualTo;
 BigNumber.prototype.equals = BigNumber.prototype.isEqualTo;
 BigNumber.prototype.add = BigNumber.prototype.plus;
 const bitcoin = require('bitcoinjs-lib');
@@ -37,6 +39,8 @@ global.leaderboardData = new Object(); //leaderboard data updated by the game se
 * Global handler to process all uncaught exceptions so that server can remain running.
 */
 process.on('uncaughtException', (err) => {
+	//add email functionality to notify admins
+	//add timestamp
 	console.error(err);
 });
 
@@ -715,7 +719,6 @@ function *RPC_getAccountTransactions (postData, requestObj, responseObj, batchRe
 		for (var count = startIndex; count <= endIndex; count++) {
 			var currentResult = betsWinsQueryResult.rows[count];
 			//trace ("currentResult="+querystring.unescape(currentResult.results));
-			trace ("currentResult="+JSON.stringify(currentResult));
 			if (currentResult != undefined) {
 				var resultObjB = new Object();
 				var resultObjW = new Object();
@@ -999,27 +1002,27 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 		if (updateJackpotQueryResult.rows.length > 0) {
 			var dbJackpotID = updateJackpotQueryResult.rows[0].jackpot_id;
 			var betContribution = new BigNumber(updateJackpotQueryResult.rows[0].bet_multiplier);
-			if ((updateJackpotQueryResult.rows[0].total == undefined) || (updateJackpotQueryResult.rows[0].total == null) || (updateJackpotQueryResult.rows[0].total == "NULL") || (updateJackpotQueryResult.rows[0].total == "")) {
-				updateJackpotQueryResult.rows[0].total = "0";
-			}
+			//if ((updateJackpotQueryResult.rows[0].total == undefined) || (updateJackpotQueryResult.rows[0].total == null) || (updateJackpotQueryResult.rows[0].total == "NULL") || (updateJackpotQueryResult.rows[0].total == "")) {
+			//	updateJackpotQueryResult.rows[0].total = "0";
+			//}
 			if ((updateJackpotQueryResult.rows[0].btc_total == undefined) || (updateJackpotQueryResult.rows[0].btc_total == null) || (updateJackpotQueryResult.rows[0].btc_total == "NULL") || (updateJackpotQueryResult.rows[0].btc_total == "")) {
 				updateJackpotQueryResult.rows[0].btc_total = "0";
 			}
 			if ((betContribution != null) && (betContribution != undefined) && (betContribution != "") && (betContribution != "NULL")) {
-				var jackpotTotalTokens = new BigNumber(updateJackpotQueryResult.rows[0].total);
+				//var jackpotTotalTokens = new BigNumber(updateJackpotQueryResult.rows[0].total);
 				var jackpotTotalBTC = new BigNumber(updateJackpotQueryResult.rows[0].btc_total);					
-				var contribution = betAmount.times(betContribution);					
+				//var contribution = betAmount.times(betContribution);					
 				var contributionBTC = btcBetAmount.times(betContribution);				
 				betInfoObj.deduction = contributionBTC;
-				jackpotTotalTokens = jackpotTotalTokens.add(contribution);
-				trace ("   Jackpot \""+dbJackpotID+"\" increased to: "+jackpotTotalTokens.toString(10));
+				//jackpotTotalTokens = jackpotTotalTokens.add(contribution);
 				jackpotTotalBTC = jackpotTotalBTC.add(contributionBTC);
-				var dbUpdates = "`total`="+jackpotTotalTokens.toString(10)+",";
-				dbUpdates += "`btc_total`=\""+jackpotTotalBTC.toString(10)+"\",";	
+				trace ("   Jackpot \""+dbJackpotID+"\" increased to: "+jackpotTotalBTC.toString(10)+" BTC");
+				//var dbUpdates = "`total`="+jackpotTotalTokens.toString(10)+",";
+				var dbUpdates = "`btc_total`=\""+jackpotTotalBTC.toString(10)+"\",";	
 				dbUpdates += "`last_update`=NOW()";	
 				var jackpotUpdateResult = yield db.query("UPDATE `gaming`.`jackpots` SET "+dbUpdates+" WHERE `jackpot_id`=\""+dbJackpotID+"\" AND `index`="+updateJackpotQueryResult.rows[0].index+" LIMIT 1", generator);
 				responseData.jackpot = new Object();
-				responseData.jackpot.tokens = jackpotTotalTokens.toString(10);
+				//responseData.jackpot.tokens = jackpotTotalTokens.toString(10);
 				responseData.jackpot.bitcoin = jackpotTotalBTC.toString(10);
 			}			
 		}		
@@ -1317,14 +1320,14 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	}	
 	if (jackpotQueryResult != null) {
 		returnData.jackpot = new Object();
-		returnData.jackpot.tokens = jackpotQueryResult.rows[0].total;
+		//returnData.jackpot.tokens = jackpotQueryResult.rows[0].total;
 		returnData.jackpot.bitcoin = jackpotQueryResult.rows[0].btc_total;
 	}
 	var winInfoObj=new Object();
 	winInfoObj.btc = new BigNumber(0);
 	winInfoObj.deduction = new BigNumber(0);
-	//Uncomment to enable jackpot win on every spin in 3-Reel Fruit Slots:
-	//returnData.decryptedResults = ["00000000000000000006","00000000000000000001","00000000000000000010"];
+	//Uncomment to enable jackpot win on every spin in 3-Reel Fruit Slots (these are simply the stop positions of the cherries on the reels, encoded as strings with leadings 0s):
+	//returnData.decryptedResults = ["00000000000000000006","00000000000000000001","00000000000000000011"];
 	var winInfo = generateWinInfo(serverConfig.gameConfigs[requestData.params.gameID], returnData.decryptedResults, jackpotQueryResult);
 	returnData.reelsInfo = new Object();
 	returnData.reelsInfo.symbols = winInfo.symbols; //copy objects individually to exclude multiplier (include elsewhere)
@@ -1348,8 +1351,8 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	}
 	//update jackpot info with new winner
 	var dbUpdates = "`last_winner`=\""+requestData.params.account+"\",";
-	dbUpdates += "`total`=\""+currentBTCBalance.toString(10)+"\",";
-	dbUpdates += "`btc_total`=\""+currentBTCBalance.toString(10)+"\",";
+//	dbUpdates += "`total`=\""+currentBTCBalance.toString(10)+"\",";
+	dbUpdates += "`btc_total`=\""+jackpotQueryResult.rows[0].btc_base+"\",";
 	dbUpdates += "`last_update`=NOW()";
 	if (returnData.win.jackpotWin == true) {
 		//jackpot has been won ... update the database
@@ -1900,8 +1903,8 @@ function calculateWin(bet, betFields, multiplier, jackpot) {
 		var totalWin = betAmount.times(multiplier);
 		if ((jackpot != null) && (jackpot != undefined)) {
 			var minimumBet = new BigNumber(jackpot.minimum_bet);
-			var jackpotTokens = new BigNumber(jackpot.total);
-			//var jackpotBTC = jackpotTokens.dividedBy(serverConfig.tokensPerBTC);
+			var jackpotBTC = new BigNumber(jackpot.btc_total);
+			var jackpotTokens = jackpotBTC.times(serverConfig.tokensPerBTC);
 			switch (currentFieldName) {
 				//only token bets are currently supported
 				case "tokens": 
@@ -1955,7 +1958,7 @@ function generateWinInfo(gameConfig, stopPositions, jackpotQueryResult) {
 		var winDefinition = gameConfig.wins[count];
 		var winSymbols = winDefinition.symbols;
 		var matchesFound = 0;
-		for (var count2=0; count2 < winSymbols.length; count2++) {
+		for (var count2 = 0; count2 < winSymbols.length; count2++) {
 			var winningSymbolIndex = winSymbols[count2];
 			if (winningSymbolIndex > -1) {
 				if (winningSymbolIndex == returnInfo.symbols[count2].index) {
@@ -1975,7 +1978,7 @@ function generateWinInfo(gameConfig, stopPositions, jackpotQueryResult) {
 			}
 			break;
 		} else {
-			for (var count2=0; count2<returnInfo.symbols.length; count2++) {
+			for (count2 = 0; count2 < returnInfo.symbols.length; count2++) {
 				returnInfo.symbols[count2].win = false;
 			}
 		}
@@ -2794,7 +2797,11 @@ function readGameConfigs(configPaths) {
 *
 */
 function onConnect(connection) {
-	trace("Database connection established on thread: "+connection.threadId);
+	if ((connection.threadId != undefined) && (connection.threadId != null)) {
+		trace("Database connection established on thread: "+connection.threadId);
+	} else {
+		trace("Using stateless / atomic database connectivity. Not thread ID assigned.");
+	}
 	startRPCServer();
 }
 

@@ -7,6 +7,8 @@ const BigNumber = require('bignumber.js'); //big number calculations
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
+BigNumber.prototype.greaterThanOrEqualTo = BigNumber.prototype.isGreaterThanOrEqualTo;
+BigNumber.prototype.lessThanOrEqualTo = BigNumber.prototype.isLessThanOrEqualTo;
 BigNumber.prototype.equals = BigNumber.prototype.isEqualTo;
 BigNumber.prototype.add = BigNumber.prototype.plus;
 const PAP = require ("./portable_account_plugin.js"); //Portable Account Plugin
@@ -763,6 +765,8 @@ var RPC_onWin_gen = function *(accountQueryResult, postData, winInfo, parentGene
 					}
 					insertValues += "\""+gainsBalance.toString(10)+"\",";
 					insertValues += "NOW(6)";
+	
+					trace ("   Adjusted gains balance for investment \""+investmentQueryResult.rows[count].id+"\": "+gainsBalance.toString(10));
 					trace ("RPC_onWin_gen inserting into investments table");
 					var insertSQL = "INSERT INTO `gaming`.`investments` ("+insertFields+") VALUES ("+insertValues+")";
 					var investmentUpdateResult = yield db.query(insertSQL, generator);

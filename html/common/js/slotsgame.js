@@ -776,8 +776,10 @@ function updatePaytableJackpot() {
 			highestBet = currentBet;
 		}
     }	
-	var totalJackpotAmount = SLOTSGAME.baseJackpotAmount.times(highestBet).plus(SLOTSGAME.currentJackpotAmount);
-	totalJackpotAmount = convertAmount(totalJackpotAmount, "tokens", SLOTSGAME.displayCurrency);
+	//var totalJackpotAmount = SLOTSGAME.baseJackpotAmount.times(highestBet).plus(SLOTSGAME.currentJackpotAmount);
+	//totalJackpotAmount = convertAmount(totalJackpotAmount, "tokens", SLOTSGAME.displayCurrency);
+	var totalJackpotAmount = SLOTSGAME.currentJackpotBTCAmount;
+	totalJackpotAmount = convertAmount(totalJackpotAmount, "btc", SLOTSGAME.displayCurrency);
 	$(".content #paytable #container #jackpot #multiplier").html(totalJackpotAmount.toFormat());
     $(".content #progressive #container #jackpot #multiplier").html(totalJackpotAmount.toFormat());
     $(".content #progressiveMenu #container #jackpot #multiplier").html(totalJackpotAmount.toFormat());
@@ -1484,7 +1486,7 @@ function updateGameResults(resultsObject) {
     var winInfo = resultsObject.win;
     var betInfo = resultsObject.bet;
     var balanceInfo = resultsObject.balance;
-    SLOTSGAME.currentJackpotAmount = new BigNumber(resultsObject.jackpot.tokens);
+   // SLOTSGAME.currentJackpotAmount = new BigNumber(resultsObject.jackpot.tokens);
     SLOTSGAME.currentJackpotBTCAmount = new BigNumber(resultsObject.jackpot.bitcoin);
     $(".content #header #winAmount").replaceWith( "<div id=\"winAmount\">"+convertAmount(winInfo.tokens, "tokens", SLOTSGAME.displayCurrency).toFormat()+"</div>" );
     SLOTSGAME.currentBalance = new BigNumber(balanceInfo.tokens);
@@ -1497,15 +1499,18 @@ function updateJackpotAmount() {
 }
 
 function onGetJackpotUpdate(resultsObject) {
+	//alert ("onGetJackpotUpdate: "+JSON.stringify(resultsObject));
     if ((resultsObject["error"] != null) && (resultsObject["error"] != undefined) && (resultsObject["error"] != "")) {
         //probably no such jackpot
     } else {
-        var newJackpot = new BigNumber(resultsObject.result.jackpot.tokens);
-        if (SLOTSGAME.currentJackpotAmount.equals(newJackpot)) {
+     //   var newJackpot = new BigNumber(resultsObject.result.jackpot.tokens);
+		var newBTCJackpot = new BigNumber(resultsObject.result.jackpot.bitcoin);
+        if (SLOTSGAME.currentJackpotBTCAmount.equals(newBTCJackpot)) {
             //no change
         } else {
             //jackpot value updated
-            SLOTSGAME.currentJackpotAmount = newJackpot;
+       //   SLOTSGAME.currentJackpotAmount = newJackpot;
+			SLOTSGAME.currentJackpotBTCAmount = newBTCJackpot;
             updatePaytableJackpot();
         }
         setTimeout(updateJackpotAmount, SLOTSGAME.jackpotCheckInterval);
