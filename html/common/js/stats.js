@@ -214,10 +214,12 @@ function buildStatsTables(resultObj) {
 			totalProgressiveAmount = totalProgressiveAmount.plus(new BigNumber(resultObj.jackpots[count].btc));
 			*/
 			var totalProgressiveAmount = new BigNumber(resultObj.jackpots[count].btc);
-			returnHTML += "<tr>";												
+			var baseProgressiveAmount = new BigNumber(resultObj.jackpots[count].btc_base);
+			var liabilityAmount = totalProgressiveAmount.minus(baseProgressiveAmount);
+			returnHTML += "<tr>";										
 			returnHTML += "<td>"+resultObj.jackpots[count].id+"</td>";			
 			returnHTML += "<td>"+convertAmount(totalProgressiveAmount, "btc", displayCurrency).toFormat()+"</td>";			
-			returnHTML += "<td>"+convertAmount(resultObj.jackpots[count].btc, "btc", displayCurrency).toFormat()+"</td>";			
+			returnHTML += "<td>"+convertAmount(liabilityAmount, "btc", displayCurrency).toFormat()+"</td>";			
 			returnHTML += "<td>"+createDateTimeString(new Date(resultObj.jackpots[count].timestamp))+"</td>";
 			if (userIsLoggedIn()) {
 				returnHTML += "<td><button id=\"\" onclick=\"onProgressiveAlertClick("+String(count)+")\">SET ALERT</button></td>";

@@ -1485,6 +1485,7 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 			jackpotObj.id = jackpotsQueryResult.rows[count].jackpot_id;
 			jackpotObj.bet_multiplier = jackpotsQueryResult.rows[count].bet_multiplier;
 			jackpotObj.btc = jackpotsQueryResult.rows[count].btc_total;
+			jackpotObj.btc_base = jackpotsQueryResult.rows[count].btc_base;
 			jackpotObj.timestamp = jackpotsQueryResult.rows[count].last_update;
 			responseData.jackpots.push (jackpotObj);
 		}
