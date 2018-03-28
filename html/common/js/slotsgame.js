@@ -137,6 +137,7 @@ function onLogIn(){
 
 function onLoginConfirmClick(event) {
 	var email = $(loginEmailInputPath).val();
+	restartAutoLogoutTimer();
 	if (!validateEmail(email)) {
 		alert ("Please enter a valid email address!");
 		$(accountHeaderDropdown).hide();
@@ -159,10 +160,12 @@ function onLoginConfirmClick(event) {
 }
 
 function onLoginCancelClick(event) {
+	restartAutoLogoutTimer();
 	$('.content #at-login-confirm').modal("hide");
 }
 
 function onRegisterClick(event) {
+	restartAutoLogoutTimer();
 	showRegisterDialog();
 }
 
@@ -174,7 +177,8 @@ function onRegisterAnonymousClick(event) {
 	getNewAccount();
 }
 
-function onResetPasswordClick(event) {	
+function onResetPasswordClick(event) {
+	restartAutoLogoutTimer();
 	var lastUpdateObj = new Date(localStorage.lastPasswordUpdate);
 	var lastUpdated = lastUpdateObj.valueOf()+(passwordUpdateInterval*60000); //passwordUpdateInterval is in minutes
 	var deltaMinutes = (lastUpdated - Date.now()) / 60000;	
@@ -217,6 +221,7 @@ function onResetPassword(resultData) {
 }
 
 function onRegisterFullClick(event) {
+	restartAutoLogoutTimer();
 	event.preventDefault();
 	var email = $(registerEmailInputPath).val();
 	if (!validateEmail(email)) {
@@ -871,6 +876,7 @@ function copyToClipboard(clipboardData) {
 * Invoked when the game's 'spin' button is clicked.
 */
 function onSpinClick(event) {
+	restartAutoLogoutTimer();
 	if ((SLOTSGAME.autospin.active == true) && (event != null)) {
 		stopAutospin();
 		return;
@@ -899,12 +905,14 @@ function onSpinClick(event) {
 
 function onAutospinClick(event) {
 	disableGameUI();
+	restartAutoLogoutTimer();
 	if (!stopAutospin()) {
 		startAutospin();
 	}
 }
 
 function onAutospinSettingsClick(event) {
+	restartAutoLogoutTimer();
 	if (SLOTSGAME.autospin.active == true) {
 		return;
 	}
@@ -912,6 +920,7 @@ function onAutospinSettingsClick(event) {
 }
 
 function onChangeNumAutospins(event) {
+	restartAutoLogoutTimer();
 	var numSpins = $(".content #autospinSettingsModal #settings #numSpins").val();
 	if (numSpins < 1) {
 		numSpins = "unlimited";
@@ -925,6 +934,7 @@ function onChangeNumAutospins(event) {
 }
 
 function onChangeMinBalAutospins(event) {
+	restartAutoLogoutTimer();
 	var minBalance = $(".content #autospinSettingsModal #settings #minumBalance").val();
 	if (minBalance == 0) {
 		minBalance = "unlimited";
@@ -941,6 +951,7 @@ function onChangeMinBalAutospins(event) {
 * @param event A jQuery UI event object.
 */
 function onCommitSelectionsClick(event) {
+	restartAutoLogoutTimer();
     var selections=new Array();
     for (var count=0; count < SLOTSGAME.config.reels.length; count++) {
         selections.push($("#gameUI #resultSelectors #reel"+String(count+1)+"Result").val());
@@ -955,6 +966,7 @@ function onCommitSelectionsClick(event) {
 * @param event A jQuery UI event object.
 */
 function onPaytableOpenClick(event) {
+	restartAutoLogoutTimer();
     disableGameUI();
     $(".content #paytable").show();
 }
@@ -965,6 +977,7 @@ function onPaytableOpenClick(event) {
 * @param event A jQuery UI event object.
 */
 function onValidateGameClick(event) {
+	restartAutoLogoutTimer();
     if (popupWindow != null) {
         popupWindow.close();
         popupWindow = null;
@@ -979,6 +992,7 @@ function onValidateGameClick(event) {
 * @param event A jQuery UI event object.
 */
 function onAccountClick(event) {
+	restartAutoLogoutTimer();
     if (popupWindow != null) {
         popupWindow.close();
         popupWindow = null;
@@ -990,6 +1004,7 @@ function onAccountClick(event) {
 }
 
 function onValidateDataCopyClick(event) {
+	restartAutoLogoutTimer();
     copyToClipboard(JSON.stringify(SLOTSGAME.validationData));
 }
 
@@ -1037,6 +1052,7 @@ function testPopupReady(popupType) {
 * @param event A jQuery UI event object.
 */
 function onClosePaytableButtonClick(event) {
+	restartAutoLogoutTimer();
     $(".content #paytable").hide();
     enableGameUI();
 }
@@ -1047,6 +1063,7 @@ function onClosePaytableButtonClick(event) {
 * @param event A jQuery UI event object.
 */
 function onDepositClick(event) {
+	restartAutoLogoutTimer();
 	showLoginDialog();
 }
 
@@ -1056,6 +1073,7 @@ function onDepositClick(event) {
 * @param event A jQuery UI event object.
 */
 function onCashoutClick(event) {
+	restartAutoLogoutTimer();
 	if (SLOTSGAME.autospin.active) {
 		return;
 	}
@@ -1070,6 +1088,7 @@ function onCashoutClick(event) {
 }
 
 function onConfirmCashoutClick(event) {
+	restartAutoLogoutTimer();
     $("#dialog").dialog("close");
     var cashOutAddress = $(".content #cashOutDialog #addressField").val();
 	var withdrawAmount = $(".content #cashOutDialog #withdrawAmountField").val();
@@ -1103,7 +1122,9 @@ function onConfirmCashoutClick(event) {
 * @param event A jQuery UI event object.
 */
 function onDoCashOutClick(event) {
+	restartAutoLogoutTimer();
     $(".content #cashOutDialog").hide();
+	restartAutoLogoutTimer();
     var cashOutAddress = $(".content #cashOutDialog #addressField").val();
 	var cashoutBTCAmount = $(".content #cashOutDialog #withdrawAmountField").val();
     SLOTSGAME.cashoutAccount = cashOutAddress;
@@ -1122,7 +1143,8 @@ function onDoCashOutClick(event) {
 * @param event A jQuery UI event object.
 */
 function onCancelCashOutClick(event) {
-    enableGameUI();
+    restartAutoLogoutTimer();
+	enableGameUI();
     $(".content #cashOutDialog").hide();
 }
 
@@ -1133,6 +1155,7 @@ function onCancelCashOutClick(event) {
 * @param event A jQuery UI event object.
 */
 function onIncreaseBetClick(event) {
+	restartAutoLogoutTimer();
 	if (SLOTSGAME.autospin.active) {
 		return;
 	}
@@ -1144,6 +1167,7 @@ function onIncreaseBetClick(event) {
 }
 
 function onCheckDepositClick(event) {
+	restartAutoLogoutTimer();
 	if (SLOTSGAME.autospin.active) {
 		return;
 	}
@@ -1164,6 +1188,7 @@ function onCheckDepositClick(event) {
 * @param event A jQuery UI event object.
 */
 function onDecreaseBetClick(event) {
+	restartAutoLogoutTimer();
 	if (SLOTSGAME.autospin.active) {
 		return;
 	}
@@ -1632,6 +1657,7 @@ function resetPassword(resetCode) {
 }
 
 function onDoResetPasswordClick(event) {
+	restartAutoLogoutTimer();
 	event.preventDefault();
 	var password = $(resetPasswordInputPath).val();	
 	password = password.split(" ").join("");
@@ -1826,6 +1852,7 @@ function nextAutospin(initialSpin) {
 	if (SLOTSGAME.autospin.active == false) {
 		return;
 	}
+	restartAutoLogoutTimer();
 	disableGameUI();
 	var doSpin = true;
 	var buttonHTML = "<button class=\"btn btn-warning btn-sm\" id=\"autospinButton\" style=\"width:49%;\">";
@@ -1937,11 +1964,13 @@ function restartAutoLogoutTimer() {
 		autologoutTimerID = setTimeout(onAutoLogoutTimerTick, 750);
 		return;
 	}
-	try {
-		autologoutTime = localStorage._autologout;
-		autologoutTimerID = setTimeout(onAutoLogoutTimerTick, 750);
-		return;
-	} catch (err) {
+	if ((SLOTSGAME.playerAccount != null) && (SLOTSGAME.playerAccount != "") && (SLOTSGAME.playerPassword != null) && (SLOTSGAME.playerAccount != "")) {
+		try {
+			autologoutTime = localStorage._autologout;
+			autologoutTimerID = setTimeout(onAutoLogoutTimerTick, 750);
+			return;
+		} catch (err) {
+		}
 	}
 }
 
@@ -2511,7 +2540,7 @@ function start() {
     $(".content #gameUI #checkDepositButton").click(onCheckDepositClick);
     // These buttons are for the modals
     $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #doCashOutButton").button();
-    $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #doCashOutButton").click(onDoCashOutClick);
+    $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #doCashOutButton").click(onDoCashOutClickonDoCashOutClick);
     $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #cancelCashOutButton").button();
     $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #cancelCashOutButton").click(onCancelCashOutClick);
     $(".content #cashoutModal .modal-dialog .modal-content .modal-header #cancelCashOutButton").button();

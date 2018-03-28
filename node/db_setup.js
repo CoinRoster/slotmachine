@@ -90,7 +90,7 @@ function allActionsComplete() {
 */
 function createDatabase(connection) {
 	console.log ("db_setup.createDatabase("+connection+")");
-	connection.query("CREATE DATABASE `"+database_name+"`", function(error, result, fields) {
+	db.query("CREATE DATABASE `"+database_name+"`", function(error, result, fields) {
 		if (error==null) {
 			console.log ("   Database \""+database_name+"\" successfully created.");
 		} else if (error.toString().indexOf("ER_DB_CREATE_EXISTS") > -1) {
@@ -120,7 +120,7 @@ function createTables(connection) {
 			return;
 		}
 		//first attempt to create table with primary key
-		connection.query("CREATE TABLE `"+database_name+"`.`"+tableName+"` "+primaryKeyObj.SQLInsert+"", function(error, result, fields) {
+		db.query("CREATE TABLE `"+database_name+"`.`"+tableName+"` "+primaryKeyObj.SQLInsert+"", function(error, result, fields) {
 			if (error==null) {
 				console.log ("   Table \""+tableName+"\" successfully created.");
 			} else if (error.toString().indexOf("ER_TABLE_EXISTS_ERROR") > -1) {
@@ -189,7 +189,7 @@ function columnIsPrimaryKey(columnSchema) {
 function createColumn(columnName, columnSchema, connection, databaseName, tableName) {
 	console.log("db_setup.createColumn(\""+columnName+"\", "+JSON.stringify(columnSchema)+", ...");
 	if (columnIsPrimaryKey(columnSchema) == false) {
-		connection.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(error, result, fields) {
+		db.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(error, result, fields) {
 			if (error==null) {
 				console.log ("      Column \"" + columnName + "\" successfully created on table \"" + tableName + "\".");
 			} else if (error.toString().indexOf("ER_DUP_FIELDNAME") > -1) {
