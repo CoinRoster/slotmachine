@@ -1929,7 +1929,8 @@ function calculateWin(bet, betFields, multiplier, jackpot) {
 				case "tokens": 
 					//only add jackpot tokens if bet meets minimum requirement, set in database
 					if (betAmount.greaterThanOrEqualTo(minimumBet)) {
-						totalWin = totalWin.add(jackpotTokens);
+						//totalWin = totalWin.add(jackpotTokens);
+						totalWin = jackpotTokens;
 						returnInfo.jackpotWin = true;
 					}
 					break;
