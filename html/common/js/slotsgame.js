@@ -2540,7 +2540,7 @@ function start() {
     $(".content #gameUI #checkDepositButton").click(onCheckDepositClick);
     // These buttons are for the modals
     $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #doCashOutButton").button();
-    $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #doCashOutButton").click(onDoCashOutClickonDoCashOutClick);
+    $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #doCashOutButton").click(onDoCashOutClick);
     $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #cancelCashOutButton").button();
     $(".content #cashoutModal .modal-dialog .modal-content .modal-footer #cancelCashOutButton").click(onCancelCashOutClick);
     $(".content #cashoutModal .modal-dialog .modal-content .modal-header #cancelCashOutButton").button();
