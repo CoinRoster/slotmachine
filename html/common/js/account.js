@@ -585,6 +585,7 @@ function existsNextPage (collatedTxArray, itemsPerPage) {
 }
 
 function addUserInvestments(txInfo) {
+	return (new BigNumber(0));
 	if (transactionTableOptions.includeInvestmentTotals != true) {
 		return (new BigNumber(0));
 	}
@@ -618,6 +619,7 @@ function buildTransactionTable(collatedTxArray) {
 	var previousLiveBalance = "0";
 	for (var count = 0; count < collatedTxArray.length; count++) {
 		var currentTx = collatedTxArray[count];		
+	//	alert (JSON.stringify(currentTx));
 		var txInfo = JSON.parse(currentTx.txInfo);		
 		var balanceAdd = addUserInvestments(txInfo);
 		var newRowHTML = "<tr>";		
@@ -648,7 +650,7 @@ function buildTransactionTable(collatedTxArray) {
 						} else {
 							newRowHTML += "<td>Win</td>";
 							newRowHTML += "<td>"+convertAmount(txInfo.info.win.btc, "btc", displayCurrency).toFormat()+"</td>";
-							newRowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).plus(convertAmount(balanceAdd, "btc", displayCurrency)).toFormat()+"</td>";
+							newRowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
 							if (transactionTableOptions.includeTxDetails) {
 								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
 								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
@@ -703,9 +705,9 @@ function buildTransactionTable(collatedTxArray) {
 				case "withdrawal":					
 					if (txInfo.subType == "investment") {
 						if (transactionTableOptions.investmentHistory) {
-							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency)
-							balanceAmount = balanceAmount.plus(convertAmount(balanceAdd, "btc", displayCurrency));
-							balanceAmount = balanceAmount.minus(convertAmount(txInfo.info.btc, "btc", displayCurrency));
+							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);
+						//	balanceAmount = balanceAmount.plus(convertAmount(balanceAdd, "btc", displayCurrency));
+						//	balanceAmount = balanceAmount.minus(convertAmount(txInfo.info.btc, "btc", displayCurrency));
 							newRowHTML += "<td>Investment Withdrawal</td>";
 							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
 							newRowHTML += "<td>"+balanceAmount.toFormat()+"</td>";
