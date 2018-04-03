@@ -50,7 +50,7 @@ SLOTSGAME.reelSpinInterval = null; //timer interval used to animate reels when s
 SLOTSGAME.currentReelSpeeds = new Array();
 SLOTSGAME.reelsSpinning = false; //are any reels spinning?
 SLOTSGAME.reelSpinning = new Array(); //is a specific reel spinning?
-SLOTSGAME.autologoutTime = "00:08:00:00"; //automatically log player out every 8 hours (format is: "days:hours:minutes:seconds", leading 0s can be omitted if desired)
+SLOTSGAME.autologoutTime = "00:01:00:00"; //automatically log player out every 8 hours (format is: "days:hours:minutes:seconds", leading 0s can be omitted if desired)
 
 var numberFormat = {
     decimalSeparator: '.',
