@@ -273,12 +273,12 @@ var rpc_updateAccountInfo = function* (postData, requestObj, responseObj, batchR
 	if (queryResult.rows.length == 0) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "No matching account.", requestData.params.account);
 		return;
-	}
+	}	
 	if ((queryResult.rows[0].password == null) || (queryResult.rows[0].password == undefined) || (queryResult.rows[0].password == "") || (queryResult.rows[0].password == "Null") || (queryResult.rows[0].password == "NULL")) {
 		var passwordSet = false;
 	} else {
 		passwordSet = true;
-	}
+	}	
 	if (passwordSet) {
 		var checkResult = exports.checkParameter(requestData, "password");
 		if (checkResult != null) {
@@ -292,9 +292,9 @@ var rpc_updateAccountInfo = function* (postData, requestObj, responseObj, batchR
 			//passwords don't match
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_AUTH_ERROR, "Authentication error.");
 			return;
-		}
+		}		
 	} else {
-		requestData.params.new_password = requestData.params.password;
+		requestData.params.new_password = requestData.params.password;		
 	}
 	var use2FAE = false;
 	var auth_status = parseInt(String(queryResult.rows[0].auth_status));
@@ -352,11 +352,10 @@ var rpc_updateAccountInfo = function* (postData, requestObj, responseObj, batchR
 			"Please click on the following URL or paste it into your browser to complete your account authentication: "+authURL
 		);
 	}
-	dbUpdates += "`last_login`=NOW(),`last_login_attempt`=NOW(),`locked`=FALSE";
-	//var accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+queryResult.rows[0].btc_account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
-	var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
-	trace ("accountUpdateResult>>>");
-	trace (JSON.stringify(accountUpdateResult));
+	dbUpdates += "`last_login`=NOW(),`last_login_attempt`=NOW(),`locked`=FALSE";	
+	var txInfo = new Object(); //to be included with database insert
+	txInfo.type = "account_update";		
+	var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);	
 	replyResult(postData, requestObj, responseObj, batchResponses, "OK");	
 }
 exports.rpc_updateAccountInfo = rpc_updateAccountInfo;
@@ -473,8 +472,9 @@ var rpc_authenticateAccount = function* (postData, requestObj, responseObj, batc
 	var auth_code_user = requestData.params.auth;
 	if (auth_code_db == auth_code_user) {
 		var dbUpdates = "`auth_code`=NULL,`auth_status`=2,`last_login`=NOW()";
-		//accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+requestData.params.account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
-		accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
+		var txInfo = new Object();		
+		txInfo.type = "account_update";
+		accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 		if (accountUpdateResult.error != null) {
 			trace ("Database error on rpc_authenticateAccount: "+accountUpdateResult.error);		
 			trace ("   Request ID: "+requestData.id);
@@ -616,8 +616,10 @@ var rpc_requestPasswordReset = function* (postData, requestObj, responseObj, bat
 	returnObj.resetURL = resetURL;
 	returnObj.resetCode = resetCode;
 	var dbUpdates = "`auth_code`=NULL,`auth_status`=3,`auth_code`=\""+resetCode+"\",`last_login`=NOW()";
-	//accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+queryResult.rows[0].btc_account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
-	accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
+	var txInfo = new Object();
+	txInfo.type = "account_update";
+	txInfo.subType = "password";
+	accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 	if (accountUpdateResult.error != null) {
 		trace ("Database error on rpc_requestPasswordReset: "+accountUpdateResult.error);		
 		trace ("   Request ID: "+requestData.id);
@@ -709,8 +711,10 @@ var rpc_passwordReset = function* (postData, requestObj, responseObj, batchRespo
 	hash.update(requestData.params.password);
 	var hashDigest = hash.digest('hex');
 	var dbUpdates = "`auth_code`=NULL,`password`=\""+hashDigest+"\",`auth_status`=2,`auth_code`=NULL,`last_login`=NOW()";
-	//accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+queryResult.rows[0].btc_account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);
-	accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
+	var txInfo = new Object();
+	txInfo.type = "account_update";
+	txInfo.subType = "password_reset";
+	accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 	if (accountUpdateResult.error != null) {
 		trace ("Database error on rpc_passwordReset: "+accountUpdateResult.error);		
 		trace ("   Request ID: "+requestData.id);

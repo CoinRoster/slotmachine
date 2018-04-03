@@ -137,6 +137,8 @@
 				<input id="gameTransactions" type="checkbox" onclick="onTxHistoryOptionClick()" checked></input><label for="gameTransactions">Game Transactions</label>&nbsp;&nbsp;
 				<input id="investmentTransactions" type="checkbox" onclick="onTxHistoryOptionClick()" checked></input><label for="investmentTransactions">Investments Transactions</label>&nbsp;&nbsp;
 				<input id="affiliateTransactions" type="checkbox" onclick="onTxHistoryOptionClick()" checked></input><label for="affiliateTransactions">Affiliate Transactions</label>&nbsp;&nbsp;
+				<br/>
+				<input id="includeInvestmentTotals" type="checkbox" onclick="onTxHistoryOptionClick()" checked></input><label for="includeInvestmentTotals">Include investment totals in balance</label>&nbsp;&nbsp;
 			</form>
 		</div>
 		<div id="transactionHistory"></div>

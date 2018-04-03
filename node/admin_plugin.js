@@ -258,8 +258,12 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 			//update gaming.accounts
 			global.logTx("   New confirmed balance in Bitcoin: "+currentBTCBalance.toString(10));
 			global.logTx("   New availabble balance in Bitcoin: "+btcBalanceVerified.toString(10));
-			//var accountUpdateResult = yield db.query("UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+requestData.params.account+"\" AND `index`="+queryResult.rows[0].index+" LIMIT 1", generator);	
-			var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, generator);
+			var txInfo = new Object();
+			txInfo.type = "withdrawal";
+			txInfo.subType = "internal";
+			txInfo.info = new Object();
+			txInfo.info.btc = withdrawalBTC.toString(10);
+			var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 		}
 	}
 	replyResult(postData, requestObj, responseObj, batchResponses, returnData);

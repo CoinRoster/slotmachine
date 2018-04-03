@@ -14,6 +14,8 @@ global.tables = {"accounts":
 					 //available/live account balance
 					 "btc_balance_available":"VARCHAR(255)",
 					 "btc_balance_total_previous":"VARCHAR(255) DEFAULT \"0\" COMMENT 'The total (confirmed + unconfirmed) Bitcoin balance for the associated address at last check'",
+					 //additional transaction info
+					 "tx_info":"JSON COMMENT 'Additional transaction information associated with the row.'",
 					 //has initial unconfirmed deposit already been made?
 					 "deposit_complete":"BOOLEAN",
 					 //additional data to include with the account, if any

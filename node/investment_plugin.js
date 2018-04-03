@@ -182,7 +182,6 @@ var timer_payDividends = function* () {
 			affiliate_amount_btc = new BigNumber(0);
 		}
 		trace ("   Calculating total effective balance for investment...");
-		trace ("uniqueCurrentResults.length="+uniqueCurrentResults.length);
 		for (var count=0; count < uniqueCurrentResults.length; count++) {
 			var currentResult = uniqueCurrentResults[count];  //latest investment for account in database
 			var validResult = getLastInvestmentTx(currentResult.account, uniqueValidResults); //latest investment for account in database within deposit time window, may be the same as currentResult		
@@ -190,10 +189,7 @@ var timer_payDividends = function* () {
 				if (isNaN(validResult["bankroll_multiplier"])) {
 					validResult.bankroll_multiplier = 1;
 				}
-				var matchingInvestment = findInvestment(investmentsQueryResult.rows[invCount].id, validResult.investments);	
-			//	trace ("investmentsQueryResult.rows[invCount].id="+investmentsQueryResult.rows[invCount].id);
-			//	trace ("validResult.investments="+JSON.stringify(validResult.investments));
-			//	trace ("matchingInvestment="+JSON.stringify(matchingInvestment));
+				var matchingInvestment = findInvestment(investmentsQueryResult.rows[invCount].id, validResult.investments);
 				if (matchingInvestment != null) {
 					if ((matchingInvestment["bankroll_multiplier"] == null) || (matchingInvestment["bankroll_multiplier"] == undefined) || (matchingInvestment["bankroll_multiplier"] == "") || (matchingInvestment["bankroll_multiplier"] == "")) {
 						matchingInvestment.bankroll_multiplier = 1;
@@ -231,7 +227,7 @@ var timer_payDividends = function* () {
 		trace ("Processing "+String(uniqueCurrentResults.length)+" existing, "+String(uniqueValidResults).length+" valid account entries...");
 		for (count=0; count < uniqueCurrentResults.length; count++) {
 			var currentResult = uniqueCurrentResults[count];  //latest investment for account in database
-			var validResult = getLastInvestmentTx(currentResult.account, uniqueValidResults); //latest investment for account in database within deposit time window, may be the same as currentResult		
+			var validResult = getLastInvestmentTx(currentResult.account, uniqueValidResults); //latest investment for account in database within deposit time window, may be the same as currentResult
 			if (validResult == null) {
 				trace ("Creating new investments object...");
 				validResult = new Object();
@@ -281,8 +277,7 @@ var timer_payDividends = function* () {
 				}
 				if (isNaN(currentInvestment["bankroll_multiplier"])) {
 					currentInvestment.bankroll_multiplier = 1;
-				}
-				//trace (JSON.stringify(currentInvestment));
+				}				
 				var current_user_investment_btc = new BigNumber(currentInvestment.user_investment_btc);
 				var current_user_bankroll_multiplier = new BigNumber(currentInvestment.bankroll_multiplier);
 				var current_user_effective_investment_btc = current_user_investment_btc.times(current_user_bankroll_multiplier);
@@ -306,100 +301,109 @@ var timer_payDividends = function* () {
 					var valid_user_investment_btc = new BigNumber(validInvestment.user_investment_btc);
 					var valid_user_investment_balance_btc = new BigNumber(validInvestment.investment_balance_btc);
 					var valid_user_ownership_percent = valid_user_investment_btc.dividedBy(investment_btc_total_balance);
-					//if (currentInvestment.investment_id == "smb") {
-						if (validResult.account == exports.pluginInfo.rake.address) {
-							global.logTx(" Applying dividend to rake account: "+validResult.account);
+					if (validResult.account == exports.pluginInfo.rake.address) {
+						global.logTx(" Applying dividend to rake account: "+validResult.account);
+					} else {
+						global.logTx(" Applying dividend to user account: "+validResult.account);
+					}
+					global.logTx("   Investment balance in Bitcoin at time of last calculation: "+valid_user_investment_balance_btc.toString(10));
+					global.logTx("   User investment balance in Bitcoin at time of last calculation: "+valid_user_investment_btc.toString(10));
+					//perform calculations but exclude rake account
+					if (validResult.account != exports.pluginInfo.rake.address) {					
+						var paramObject = new Object();
+						paramObject.investment_btc_balance = investment_btc_balance;					
+						paramObject.investment_btc_balance_snapshot = investment_btc_balance_snapshot ;
+						paramObject.investment_btc_balance_delta = investment_btc_balance_delta ;
+						paramObject.investment_btc_total_balance = investment_btc_total_balance;
+						paramObject.investment_btc_gains = investment_btc_gains;
+						paramObject.snapshot_available = snapshot_available;
+						paramObject.rake_amount_btc = rake_amount_btc;
+						paramObject.affiliate_amount_btc = affiliate_amount_btc;
+						paramObject.current_user_investment_btc = current_user_investment_btc;
+						paramObject.current_user_investment_balance_btc = current_user_investment_balance_btc;
+						paramObject.current_user_ownership_percent = current_user_ownership_percent;
+						paramObject.valid_user_investment_btc = valid_user_investment_btc;
+						paramObject.valid_user_investment_balance_btc = valid_user_investment_balance_btc;
+						paramObject.valid_user_ownership_percent = valid_user_ownership_percent;
+						paramObject.total_gains_dist_btc = total_gains_dist_btc;					
+						var filterResult = yield exports.pluginInfo._manager.RPC_dividend(currentResult, paramObject, generator);
+						if (filterResult != null) {
+							try {
+								trace("   Last filter did not return null! Error #"+filterResult.code+": "+filterResult.message);
+								global.logTx("   Last filter did not return null! Error #"+filterResult.code+": "+filterResult.message);
+							} catch (err) {
+								trace("   Last filter did not return a standard error: "+err.toString());
+								global.logTx("   Last filter did not return a standard error: "+err.toString());
+							} finally {
+								//keep going?
+								//return;
+							}
+						}
+						investment_btc_balance = paramObject.investment_btc_balance;
+						investment_btc_balance_snapshot = paramObject.investment_btc_balance_snapshot;
+						investment_btc_balance_delta = paramObject.investment_btc_balance_delta;
+						investment_btc_total_balance = paramObject.investment_btc_total_balance;
+						investment_btc_gains = paramObject.investment_btc_gains;
+						snapshot_available = paramObject.snapshot_available;
+						rake_amount_btc = paramObject.rake_amount_btc;
+						affiliate_amount_btc = paramObject.affiliate_amount_btc;
+						current_user_investment_btc = paramObject.current_user_investment_btc;
+						current_user_investment_balance_btc = paramObject.current_user_investment_balance_btc;
+						current_user_ownership_percent = paramObject.current_user_ownership_percent;
+						valid_user_investment_btc = paramObject.valid_user_investment_btc;
+						valid_user_investment_balance_btc = paramObject.valid_user_investment_balance_btc;
+						valid_user_ownership_percent = paramObject.valid_user_ownership_percent;
+						total_gains_dist_btc = paramObject.total_gains_dist_btc;					
+						var user_dividend = investment_btc_gains_full.times(valid_user_ownership_percent).minus(rake_amount_btc.times(valid_user_ownership_percent)).minus(affiliate_amount_btc.times(valid_user_ownership_percent));										
+						total_gains_dist_btc = total_gains_dist_btc.plus(user_dividend);					
+						current_user_investment_btc = current_user_investment_btc.plus(user_dividend);
+						validInvestment.user_investment_btc = current_user_investment_btc.toString(10);
+						if (snapshot_available) {
+							validInvestment.investment_balance_btc = investment_btc_total_balance.plus(investment_btc_gains_full).plus(investment_btc_balance_delta).toString(10);
 						} else {
-							global.logTx(" Applying dividend to user account: "+validResult.account);
+							validInvestment.investment_balance_btc = investment_btc_total_balance.plus(investment_btc_gains_full).toString(10);
 						}
-						global.logTx("   Investment balance in Bitcoin at time of last calculation: "+valid_user_investment_balance_btc.toString(10));
-						global.logTx("   User investment balance in Bitcoin at time of last calculation: "+valid_user_investment_btc.toString(10));
-						//perform calculations but exclude rake account
-						if (validResult.account != exports.pluginInfo.rake.address) {					
-							var paramObject = new Object();
-							paramObject.investment_btc_balance = investment_btc_balance;					
-							paramObject.investment_btc_balance_snapshot = investment_btc_balance_snapshot ;
-							paramObject.investment_btc_balance_delta = investment_btc_balance_delta ;
-							paramObject.investment_btc_total_balance = investment_btc_total_balance;
-							paramObject.investment_btc_gains = investment_btc_gains;
-							paramObject.snapshot_available = snapshot_available;
-							paramObject.rake_amount_btc = rake_amount_btc;
-							paramObject.affiliate_amount_btc = affiliate_amount_btc;
-							paramObject.current_user_investment_btc = current_user_investment_btc;
-							paramObject.current_user_investment_balance_btc = current_user_investment_balance_btc;
-							paramObject.current_user_ownership_percent = current_user_ownership_percent;
-							paramObject.valid_user_investment_btc = valid_user_investment_btc;
-							paramObject.valid_user_investment_balance_btc = valid_user_investment_balance_btc;
-							paramObject.valid_user_ownership_percent = valid_user_ownership_percent;
-							paramObject.total_gains_dist_btc = total_gains_dist_btc;					
-							var filterResult = yield exports.pluginInfo._manager.RPC_dividend(currentResult, paramObject, generator);
-							if (filterResult != null) {
-								try {
-									trace("   Last filter did not return null! Error #"+filterResult.code+": "+filterResult.message);
-									global.logTx("   Last filter did not return null! Error #"+filterResult.code+": "+filterResult.message);
-								} catch (err) {
-									trace("   Last filter did not return a standard error: "+err.toString());
-									global.logTx("   Last filter did not return a standard error: "+err.toString());
-								} finally {
-									//keep going?
-									//return;
-								}
-							}
-							investment_btc_balance = paramObject.investment_btc_balance;
-							investment_btc_balance_snapshot = paramObject.investment_btc_balance_snapshot;
-							investment_btc_balance_delta = paramObject.investment_btc_balance_delta;
-							investment_btc_total_balance = paramObject.investment_btc_total_balance;
-							investment_btc_gains = paramObject.investment_btc_gains;
-							snapshot_available = paramObject.snapshot_available;
-							rake_amount_btc = paramObject.rake_amount_btc;
-							affiliate_amount_btc = paramObject.affiliate_amount_btc;
-							current_user_investment_btc = paramObject.current_user_investment_btc;
-							current_user_investment_balance_btc = paramObject.current_user_investment_balance_btc;
-							current_user_ownership_percent = paramObject.current_user_ownership_percent;
-							valid_user_investment_btc = paramObject.valid_user_investment_btc;
-							valid_user_investment_balance_btc = paramObject.valid_user_investment_balance_btc;
-							valid_user_ownership_percent = paramObject.valid_user_ownership_percent;
-							total_gains_dist_btc = paramObject.total_gains_dist_btc;					
-							var user_dividend = investment_btc_gains_full.times(valid_user_ownership_percent).minus(rake_amount_btc.times(valid_user_ownership_percent)).minus(affiliate_amount_btc.times(valid_user_ownership_percent));										
-							total_gains_dist_btc = total_gains_dist_btc.plus(user_dividend);					
-							current_user_investment_btc = current_user_investment_btc.plus(user_dividend);
-							validInvestment.user_investment_btc = current_user_investment_btc.toString(10);
-							if (snapshot_available) {
-								validInvestment.investment_balance_btc = investment_btc_total_balance.plus(investment_btc_gains_full).plus(investment_btc_balance_delta).toString(10);
-							} else {
-								validInvestment.investment_balance_btc = investment_btc_total_balance.plus(investment_btc_gains_full).toString(10);
-							}
-							validInvestment.user_investment_base_btc = currentInvestment.user_investment_base_btc;
-							//add new row to 'investment_txs' table			
-							var insertFields = "`account`,";		
-							insertFields += "`name`,";		
-							insertFields += "`investments`,";
-							insertFields += "`last_update`";
-							global.assertAnyValue("NaN", "0", validInvestments);
-							var insertValues = "\""+currentResult.account+"\",";		
-							insertValues += "\""+investmentsQueryResult.rows[invCount].name+" distribution\",";				
-							insertValues += "'"+JSON.stringify(validInvestments)+"',";
-							insertValues += "NOW()";
-							var accountQueryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+validResult.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
-							if (accountQueryResult.rows[0].auth_status == 2) {
-								var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
-								var dateStr = new Date().toISOString();
-								var message = "Your investment balances have been updated with new gains / losses.\n\n";
-								for (var count=0; count<validInvestments.length; count++) {
-									message += "   "+validInvestments[count].investment_id+": BTC"+validInvestments[count].user_investment_btc+" (yours) / BTC"+validInvestments[count].investment_balance_btc+" (total)\n";
-								}
-								//may cause problems, only enable when strict limits have been added to "sendMail" function
-								//accountPlugin.sendEmail("myfruitgame@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);						
-							}
-							var insertSQL = "INSERT INTO `gaming`.`investment_txs` ("+insertFields+") VALUES ("+insertValues+")";
-							var txInsertResult = yield db.query(insertSQL, generator);
-							if (txInsertResult.error != null) {
-								global.logTx("   Couldn't add entry to database!");
-								trace ("Database error on timer_payDividends: "+txInsertResult.error);
-								trace ("   SQL: "+insertSQL);			
-							}		
+						validInvestment.user_investment_base_btc = currentInvestment.user_investment_base_btc;
+						//add new row to 'investment_txs' table			
+						var insertFields = "`account`,";		
+						insertFields += "`name`,";		
+						insertFields += "`investments`,";
+						insertFields += "`last_update`";
+						global.assertAnyValue("NaN", "0", validInvestments);
+						var insertValues = "\""+currentResult.account+"\",";		
+						insertValues += "\""+investmentsQueryResult.rows[invCount].name+" distribution\",";				
+						insertValues += "'"+JSON.stringify(validInvestments)+"',";
+						insertValues += "NOW()";
+						var accountQueryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+validResult.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
+						if (accountQueryResult.rows[0].auth_status == 2) {
+							var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
+							var dateStr = new Date().toISOString();
+							var message = "Your investment balances have been updated with new gains / losses.\n\n";
+							for (var count=0; count<validInvestments.length; count++) {
+								message += "   "+validInvestments[count].investment_id+": BTC"+validInvestments[count].user_investment_btc+" (yours) / BTC"+validInvestments[count].investment_balance_btc+" (total)\n";
+							}							
+							accountPlugin.sendEmail("myfruitgame@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
 						}
-					//}
+						var txInfo = new Object();
+						txInfo.info = new Object();
+						txInfo.info = new Object();
+						txInfo.type = "investment";
+						txInfo.subType = "distribution";
+						txInfo.info.btc = user_dividend.toString(10);
+						txInfo.info.btc_total = current_user_investment_btc.toString(10);
+						txInfo.info.ownership_percent = valid_user_ownership_percent.toString(10);
+						txInfo.info.id = validInvestment.investment_id;
+						var updateObj = new Object();
+						updateObj.last_login = "NOW()";
+						var accountUpdateResult = yield global.updateAccount(accountQueryResult, updateObj, txInfo, generator);
+						var insertSQL = "INSERT INTO `gaming`.`investment_txs` ("+insertFields+") VALUES ("+insertValues+")";
+						var txInsertResult = yield db.query(insertSQL, generator);
+						if (txInsertResult.error != null) {
+							global.logTx("   Couldn't add entry to database!");
+							trace ("Database error on timer_payDividends: "+txInsertResult.error);
+							trace ("   SQL: "+insertSQL);			
+						}		
+					}					
 				}
 			}	
 		}
@@ -1040,9 +1044,21 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	}
 	//update 'accounts' table
 	var dbUpdates = "`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`last_login`=NOW()+2"; //ensure that transaction appears chronologically after investment update
-	//var updateSQL = "UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+accountQueryResult.rows[0].btc_account+"\" AND `index`="+accountQueryResult.rows[0].index+" LIMIT 1";
-	//var accountUpdateResult = yield db.query(updateSQL, generator);
-	var accountUpdateResult = yield global.updateAccount(accountQueryResult, dbUpdates, generator);
+	var txInfo = new Object();
+	if (depositing) {
+		txInfo.type = "deposit";
+	} else {
+		txInfo.type = "withdrawal";		
+	}
+	txInfo.subType = "investment";
+	txInfo.info = new Object();	
+	txInfo.info.btc = btc_tx_amount.toString(10);
+	txInfo.info.investment_id = investmentQueryResult.rows[0].id;
+	txInfo.info.investment_name = investmentQueryResult.rows[0].name;
+	var totalBalance = new BigNumber (investmentQueryResult.rows[0].btc_total_balance);
+	var gains = new BigNumber (investmentQueryResult.rows[0].btc_gains);
+	txInfo.info.investment_balance_btc = totalBalance.plus(gains).toString(10);
+	var accountUpdateResult = yield global.updateAccount(accountQueryResult, dbUpdates, txInfo, generator);
 	if (accountUpdateResult.error != null) {
 		trace ("Database error on rpc_updateInvestorInfo: "+accountUpdateResult.error);		
 		//trace ("   SQL: "+updateSQL);

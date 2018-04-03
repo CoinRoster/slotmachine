@@ -10,6 +10,7 @@ transactionTableOptions.accountHistory = true;
 transactionTableOptions.gameHistory = true;
 transactionTableOptions.investmentHistory = true;
 transactionTableOptions.affiliateHistory = true;
+transactionTableOptions.includeInvestmentTotals = true;
 var displayCurrency = "tokens";
 var passwordUpdateInterval = 10; //number of minutes that must elapse between subsequent password reset attempts (should reflect server setting)
 var numberFormat = {
@@ -179,8 +180,7 @@ function onGetAllInvestments(returnData) {
 	getOwnedInvestments();
 }
 
-function onGetOwnedInvestments(returnData) {
-	console.log(JSON.stringify(onGetOwnedInvestments));
+function onGetOwnedInvestments(returnData) {	
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		//error is returned if no entries are found for the account
 		var investmentListHTML = "<ul id=\"ownedInvestments\"><li>none</li>";
@@ -238,9 +238,9 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 		}
 		var availBalance = new BigNumber(accountInfo.availableBTCBalance);
 		var unconfirmedBalance = new BigNumber(accountInfo.unconfirmedBTCBalance);
-		availBalance = availBalance.minus(unconfirmedBalance);
+	//	availBalance = availBalance.minus(unconfirmedBalance);
 		if (availBalance.lessThan(0)) {
-			availBalance = new BigNumber(0);
+	//		availBalance = new BigNumber(0);
 		}
 		returnHTML += "<tr class=\"static\"><td><b>Available Balance:</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td></td></tr>";
 		totalUserInvestmentBase = totalUserInvestmentBase.plus(availBalance);
@@ -291,19 +291,7 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 	returnHTML += "</tbody></table>";
 	return (returnHTML);
 }
-/*
-function onTxTablePreviousClick() {	
-	//_txTableTopItemIndex--;
-	var txTable = buildTransactionTable(currentTransactionsData, _txTableItemsPerPage, "down");
-	$("#transactionHistory").replaceWith(txTable);
-}
 
-function onTxTableNextClick() {	
-	//_txTableTopItemIndex++;
-	var txTable = buildTransactionTable(currentTransactionsData, _txTableItemsPerPage, "up");
-	$("#transactionHistory").replaceWith(txTable);
-}
-*/
 function onTxHistoryOptionClick() {
 	var options = new Object();
 	if ($("#transactionHistoryOptions #options #accountTransactions").prop("checked")) {
@@ -326,9 +314,15 @@ function onTxHistoryOptionClick() {
 	} else {
 		options.affiliateHistory = false;
 	}
+	if ($("#transactionHistoryOptions #options #includeInvestmentTotals").prop("checked")) {
+		options.includeInvestmentTotals = true;
+	} else {
+		options.includeInvestmentTotals = false;
+	}
+	
 	transactionTableOptions = options;
 	_txTableTopItemIndex = 0;
-	var txTable = buildTransactionTable(currentTransactionsData, _txTableItemsPerPage, "up");
+	var txTable = buildTransactionTable(currentTransactionsData.accountTransactions);
 	$("#transactionHistory").replaceWith(txTable);
 	paginateSortableTable("#transactionHistory table", "#transactionHistoryPager");
 }
@@ -590,7 +584,202 @@ function existsNextPage (collatedTxArray, itemsPerPage) {
 	return (false);
 }
 
-function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
+function addUserInvestments(txInfo) {
+	if (transactionTableOptions.includeInvestmentTotals != true) {
+		return (new BigNumber(0));
+	}
+	if ((txInfo == undefined) || (txInfo == null)) {
+		return (new BigNumber(0));
+	}
+	if ((txInfo["info"] == undefined) || (txInfo["info"] == null)) {
+		return (new BigNumber(0));
+	}
+	if ((txInfo.info["investments"] == undefined) || (txInfo.info["investments"] == null)) {
+		return (new BigNumber(0));
+	}
+	var returnNum = new BigNumber(0);	
+	for (var count=0; count < txInfo.info.investments.length; count++) {
+		var currentUserBalance = new BigNumber(txInfo.info.investments[count].user_investment_btc);
+		returnNum = returnNum.plus(currentUserBalance);
+	}
+	return (returnNum);
+}
+
+function buildTransactionTable(collatedTxArray) {
+	var returnHTML = "<div id=\"transactionHistory\"><table id=\"transactionHistoryTable\" class=\"tablesorter-blue\">";
+	returnHTML += "<thead><tr>";
+	returnHTML += "<th class=\"header\">Date</th>";
+	returnHTML += "<th class=\"header\">Type</th>";
+	returnHTML += "<th class=\"header\">Amount</th>";
+	returnHTML += "<th class=\"header\">Balance</th>";
+	returnHTML += "<th class=\"header\">Description</th>";
+	returnHTML += "</tr></thead>";
+	returnHTML += "<tbody>";
+	var previousLiveBalance = "0";
+	for (var count = 0; count < collatedTxArray.length; count++) {
+		var currentTx = collatedTxArray[count];		
+		var txInfo = JSON.parse(currentTx.txInfo);		
+		var balanceAdd = addUserInvestments(txInfo);
+		var newRowHTML = "<tr>";		
+		try {
+			newRowHTML += "<td>"+ createDateTimeString(new Date(currentTx.timestamp))+"</td>";
+			switch (txInfo.type) {
+				case "bet":	
+					if (transactionTableOptions.gameHistory) {
+						newRowHTML += "<td>Bet</td>";
+						newRowHTML += "<td>"+convertAmount(txInfo.info.bet.btc, "btc", displayCurrency).toFormat()+"</td>";
+						newRowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).plus(convertAmount(balanceAdd, "btc", displayCurrency)).toFormat()+"</td>";
+						if (transactionTableOptions.includeTxDetails) {
+							newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
+							newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
+						} else {
+							newRowHTML += "<td>My Fruit Game</td>";
+						}
+					} else {
+						newRowHTML = "";
+					}
+					break;
+				case "win":
+					if (transactionTableOptions.gameHistory) {
+						var winAmount = new BigNumber(txInfo.info.win.btc);
+						if (winAmount.equals(0)) {
+							//no win, just a game completion
+							newRowHTML = ""; 
+						} else {
+							newRowHTML += "<td>Win</td>";
+							newRowHTML += "<td>"+convertAmount(txInfo.info.win.btc, "btc", displayCurrency).toFormat()+"</td>";
+							newRowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).plus(convertAmount(balanceAdd, "btc", displayCurrency)).toFormat()+"</td>";
+							if (transactionTableOptions.includeTxDetails) {
+								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
+								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
+							} else {
+								newRowHTML += "<td>My Fruit Game</td>";
+							}
+						}
+					} else {
+						newRowHTML = "";
+					}
+					break;
+				case "deposit":					
+					if (txInfo.subType == "investment") {
+						if (transactionTableOptions.investmentHistory) {
+							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);							
+							balanceAmount = balanceAmount.plus(convertAmount(balanceAdd, "btc", displayCurrency));							
+							balanceAmount = balanceAmount.plus(convertAmount(txInfo.info.btc, "btc", displayCurrency));							
+							newRowHTML += "<td>Investment Deposit</td>";
+							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
+							newRowHTML += "<td>"+balanceAmount.toFormat()+"</td>";
+							if (transactionTableOptions.includeTxDetails) {
+								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
+								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
+							} else {
+								newRowHTML += "<td></td>";
+							}
+						} else {
+							newRowHTML = "";
+						}
+					} else {
+						if (transactionTableOptions.accountHistory) {
+							newRowHTML += "<td>Account Deposit</td>";
+							var balance = convertAmount(currentTx.btc_balance, "btc", displayCurrency).plus(convertAmount(balanceAdd, "btc", displayCurrency));
+							if (previousLiveBalance != balance.toFormat()) {
+								newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
+								newRowHTML += "<td>"+balance.toFormat()+"</td>";
+								if (transactionTableOptions.includeTxDetails) {
+									newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
+									newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
+								} else {
+									newRowHTML += "<td></td>";
+								}
+							} else {
+								newRowHTML = "";
+							}
+							previousLiveBalance = balance.toFormat();
+						} else {
+							newRowHTML = "";
+						}
+					}
+					break;
+				case "withdrawal":					
+					if (txInfo.subType == "investment") {
+						if (transactionTableOptions.investmentHistory) {
+							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency)
+							balanceAmount = balanceAmount.plus(convertAmount(balanceAdd, "btc", displayCurrency));
+							balanceAmount = balanceAmount.minus(convertAmount(txInfo.info.btc, "btc", displayCurrency));
+							newRowHTML += "<td>Investment Withdrawal</td>";
+							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
+							newRowHTML += "<td>"+balanceAmount.toFormat()+"</td>";
+						//	alert (JSON.stringify(txInfo.info));
+							if (transactionTableOptions.includeTxDetails) {
+								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
+								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
+							} else {								
+								newRowHTML += "<td>"+txInfo.info.investments[0].investment_id+"</td>";
+							}							
+						} else {
+							newRowHTML = "";
+						}
+					} else {
+						if (transactionTableOptions.accountHistory) {
+							newRowHTML += "<td>Account Withdrawal</td>";
+							var balance = convertAmount(currentTx.btc_balance, "btc", displayCurrency).plus(convertAmount(balanceAdd, "btc", displayCurrency));
+							if ((txInfo.info.recipientAddress == null) || (txInfo.info.recipientAddress == undefined)) {
+								txInfo.info.recipientAddress = "";
+							}
+							if (previousLiveBalance != balance.toFormat()) {
+								newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
+								newRowHTML += "<td>"+balance.toFormat()+"</td>";								
+								newRowHTML += "<td>Sent to: "+txInfo.info.recipientAddress+"</td>";
+							}
+							previousLiveBalance = balance.toFormat();
+						} else {
+							newRowHTML = "";
+						}
+					}
+					break;
+				case "investment":
+					if (txInfo.subType == "distribution") {
+						if (transactionTableOptions.investmentHistory) {
+							newRowHTML += "<td>Investment Distribution</td>";
+							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
+							newRowHTML += "<td>"+convertAmount(txInfo.info.btc_total, "btc", displayCurrency).plus(balanceAdd).toFormat()+"</td>";
+							//newRowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
+							if (transactionTableOptions.includeTxDetails) {
+								newRowHTML += "<td>Investment: "+txInfo.info.id+"<br>Your Investment Balance: "+txInfo.info.btc_total+"<br>Your Investment Ownership: "+txInfo.info.ownership_percent+"</td>";
+							} else {
+								newRowHTML += "<td></td>";
+							}						
+						} else {
+							newRowHTML = "";
+						}
+					} else {
+						newRowHTML = "";						
+					}
+					break;		
+				case null:
+					//no txInfo object included, this is an unsupported transaction type
+					newRowHTML = ""; 
+					break;
+				default: 
+					console.log ("Unsuported transaction info:\n");
+					console.log(JSON.stringify(txInfo));
+					newRowHTML = ""; 
+					break;
+					
+			}
+			if (newRowHTML != "") {
+				newRowHTML += "</tr>";
+			}
+		} catch (err) {	
+			newRowHTML = "";			
+		}		
+		returnHTML += newRowHTML;
+	}
+	returnHTML += "</tbody></table></div>";		
+	return (returnHTML);
+}
+
+function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 	if ((itemsPerPage == null) || (itemsPerPage == undefined) || (isNaN(itemsPerPage))) {
 		itemsPerPage = _txTableItemsPerPage;
 	}	
@@ -627,7 +816,7 @@ function buildTransactionTable(collatedTxArray, itemsPerPage, direction) {
 			var rowHTML = "<tr>";
 			rowHTML += "<td>"			
 			rowHTML += createDateTimeString(new Date(currentTx.timestamp));
-			rowHTML += "</td>";
+			rowHTML += "</td>";			
 			switch (currentTx.type) {
 				case "accountTransactions":
 					if (transactionTableOptions.accountHistory) {
@@ -951,8 +1140,9 @@ function onGetTransactions(returnData) {
 		alert (returnData.error.message);
 	} else {
 		_txTableTopItemIndex = 0;
-		currentTransactionsData = collateTransactions(returnData.result);
-		var txTable = buildTransactionTable(currentTransactionsData, _txTableItemsPerPage, "up");
+		//currentTransactionsData = collateTransactions(returnData.result);
+		currentTransactionsData = returnData.result;
+		var txTable = buildTransactionTable(currentTransactionsData.accountTransactions);
 		$("#transactionHistory").replaceWith(txTable);
 		paginateSortableTable("#transactionHistory #transactionHistoryTable", "#transactionHistoryPager");
 	}
