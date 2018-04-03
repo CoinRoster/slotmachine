@@ -987,7 +987,8 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 			var currentInvestment = investments[count];
 			if (currentInvestment.investment_id == requestData.params.investment_id) {
 				try {
-					var btc_currentDeposit = new BigNumber(currentInvestment.user_investment_base_btc);
+					//var btc_currentDeposit = new BigNumber(currentInvestment.user_investment_base_btc);
+					var btc_currentDeposit = new BigNumber(currentInvestment.user_investment_btc);
 					var btc_userInvestmentBalance = new BigNumber(currentInvestment.user_investment_btc);
 					if (depositing) {						
 						btc_currentDeposit = btc_currentDeposit.plus(btc_tx_amount);
