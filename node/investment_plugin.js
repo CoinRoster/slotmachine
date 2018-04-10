@@ -392,7 +392,9 @@ var timer_payDividends = function* () {
 						txInfo.info.btc = user_dividend.toString(10);
 						txInfo.info.btc_total = current_user_investment_btc.toString(10);
 						txInfo.info.ownership_percent = valid_user_ownership_percent.toString(10);
+						validInvestment.user_investment_exclude_btc = "0"; //reset deposit/withdrawal exclusion value since it's just been used
 						txInfo.info.id = validInvestment.investment_id;
+						txInfo.investments=validInvestments;
 						var updateObj = new Object();
 						updateObj.last_login = "NOW()";
 						var accountUpdateResult = yield global.updateAccount(accountQueryResult, updateObj, txInfo, generator);
@@ -971,6 +973,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		try {
 			investmentObj.user_investment_btc = requestData.params.transaction.deposit.btc;
 			investmentObj.user_investment_base_btc = requestData.params.transaction.deposit.btc;
+			investmentObj.user_investment_exclude_btc = requestData.params.transaction.deposit.btc; //the latest deposit/withdrawal by the user to be excluded from 
 		} catch (err) {
 			trace ("Invalid initial deposit object format: "+err);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Invalid initial deposit transaction object. Expecting \"btc\":\"NUMERIC_VALUE\"");
@@ -987,12 +990,17 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 			var currentInvestment = investments[count];
 			if (currentInvestment.investment_id == requestData.params.investment_id) {
 				try {
-					//var btc_currentDeposit = new BigNumber(currentInvestment.user_investment_base_btc);
+					if ((typeof(currentInvestment["user_investment_exclude_btc"]) != "string") || (currentInvestment["user_investment_exclude_btc"] == "")) {
+						currentInvestment.user_investment_exclude_btc = "0";
+					}
 					var btc_currentDeposit = new BigNumber(currentInvestment.user_investment_btc);
 					var btc_userInvestmentBalance = new BigNumber(currentInvestment.user_investment_btc);
+					var btc_userInvestmentExclude = new BigNumber(currentInvestment.user_investment_exclude_btc);
+					trace ("btc_userInvestmentExclude before="+btc_userInvestmentExclude.toString(10));
 					if (depositing) {						
 						btc_currentDeposit = btc_currentDeposit.plus(btc_tx_amount);
-						btc_userInvestmentBalance = btc_userInvestmentBalance.plus(btc_tx_amount);						
+						btc_userInvestmentBalance = btc_userInvestmentBalance.plus(btc_tx_amount);
+						btc_userInvestmentExclude = btc_userInvestmentExclude.plus(btc_tx_amount);
 					} else {							
 						btc_currentDeposit = btc_currentDeposit.minus(btc_tx_amount);
 						if (btc_currentDeposit.lessThan(0)) {							
@@ -1000,10 +1008,12 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 							return;
 						}
 						btc_userInvestmentBalance = btc_userInvestmentBalance.minus(btc_tx_amount);
+						btc_userInvestmentExclude = btc_userInvestmentExclude.minus(btc_tx_amount);
 					}
 					currentInvestment.user_investment_base_btc = btc_currentDeposit.toString(10);
 					currentInvestment.user_investment_btc = btc_userInvestmentBalance.toString(10);
 					currentInvestment.investment_balance_btc = btc_investment_total_balance.toString(10);
+					currentInvestment.user_investment_exclude_btc = btc_userInvestmentExclude.toString(10);
 					currentInvestment.bankroll_multiplier = requestData.params.bankroll_multiplier;
 					//To restrict withdrawals to only the base deposit amount use:
 					//if (btc_currentDeposit.lessThan(0)) {
@@ -1033,6 +1043,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 			try {
 				investmentObj.user_investment_base_btc = requestData.params.transaction.deposit.btc;
 				investmentObj.user_investment_btc = requestData.params.transaction.deposit.btc;
+				investmentObj.user_investment_exclude_btc = "0";
 			} catch (err) {
 				trace ("Invalid initial deposit object format: "+err);
 				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Invalid initial deposit transaction object. Expecting \"btc\":\"NUMERIC_VALUE\"");
@@ -1044,7 +1055,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		}
 	}
 	//update 'accounts' table
-	var dbUpdates = "`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`last_login`=NOW()+2"; //ensure that transaction appears chronologically after investment update
+	var dbUpdates = "`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`last_login`=NOW()";
 	var txInfo = new Object();
 	if (depositing) {
 		txInfo.type = "deposit";
@@ -1061,8 +1072,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	txInfo.info.investment_balance_btc = totalBalance.plus(gains).toString(10);
 	var accountUpdateResult = yield global.updateAccount(accountQueryResult, dbUpdates, txInfo, generator);
 	if (accountUpdateResult.error != null) {
-		trace ("Database error on rpc_updateInvestorInfo: "+accountUpdateResult.error);		
-		//trace ("   SQL: "+updateSQL);
+		trace ("Database error on rpc_updateInvestorInfo: "+accountUpdateResult.error);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 		return;
@@ -1236,7 +1246,7 @@ var rpc_getInvestorInfo = function* (postData, requestObj, responseObj, batchRes
 			transactionHistory = 6;
 		}
 	}
-	var investorQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\""+requestData.params.account+"\" ORDER BY  `last_update` DESC LIMIT "+String(transactionHistory)+" OFFSET "+THPage, generator);	
+	var investorQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT "+String(transactionHistory)+" OFFSET "+THPage, generator);	
 	if (investorQueryResult.error != null) {
 		trace ("Database error on rpc_getInvestorInfo: "+investorQueryResult.error);
 		trace ("   Request ID: "+requestData.id);

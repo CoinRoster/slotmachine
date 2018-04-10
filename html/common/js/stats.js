@@ -38,7 +38,6 @@ function onGetInvestmentStats(returnData) {
 		alert(returnData.error.message);
 	} else {
 		var statsTables = buildStatsTables(returnData.result);
-		//alert (JSON.stringify(returnData.result));
 		$("#stats").replaceWith("<div id=\"stats\">"+statsTables+"</div>");
 		paginateSortableTable("#stats #investments", "#stats #investmentsPager");
 		paginateSortableTable("#stats #jackpots", "#stats #jackpotsPager");
@@ -261,36 +260,17 @@ function buildStatsTables(resultObj) {
 		}
 		var gainsCurrent = new BigNumber(currentInvestment.btc_gains_current);	
 		var gainsTotal = balanceTotal.plus(gainsCurrent);
-		var balanceDelta = gainsTotal.minus(balanceTotal);
-		//var gainsTotal = balanceTotal.minus(baseDeposit);
-		column1Total = column1Total.plus(balanceTotal);
+		var balanceDelta = gainsTotal.minus(baseDeposit);
+		column1Total = column1Total.plus(baseDeposit);
 		column2Total = column2Total.plus(gainsTotal);
 		column3Total = column3Total.plus(balanceDelta);
-		returnHTML += "<td><b>"+convertAmount(balanceTotal, "btc", displayCurrency).toFormat()+"<b></td>";		
+		returnHTML += "<td><b>"+convertAmount(baseDeposit, "btc", displayCurrency).toFormat()+"<b></td>";		
 		returnHTML += "<td><b>"+convertAmount(gainsTotal, "btc", displayCurrency).toFormat()+"</b></td>";		
-		//returnHTML += "<td><b>"+convertAmount(currentInvestment.btc_gains_total, "btc", displayCurrency).toFormat()+"</b></td>";		
 		returnHTML += "<td><b>"+convertAmount(balanceDelta, "btc", displayCurrency).toFormat()+"</b></td>";	
-		/*
-		var gains_sum = new BigNumber(currentInvestment.btc_gains_total);
-		var base_deposit = new BigNumber(currentInvestment.btc_base_deposit);		
-		if (gainsTotal.equals(0)) {
-			var arp = new BigNumber(0);
-		} else {
-			arp = gainsTotal.dividedBy(base_deposit).times(new BigNumber(100));			
-		}
-		arp = arp.times(precisionVal).floor().dividedBy(precisionVal);
-		column4Total = column4Total.plus(arp);
-		if (arp.equals(0)) {
-			returnHTML += "<td><b>0%<b></td>";
-		} else {
-			returnHTML += "<td><b>"+arp.toPrecision(8)+"%<b></td>";
-		}
-		returnHTML += "</tr>";
-		*/
 		if (gainsTotal.equals(0)) {
 			var percentChange = new BigNumber(0);
 		} else {
-			percentChange = gainsTotal.dividedBy(balanceTotal).times(new BigNumber(100));			
+			percentChange = gainsTotal.dividedBy(baseDeposit).times(new BigNumber(100));			
 		}
 		percentChange = percentChange.times(precisionVal).floor().dividedBy(precisionVal);
 		returnHTML += "<td><b>"+percentChange.minus(new BigNumber(100))+"%<b></td>";

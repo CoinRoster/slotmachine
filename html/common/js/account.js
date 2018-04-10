@@ -180,7 +180,7 @@ function onGetAllInvestments(returnData) {
 	getOwnedInvestments();
 }
 
-function onGetOwnedInvestments(returnData) {	
+function onGetOwnedInvestments(returnData) {
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		//error is returned if no entries are found for the account
 		var investmentListHTML = "<ul id=\"ownedInvestments\"><li>none</li>";
@@ -238,10 +238,6 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 		}
 		var availBalance = new BigNumber(accountInfo.availableBTCBalance);
 		var unconfirmedBalance = new BigNumber(accountInfo.unconfirmedBTCBalance);
-	//	availBalance = availBalance.minus(unconfirmedBalance);
-		if (availBalance.lessThan(0)) {
-	//		availBalance = new BigNumber(0);
-		}
 		returnHTML += "<tr class=\"static\"><td><b>Available Balance:</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td></td></tr>";
 		totalUserInvestmentBase = totalUserInvestmentBase.plus(availBalance);
 		totalInvestmentsBalance = totalInvestmentsBalance.plus(availBalance);
@@ -262,13 +258,17 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 				investmentGains = "0";
 			}
 			var userInvestmentObj = getUserInvestment(currentInvestment.id, ownedInvestmentsArr);
-			//alert (currentInvestment+": "+JSON.stringify(userInvestmentObj));
 			if (userInvestmentObj == null) {
 				var userInvestmentBase = "0";
 				var userInvestmentTotal = "0";
+				var userInvestmentExclude = "0";
 			} else {
+				if ((typeof(userInvestmentObj["user_investment_exclude_btc"]) != "string") || (userInvestmentObj["user_investment_exclude_btc"] == "")) {
+					userInvestmentObj.user_investment_exclude_btc = "0";
+				}
 				userInvestmentBase = userInvestmentObj.user_investment_base_btc;
 				userInvestmentTotal = userInvestmentObj.user_investment_btc;
+				userInvestmentExclude = userInvestmentObj.user_investment_exclude_btc;
 				if ((currentInvestment.id == "smb") && (isNaN(userInvestmentObj["bankroll_multiplier"]) == false)) {
 					//update multiplier inputs
 					$("#bankrollMultiplier #multiplierInputForm #multiplierNumberInput").val(userInvestmentObj.bankroll_multiplier);
@@ -277,6 +277,8 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 			}
 			var currentBaseValue = new BigNumber(userInvestmentBase);
 			var currentTotalValue = new BigNumber(userInvestmentTotal);
+			var currentExcludeValue = new BigNumber(userInvestmentExclude);
+			currentTotalValue = currentTotalValue.minus(currentExcludeValue);
 			var investmentDelta = currentTotalValue.minus(currentBaseValue);
 			totalUserInvestmentBase = totalUserInvestmentBase.plus(currentBaseValue);			
 			totalInvestmentsBalance = totalInvestmentsBalance.plus(currentTotalValue);
@@ -665,9 +667,7 @@ function buildTransactionTable(collatedTxArray) {
 				case "deposit":					
 					if (txInfo.subType == "investment") {
 						if (transactionTableOptions.investmentHistory) {
-							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);							
-							balanceAmount = balanceAmount.plus(convertAmount(balanceAdd, "btc", displayCurrency));							
-							balanceAmount = balanceAmount.plus(convertAmount(txInfo.info.btc, "btc", displayCurrency));							
+							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);
 							newRowHTML += "<td>Investment Deposit</td>";
 							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
 							newRowHTML += "<td>"+balanceAmount.toFormat()+"</td>";
@@ -675,7 +675,7 @@ function buildTransactionTable(collatedTxArray) {
 								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
 								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
 							} else {
-								newRowHTML += "<td></td>";
+								newRowHTML += "<td>Investment ID: "+txInfo.info.investments[0].investment_id+"</td>";
 							}
 						} else {
 							newRowHTML = "";
@@ -706,17 +706,14 @@ function buildTransactionTable(collatedTxArray) {
 					if (txInfo.subType == "investment") {
 						if (transactionTableOptions.investmentHistory) {
 							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);
-						//	balanceAmount = balanceAmount.plus(convertAmount(balanceAdd, "btc", displayCurrency));
-						//	balanceAmount = balanceAmount.minus(convertAmount(txInfo.info.btc, "btc", displayCurrency));
 							newRowHTML += "<td>Investment Withdrawal</td>";
 							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
 							newRowHTML += "<td>"+balanceAmount.toFormat()+"</td>";
-						//	alert (JSON.stringify(txInfo.info));
 							if (transactionTableOptions.includeTxDetails) {
 								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
 								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
 							} else {								
-								newRowHTML += "<td>"+txInfo.info.investments[0].investment_id+"</td>";
+								newRowHTML += "<td>Investment ID: "+txInfo.info.investments[0].investment_id+"</td>";
 							}							
 						} else {
 							newRowHTML = "";
