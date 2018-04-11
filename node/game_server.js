@@ -114,10 +114,14 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 	newAccountInfo.privateKey = serviceResponse.private;
 	newAccountInfo.publicKey = serviceResponse.public;
 	newAccountInfo.wif = serviceResponse.wif;
+	var txInfo = new Object();
+	txInfo.type = "account";
+	txInfo.subType = "create";
 	var insertFields = "(";
 	insertFields += "`btc_account`,";
 	insertFields += "`btc_balance_verified`,";
 	insertFields += "`btc_balance_available`,";
+	insertFields += "`tx_info`,";
 	insertFields += "`extra_data`,"
 	insertFields += "`affiliate`";
 	insertFields += ")";
@@ -125,6 +129,7 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 	insertValues += "\""+responseData.account+"\","; 
 	insertValues += "\"0\",";
 	insertValues += "\"0\",";
+	insertValues += "\"{}\",";
 	insertValues += "\""+querystring.escape(JSON.stringify(newAccountInfo))+"\",";
 	if (affiliateID == null) {
 		insertValues += "NULL"; //proper MySQL null
@@ -134,7 +139,7 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 	insertValues += ")";
 	var queryResult = yield db.query("INSERT INTO `gaming`.`accounts` "+insertFields+" VALUES "+insertValues, generator);	
 	if (queryResult.error != null) {
-		trace ("Database error on RPC_newGamingAccount: "+queryResult.error);		
+		trace ("Database error on RPC_newGamingAccount!: "+queryResult.error);		
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was an error creating a new account address.");
 		return;
