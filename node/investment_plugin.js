@@ -1049,13 +1049,13 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	txInfo.info.btc = btc_tx_amount.toString(10);
 	txInfo.info.investment_id = investmentQueryResult.rows[0].id;
 	txInfo.info.investment_name = investmentQueryResult.rows[0].name;
-	if ((investmentQueryResult.rows[0].btc_total_balance == ull) || (investmentQueryResult.rows[0].btc_total_balance == "NULL") || (investmentQueryResult.rows[0].btc_total_balance == "")) {
+	if ((investmentQueryResult.rows[0].btc_total_balance == null) || (investmentQueryResult.rows[0].btc_total_balance == "NULL") || (investmentQueryResult.rows[0].btc_total_balance == "")) {
 		investmentQueryResult.rows[0].btc_total_balance="0";
 	}
-	if ((investmentQueryResult.rows[0].btc_gains == ull) || (investmentQueryResult.rows[0].btc_gains == "NULL") || (investmentQueryResult.rows[0].btc_gains == "")) {
+	if ((investmentQueryResult.rows[0].btc_gains == null) || (investmentQueryResult.rows[0].btc_gains == "NULL") || (investmentQueryResult.rows[0].btc_gains == "")) {
 		investmentQueryResult.rows[0].btc_gains="0";
 	}
-	if ((investmentQueryResult.rows[0].btc_balance == ull) || (investmentQueryResult.rows[0].btc_balance == "NULL") || (investmentQueryResult.rows[0].btc_balance == "")) {
+	if ((investmentQueryResult.rows[0].btc_balance == null) || (investmentQueryResult.rows[0].btc_balance == "NULL") || (investmentQueryResult.rows[0].btc_balance == "")) {
 		investmentQueryResult.rows[0].btc_balance="0";
 	}
 	var totalBalance = new BigNumber (investmentQueryResult.rows[0].btc_total_balance);
