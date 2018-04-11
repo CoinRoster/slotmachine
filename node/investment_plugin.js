@@ -382,7 +382,7 @@ var timer_payDividends = function* () {
 							for (var count=0; count<validInvestments.length; count++) {
 								message += "   "+validInvestments[count].investment_id+": BTC"+validInvestments[count].user_investment_btc+" (yours) / BTC"+validInvestments[count].investment_balance_btc+" (total)\n";
 							}							
-							accountPlugin.sendEmail("myfruitgame@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
+							accountPlugin.sendEmail("myfruitgame2@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
 						}
 						var txInfo = new Object();
 						txInfo.info = new Object();
@@ -1049,6 +1049,9 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	txInfo.info.btc = btc_tx_amount.toString(10);
 	txInfo.info.investment_id = investmentQueryResult.rows[0].id;
 	txInfo.info.investment_name = investmentQueryResult.rows[0].name;
+	global.assertAnyValue("NaN", "0", investmentQueryResult.rows[0]);
+	global.assertAnyValue(null, "0", investmentQueryResult.rows[0]);
+	global.assertAnyValue("NULL", "0", investmentQueryResult.rows[0]);
 	var totalBalance = new BigNumber (investmentQueryResult.rows[0].btc_total_balance);
 	var gains = new BigNumber (investmentQueryResult.rows[0].btc_gains);
 	txInfo.info.investment_balance_btc = totalBalance.plus(gains).toString(10);
@@ -1065,13 +1068,13 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
 		var dateStr = new Date().toISOString();
 		if (depositing) {
-			accountPlugin.sendEmail("myfruitgame@gmail.com", 
+			accountPlugin.sendEmail("myfruitgame2@gmail.com", 
 				accountQueryResult.rows[0].email,
 				"Investment Update (Deposit)", 
 				"You deposited BTC"+btc_tx_amount.toString(10)+" to investment \""+requestData.params.investment_id+"\" on "+dateStr+". Available BTC balance is now: "+btc_balance_avail.toString(10)
 			);
 		} else {
-			accountPlugin.sendEmail("myfruitgame@gmail.com", 
+			accountPlugin.sendEmail("myfruitgame2@gmail.com", 
 				accountQueryResult.rows[0].email,
 				"Investment Update (Withdrawal)", 
 				"You withdrew BTC"+btc_tx_amount.toString(10)+" from investment \""+requestData.params.investment_id+"\" on "+dateStr+". Available BTC balance now: "+btc_balance_avail.toString(10)
