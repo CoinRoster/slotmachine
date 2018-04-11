@@ -1049,9 +1049,15 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	txInfo.info.btc = btc_tx_amount.toString(10);
 	txInfo.info.investment_id = investmentQueryResult.rows[0].id;
 	txInfo.info.investment_name = investmentQueryResult.rows[0].name;
-	global.assertAnyValue("NaN", "0", investmentQueryResult.rows[0]);
-	global.assertAnyValue(null, "0", investmentQueryResult.rows[0]);
-	global.assertAnyValue("NULL", "0", investmentQueryResult.rows[0]);
+	if ((investmentQueryResult.rows[0].btc_total_balance == ull) || (investmentQueryResult.rows[0].btc_total_balance == "NULL") || (investmentQueryResult.rows[0].btc_total_balance == "")) {
+		investmentQueryResult.rows[0].btc_total_balance="0";
+	}
+	if ((investmentQueryResult.rows[0].btc_gains == ull) || (investmentQueryResult.rows[0].btc_gains == "NULL") || (investmentQueryResult.rows[0].btc_gains == "")) {
+		investmentQueryResult.rows[0].btc_gains="0";
+	}
+	if ((investmentQueryResult.rows[0].btc_balance == ull) || (investmentQueryResult.rows[0].btc_balance == "NULL") || (investmentQueryResult.rows[0].btc_balance == "")) {
+		investmentQueryResult.rows[0].btc_balance="0";
+	}
 	var totalBalance = new BigNumber (investmentQueryResult.rows[0].btc_total_balance);
 	var gains = new BigNumber (investmentQueryResult.rows[0].btc_gains);
 	txInfo.info.investment_balance_btc = totalBalance.plus(gains).toString(10);
