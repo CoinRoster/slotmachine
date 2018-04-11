@@ -990,7 +990,8 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 						btc_currentBaseDeposit = btc_currentBaseDeposit.plus(btc_tx_amount);
 					} else {
 						//calculate adjusted withdrawal amount to subtract from base investment amounts
-						adj_btc_tx_amount = btc_tx_amount.times(btc_currentBaseDeposit.dividedBy(btc_currentDeposit));
+						//adj_btc_tx_amount = btc_tx_amount.times(btc_currentBaseDeposit.dividedBy(btc_currentDeposit));
+						adj_btc_tx_amount = btc_currentBaseDeposit.times(btc_tx_amount.dividedBy(btc_currentDeposit));
 						btc_currentDeposit = btc_currentDeposit.minus(btc_tx_amount);
 						btc_currentBaseDeposit = btc_currentBaseDeposit.minus(adj_btc_tx_amount);
 						//revert and adjust btc base investment balance
