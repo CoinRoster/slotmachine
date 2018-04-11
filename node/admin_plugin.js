@@ -9,7 +9,7 @@ const request = require("request");
 const crypto = require ("crypto");
 const aesjs = require("aes-js");
 const BigNumber = require('bignumber.js');
-BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8});
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
 BigNumber.prototype.greaterThanOrEqualTo = BigNumber.prototype.isGreaterThanOrEqualTo;

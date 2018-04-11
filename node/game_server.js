@@ -13,7 +13,7 @@ const request = require("request");
 const crypto = require ("crypto");
 const aesjs = require("aes-js");
 const BigNumber = require('bignumber.js');
-BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8});
 //polyfill for new versions of BigNumber
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
@@ -3042,8 +3042,8 @@ function startRPCServer() {
 		//var now = new Date();
 		//var time = now.getHours()+":"+now.getMinutes();
 		var time = "00:10";
-		trace ("   Registered database backup job @ "+time);
-		plugins.registerTimerFunction({"time":time,"func":"backupDatabase","plugin":global});
+		//trace ("   Registered database backup job @ "+time);
+		//plugins.registerTimerFunction({"time":time,"func":"backupDatabase","plugin":global});
 	} catch (err) {
 		trace ("The requested port ("+serverConfig.rpc_options.port+") is already in use.");
 	}

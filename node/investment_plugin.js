@@ -4,7 +4,7 @@ var serverConfig = require("./game_server_config.js"); //game server global conf
 const request = require("request");
 const crypto = require('crypto'); //used to hash passwords
 const BigNumber = require('bignumber.js'); //big number calculations
-BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR });
+BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8});
 BigNumber.prototype.lessThan = BigNumber.prototype.isLessThan;
 BigNumber.prototype.greaterThan = BigNumber.prototype.isGreaterThan;
 BigNumber.prototype.greaterThanOrEqualTo = BigNumber.prototype.isGreaterThanOrEqualTo;
@@ -903,6 +903,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 			return;
 		}
 	}
+	var adj_btc_tx_amount = new BigNumber(btc_tx_amount.toString(10)); //adjusted transaction amount
 	var current_btc_balance_conf = new BigNumber(accountQueryResult.rows[0].btc_balance_verified);
 	var current_btc_balance_total = new BigNumber(accountQueryResult.rows[0].btc_balance_total);
 	var current_btc_balance_avail = new BigNumber(accountQueryResult.rows[0].btc_balance_available);
@@ -940,18 +941,6 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		btc_investment_balance = btc_investment_balance.minus(btc_tx_amount);
 		btc_investment_total_balance = btc_investment_total_balance.minus(btc_tx_amount);
 	}
-	/*
-	var dbUpdates = "`btc_balance_verified`=\""+btc_balance_conf.toString(10)+"\",`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`btc_balance_total`=\""+btc_balance_total.toString(10)+"\",`btc_balance_total_previous`=\""+btc_balance_total_previous.toString(10)+"\",`last_login`=NOW()";
-	var updateSQL = "UPDATE `gaming`.`accounts` SET "+dbUpdates+" WHERE `btc_account`=\""+accountQueryResult.rows[0].btc_account+"\" AND `index`="+accountQueryResult.rows[0].index+" LIMIT 1";	
-	var accountUpdateResult = yield db.query(updateSQL, generator);
-	if (accountUpdateResult.error != null) {
-		trace ("Database error on rpc_updateInvestorInfo: "+accountUpdateResult.error);		
-		trace ("   SQL: "+updateSQL);
-		trace ("   Request ID: "+requestData.id);
-		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
-		return;
-	}
-	*/
 	//get latest investor row
 	var investorQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\""+requestData.params.account+"\" ORDER BY  `last_update` DESC LIMIT 1", generator);	
 	var total_investment_amount = new BigNumber(0);		
@@ -973,7 +962,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		try {
 			investmentObj.user_investment_btc = requestData.params.transaction.deposit.btc;
 			investmentObj.user_investment_base_btc = requestData.params.transaction.deposit.btc;
-			investmentObj.user_investment_exclude_btc = requestData.params.transaction.deposit.btc; //the latest deposit/withdrawal by the user to be excluded from 
+			investmentObj.user_investment_exclude_btc = "0"; //requestData.params.transaction.deposit.btc; //the latest deposit/withdrawal by the user to be excluded from 
 		} catch (err) {
 			trace ("Invalid initial deposit object format: "+err);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Invalid initial deposit transaction object. Expecting \"btc\":\"NUMERIC_VALUE\"");
@@ -994,33 +983,25 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 						currentInvestment.user_investment_exclude_btc = "0";
 					}
 					var btc_currentDeposit = new BigNumber(currentInvestment.user_investment_btc);
-					var btc_userInvestmentBalance = new BigNumber(currentInvestment.user_investment_btc);
+					var btc_currentBaseDeposit = new BigNumber(currentInvestment.user_investment_base_btc);
 					var btc_userInvestmentExclude = new BigNumber(currentInvestment.user_investment_exclude_btc);
-					trace ("btc_userInvestmentExclude before="+btc_userInvestmentExclude.toString(10));
-					if (depositing) {						
+					if (depositing) {
 						btc_currentDeposit = btc_currentDeposit.plus(btc_tx_amount);
-						btc_userInvestmentBalance = btc_userInvestmentBalance.plus(btc_tx_amount);
-						btc_userInvestmentExclude = btc_userInvestmentExclude.plus(btc_tx_amount);
-					} else {							
+						btc_currentBaseDeposit = btc_currentBaseDeposit.plus(btc_tx_amount);
+					} else {
+						//calculate adjusted withdrawal amount to subtract from base investment amounts
+						adj_btc_tx_amount = btc_tx_amount.times(btc_currentBaseDeposit.dividedBy(btc_currentDeposit));
 						btc_currentDeposit = btc_currentDeposit.minus(btc_tx_amount);
-						if (btc_currentDeposit.lessThan(0)) {							
-							replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Insufficient funds in investment to withdraw requested amount.");
-							return;
-						}
-						btc_userInvestmentBalance = btc_userInvestmentBalance.minus(btc_tx_amount);
-						btc_userInvestmentExclude = btc_userInvestmentExclude.minus(btc_tx_amount);
+						btc_currentBaseDeposit = btc_currentBaseDeposit.minus(adj_btc_tx_amount);
+						//revert and adjust btc base investment balance
+						btc_investment_balance = btc_investment_balance.plus(btc_tx_amount).minus(adj_btc_tx_amount);
 					}
-					currentInvestment.user_investment_base_btc = btc_currentDeposit.toString(10);
-					currentInvestment.user_investment_btc = btc_userInvestmentBalance.toString(10);
+					currentInvestment.user_investment_base_btc = btc_currentBaseDeposit.toString(10);
+					currentInvestment.user_investment_btc = btc_currentDeposit.toString(10);
 					currentInvestment.investment_balance_btc = btc_investment_total_balance.toString(10);
 					currentInvestment.user_investment_exclude_btc = btc_userInvestmentExclude.toString(10);
 					currentInvestment.bankroll_multiplier = requestData.params.bankroll_multiplier;
-					//To restrict withdrawals to only the base deposit amount use:
-					//if (btc_currentDeposit.lessThan(0)) {
-					if (btc_userInvestmentBalance.lessThan(0)) {
-						replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_ACTION_ERROR, "Withdrawal request for investment \""+requestData.params.investment_id+"\" exceeds deposit.");
-						return;
-					}
+					investmentObj = currentInvestment;
 					investmentUpdated = true;
 				} catch (err) {
 					trace ("Couldn't update \"btc\" amount on investment object \""+requestData.params.investment_id+"\": "+err);		
@@ -1077,6 +1058,8 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 		return;
 	}
+	//Email disabled --
+	/*
 	if (accountQueryResult.rows[0].auth_status == 2) {
 		var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
 		var dateStr = new Date().toISOString();
@@ -1094,6 +1077,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 			);
 		}
 	}
+	*/
 	//update 'investments' table
 	var insertFields = "`id`,";
 	insertFields += "`name`,";
@@ -1113,14 +1097,14 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	if (investmentQueryResult.rows[0].btc_total_balance == null) {
 		insertValues += "NULL,";
 	} else {
-		insertValues += "\""+investmentQueryResult.rows[0].btc_total_balance+"\",";
+		insertValues += "\""+btc_investment_total_balance.toString(10)+"\",";
 	}
 	if (investmentQueryResult.rows[0].btc_gains == null) {
 		insertValues += "NULL,";
 	} else {
 		insertValues += "\""+investmentQueryResult.rows[0].btc_gains+"\",";
 	}
-	insertValues += "NOW(6)";
+	insertValues += "NOW()";
 	var insertSQL = "INSERT INTO `gaming`.`investments` ("+insertFields+") VALUES ("+insertValues+")";
 	var investmentUpdateResult = yield db.query(insertSQL, generator);
 	if (investmentUpdateResult.error != null) {
