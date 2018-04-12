@@ -375,6 +375,8 @@ var timer_payDividends = function* () {
 						insertValues += "'"+JSON.stringify(validInvestments)+"',";
 						insertValues += "NOW()";
 						var accountQueryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+validResult.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
+						//Email disabled --
+						/*
 						if (accountQueryResult.rows[0].auth_status == 2) {
 							var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
 							var dateStr = new Date().toISOString();
@@ -384,6 +386,7 @@ var timer_payDividends = function* () {
 							}							
 							accountPlugin.sendEmail("myfruitgame2@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
 						}
+						*/
 						var txInfo = new Object();
 						txInfo.info = new Object();
 						txInfo.info = new Object();
