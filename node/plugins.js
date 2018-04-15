@@ -201,8 +201,8 @@ exports.timerFunctionExecute = (tfDefinition) => {
 	var minutes = parseInt(timeSplit[1]);
 	var now = new Date();
 	//trigger immediately on startup, used for testing:
-	hours = now.getHours();
-	minutes = now.getMinutes();
+	//hours = now.getHours();
+	//minutes = now.getMinutes();
 	var h24MS = 86400000; //24 hours in milliseconds
 	var h12MS = 43200000; //12 hours in milliseconds
 	//var h1MS = 3600000; //1 hour in milliseconds
