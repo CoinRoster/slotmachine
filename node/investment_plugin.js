@@ -375,18 +375,15 @@ var timer_payDividends = function* () {
 						insertValues += "'"+JSON.stringify(validInvestments)+"',";
 						insertValues += "NOW()";
 						var accountQueryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+validResult.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
-						//Email disabled --
-						/*
 						if (accountQueryResult.rows[0].auth_status == 2) {
 							var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
 							var dateStr = new Date().toISOString();
 							var message = "Your investment balances have been updated with new gains / losses.\n\n";
-							for (var count=0; count<validInvestments.length; count++) {
-								message += "   "+validInvestments[count].investment_id+": BTC"+validInvestments[count].user_investment_btc+" (yours) / BTC"+validInvestments[count].investment_balance_btc+" (total)\n";
+							for (var count3=0; count3 < validInvestments.length; count3++) {
+								message += "   "+validInvestments[count3].investment_id+": BTC"+validInvestments[count3].user_investment_btc+" (yours) / BTC"+validInvestments[count3].investment_balance_btc+" (total)\n";
 							}							
-							accountPlugin.sendEmail("myfruitgame2@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
+							accountPlugin.sendEmail("myfruitgame@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
 						}
-						*/
 						var txInfo = new Object();
 						txInfo.info = new Object();
 						txInfo.info = new Object();
@@ -1071,26 +1068,23 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 		return;
 	}
-	//Email disabled --
-	/*
 	if (accountQueryResult.rows[0].auth_status == 2) {
 		var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
 		var dateStr = new Date().toISOString();
 		if (depositing) {
-			accountPlugin.sendEmail("myfruitgame2@gmail.com", 
+			accountPlugin.sendEmail("myfruitgame@gmail.com", 
 				accountQueryResult.rows[0].email,
 				"Investment Update (Deposit)", 
 				"You deposited BTC"+btc_tx_amount.toString(10)+" to investment \""+requestData.params.investment_id+"\" on "+dateStr+". Available BTC balance is now: "+btc_balance_avail.toString(10)
 			);
 		} else {
-			accountPlugin.sendEmail("myfruitgame2@gmail.com", 
+			accountPlugin.sendEmail("myfruitgame@gmail.com", 
 				accountQueryResult.rows[0].email,
 				"Investment Update (Withdrawal)", 
 				"You withdrew BTC"+btc_tx_amount.toString(10)+" from investment \""+requestData.params.investment_id+"\" on "+dateStr+". Available BTC balance now: "+btc_balance_avail.toString(10)
 			);
 		}
 	}
-	*/
 	//update 'investments' table
 	var insertFields = "`id`,";
 	insertFields += "`name`,";
