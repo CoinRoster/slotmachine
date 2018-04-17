@@ -185,6 +185,7 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	var requestData = JSON.parse(postData);
 	//---- VERIFY PARAMETERS ----	
 	checkParameter(requestData, "account");	
+	checkParameter(requestData, "btc");	
 	checkParameter(requestData, "receiver");
 	var returnData = new Object();
 	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
@@ -206,7 +207,8 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	var currentAvailSatoshiBalance = currentAvailBTCBalance.times(satoshiPerBTC);
 	currentAvailBTCBalance = currentAvailBTCBalance.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //subtract miner fee
 	currentAvailSatoshiBalance = currentAvailSatoshiBalance.minus(serverConfig.APIInfo.blockcypher.minerFee);
-	var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount
+	//var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount
+	var withdrawalBTC = new BigNumber(requestData.params.btc); //withdraw amount specified by admin interface (may not match our records!)
 	withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //do we want to specify fees otherwise here?
 	var withdrawalSatoshis = withdrawalBTC.times(satoshiPerBTC);
 	var extraData = JSON.parse(querystring.unescape(queryResult.rows[0].extra_data));

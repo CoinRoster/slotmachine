@@ -10,8 +10,17 @@ transactionTableOptions.accountHistory = true;
 transactionTableOptions.gameHistory = true;
 transactionTableOptions.investmentHistory = true;
 transactionTableOptions.affiliateHistory = true;
+var batchTransferAccounts = new Array();
+var currentBatchTransferAccount = null;
+var currentTransferButton = null;
 
 var defaultTransferTargetAddress = "mqRSzumcT9mXcjZbSr5LTsJXABAXpj42kQ"; // default transfer-to Bitcoin address for use with dormant accounts
+var blockchainAPI = new Object();
+blockchainAPI.mainnet = new Object();
+blockchainAPI.testnet = new Object();
+blockchainAPI.mainnet.checkBalanceAddress = "https://lockexplorer.com/api/addr/%addr%";
+blockchainAPI.testnet.checkBalanceAddress = "https://testnet.blockexplorer.com/api/addr/%addr%";
+
 
 function callServerMethod(methodName, params, resultCallback) {	
 	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};			
@@ -112,23 +121,6 @@ function buildRakeTransactionTable(collatedTxArray, itemsPerPage, pageNum) {
 	if (endIndex > (collatedTxArray.length - 1)) {
 		endIndex = collatedTxArray.length - 1;
 	}
-	/*
-	returnHTML += "<tfoot><tr>";
-	if (startIndex > 0) {
-		returnHTML += "<td><small><a href=\"#\" onclick=\"onTxTablePreviousClick()\">PREVIOUS</a></small></td>";
-	} else {
-		returnHTML += "<td>&nbsp;</td>";
-	}
-	returnHTML += "<td><small><a href=\"#\" onclick=\"onTxTableRefreshClick()\">REFRESH</a></small></td>";
-	returnHTML += "<td>&nbsp;</td>";
-	if (endIndex < (collatedTxArray.length - 1)) {
-		returnHTML += "<td style=\"text-align:right;\"><small><a href=\"#\" onclick=\"onTxTableNextClick()\">NEXT</a></small></td>";
-	} else {
-		returnHTML += "<td>&nbsp;</td>";
-	}
-	returnHTML += "</tr>";
-	returnHTML += "</tfoot>";
-	*/
 	returnHTML += "<tbody>";
 	var investmentHistory = new Object();
 	for (var count=startIndex; count <= endIndex; count++) {
@@ -160,12 +152,13 @@ function buildRakeTransactionTable(collatedTxArray, itemsPerPage, pageNum) {
 /**
 * Transfers all of the confirmed funds from a specified Bitcoin account to a target Bitcoin account.
 *
+* @param btcAmount A numeric string representing the amount, in Bitcoin, to transfer.
 * @param sourceAddress The source Bitcoin address from which to transfer all available funds.
 * @param targetAddress The target Bitcoin address to which to transfer the funds to. If not supplied, null, or an empty string, the 'defaultTransferTargetAddress' value is used.
 * @param sourceButton A reference to the source HTMLButton element invoking this function.
 *
 */
-function transferAccountFunds(sourceAddress, targetAddress, sourceButton) {
+function transferAccountFunds(btcAmount, sourceAddress, targetAddress, sourceButton) {
 	if ((targetAddress==null) || (targetAddress==undefined) || (targetAddress=="")) {
 		targetAddress = $("#transferTargetAddress").val();
 	}
@@ -175,11 +168,11 @@ function transferAccountFunds(sourceAddress, targetAddress, sourceButton) {
 	var params = new Object();
 	params.account = sourceAddress;
 	params.receiver = targetAddress;
-	callServerMethod("admin_transferAccountFunds",params, onTransferAccountFunds);
+	params.btc = btcAmount;
+	currentBatchTransferAccount = sourceAddress;
+	$(sourceButton).replaceWith("<button class=\"transferButton\" data =\""+sourceAddress+"\" disabled>Transfer pending...</button>");
+	callServerMethod("admin_transferAccountFunds", params, onTransferAccountFunds);
 }
-
-var batchTransferAccounts = new Array();
-var currentBatchTransferAccount = null;
 
 function onTransferAllAccountsClick(event) {
 	if (batchTransferAccounts.length > 0) {
@@ -218,33 +211,64 @@ function onTransferNextBatchedAccount(resultData) {
 }
 
 function onTransferAccountFunds(resultData) {
-	alert (JSON.stringify(resultData));
+	$(".transferButton").each(function(index) {
+		var sourceAccount = $(this).attr("data");
+		if (sourceAccount == currentBatchTransferAccount) {
+			$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Complete</button>");
+			//removes row and updates table sorter index:
+			//$(this).closest('tr').remove();
+			//$("#balanceSheet table").trigger("update");
+		}
+	});
 }
 
-function buildDormantAccountsTable(accountsArray, itemsPerPage, pageNum) {
-	itemsPerPage=1000000000;
-	var returnHTML = "<div id=\"dormantAccounts\"><table>";
+function buildBalanceSheet(accountsArray) {
+	var returnHTML = "<div id=\"balanceSheet\"><table>";
 	returnHTML += "<thead><tr>";
 	returnHTML += "<th class=\"header\">Account</th>";
-	returnHTML += "<th class=\"header\">Confirmed balance (BTC)</th>";
+	returnHTML += "<th class=\"header\">blockchain Balance (BTC)</th>";
 	returnHTML += "<th class=\"header\">Last Login</th>";
 	returnHTML += "<th class=\"header\">Actions</th>";
 	returnHTML += "</tr></thead>";
 	returnHTML += "<tbody>";
-	for (var count=0; count < accountsArray.length; count++) {
-		var currentAccount = accountsArray[count];
-		var onClickJS = "transferAccountFunds(\""+currentAccount.btc_account+"\",null,this)"; //JavaScript function to invoke, including parameter(s), when "transfer" action button is clicked
-		console.log(JSON.stringify(currentAccount));
-		returnHTML += "<tr>";
-		returnHTML += "<td>"+currentAccount.btc_account+"</td>";
-		returnHTML += "<td>"+currentAccount.btc_balance_verified+"</td>";
-		returnHTML += "<td>"+createDateTimeString(new Date(currentAccount.last_login))+"</td>";
-		returnHTML += "<td><button class=\"transferButton\" onclick='"+onClickJS+"' data=\""+currentAccount.btc_account+"\">Transfer All Funds</button></td>";
-		returnHTML += "</tr>";
-	}
 	returnHTML += "</tbody>";
 	returnHTML += "</table>";
 	return (returnHTML);
+}
+
+function getLiveAccountBalances(accountsArray) {
+	if (accountsArray.length == 0) {
+		//all done
+		$("#balanceSheetProgress").replaceWith("<div id=\"balanceSheetProgress\"></div>");
+		return;
+	}
+	var progressHTML = "<div id=\"balanceSheetProgress\">Accounts remaining to retreive: "+accountsArray.length+"</div>";
+	$("#balanceSheetProgress").replaceWith(progressHTML);
+	var currentAccount = accountsArray.shift();
+	var url = blockchainAPI.testnet.checkBalanceAddress.split("%addr%").join(currentAccount.btc_account).toString();
+	console.log($.get(url, function(data) {
+		onGetBlockchainBalance(data, currentAccount, accountsArray);
+	}));
+}
+
+
+
+function onGetBlockchainBalance(returnData, currentAccount, accountsArray) {
+	console.log (JSON.stringify(returnData));
+	addNewAccountRow(currentAccount, returnData.balance);
+	getLiveAccountBalances(accountsArray);
+}
+
+function addNewAccountRow(currentAccount, balance) {
+	var onClickJS = "transferAccountFunds(\""+balance+"\", \""+currentAccount.btc_account+"\",null,this)"; //JavaScript function to invoke, including parameter(s), when "transfer" action button is clicked
+	var row = "<tr>";
+	row += "<td>"+currentAccount.btc_account+"</td>";
+	row += "<td>"+balance+"</td>";
+	row += "<td>"+createDateTimeString(new Date(currentAccount.last_login))+"</td>";
+	row += "<td><button class=\"transferButton\" onclick='"+onClickJS+"' data=\""+currentAccount.btc_account+"\">Transfer All Funds</button></td>";
+	row += "</tr>";
+	$row = $(row),
+	$("#balanceSheet table").find("tbody").append($row).trigger("addRows", [$row, true]);
 }
 
 function createDateTimeString(dateObj) {
@@ -445,10 +469,11 @@ function onGetDormantAccounts(returnData) {
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		alert (returnData.error.message);
 	} else {
-		var accountsTable = buildDormantAccountsTable(returnData.result.dormant, _txTableItemsPerPage, _txTablePageNum);
-		accountsTable += generatePagerDiv("dormantAccountsPager");
-		$("#dormantAccounts").replaceWith(accountsTable);
-		paginateSortableTable("#dormantAccounts table", "#dormantAccountsPager");
+		var accountsTable = buildBalanceSheet(returnData.result.dormant);
+		accountsTable += generatePagerDiv("balanceSheetPager");
+		$("#balanceSheet").replaceWith(accountsTable);
+		paginateSortableTable("#balanceSheet table", "#balanceSheetPager");
+		getLiveAccountBalances(returnData.result.dormant);
 	}
 }
 

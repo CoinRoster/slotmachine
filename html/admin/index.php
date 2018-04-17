@@ -56,10 +56,11 @@
 	<body onload="start()">
 		<div id="rakeAccountHistoryHeader">Rake Account Transaction History</div>
 		<div id="rakeAccountHistory"></div>
-		<br/><br/>
-		<div id="dormantAccountsHeader">Dormant Accounts</div>
+		<br/><br/>		
+		<div id="balanceSheetHeader">Balance Sheet</div>
 		<label for="transferTargetAddress">Transfer target address:&nbsp;</label><input type="text" id="transferTargetAddress" style="width:250px;" value="Enter valid Bitcoin address" />&nbsp;&nbsp;
+		<div id="balanceSheetProgress"></div>
 		<button id="transferAllAccountsButton" onclick="onTransferAllAccountsClick()">Transfer All Accounts Funds</button>
-		<div id="dormantAccounts"></div>
+		<div id="balanceSheet"></div>
 	</body>
 </html>
