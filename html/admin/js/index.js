@@ -18,8 +18,11 @@ var defaultTransferTargetAddress = "mqRSzumcT9mXcjZbSr5LTsJXABAXpj42kQ"; // defa
 var blockchainAPI = new Object();
 blockchainAPI.mainnet = new Object();
 blockchainAPI.testnet = new Object();
-blockchainAPI.mainnet.checkBalanceAddress = "https://lockexplorer.com/api/addr/%addr%";
-blockchainAPI.testnet.checkBalanceAddress = "https://testnet.blockexplorer.com/api/addr/%addr%";
+blockchainAPI.mainnet.checkBalanceAddress = "https://blockchain.info/q/addressbalance/%addr%?confirmations=0";
+blockchainAPI.testnet.checkBalanceAddress = "https://testnet.blockchain.info/q/addressbalance/%addr%?confirmations=0";
+//blockchainAPI.testnet.checkBalanceAddress = "https://testnet.blockexplorer.com/api/addr/%addr%";
+//blockchainAPI.mainnet.checkBalanceAddress = "https://blockexplorer.com/api/addr/%addr%";
+
 
 
 function callServerMethod(methodName, params, resultCallback) {	
@@ -201,25 +204,46 @@ function transferNextBatchedAccount() {
 }
 
 function onTransferNextBatchedAccount(resultData) {
-	$(".transferButton").each(function(index) {
-		var sourceAccount = $(this).attr("data");
-		if (sourceAccount == currentBatchTransferAccount) {
-			$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Complete</button>");
-		}
-	});
+	if ((resultData["error"] != null) && (resultData["error"] != undefined)) {
+		alert (resultData.error.message);
+		$(".transferButton").each(function(index) {
+			var sourceAccount = $(this).attr("data");
+			if (sourceAccount == currentBatchTransferAccount) {
+				$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Failed!</button>");
+			}
+		});
+	} else {
+		$(".transferButton").each(function(index) {
+			var sourceAccount = $(this).attr("data");
+			if (sourceAccount == currentBatchTransferAccount) {
+				$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Complete</button>");
+			}
+		});
+	}
 	setTimeout(transferNextBatchedAccount, 2500);
 }
 
 function onTransferAccountFunds(resultData) {
-	$(".transferButton").each(function(index) {
-		var sourceAccount = $(this).attr("data");
-		if (sourceAccount == currentBatchTransferAccount) {
-			$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Complete</button>");
-			//removes row and updates table sorter index:
-			//$(this).closest('tr').remove();
-			//$("#balanceSheet table").trigger("update");
-		}
-	});
+	console.log(JSON.stringify(resultData));
+	if ((resultData["error"] != null) && (resultData["error"] != undefined)) {
+		alert (resultData.error.message);
+		$(".transferButton").each(function(index) {
+			var sourceAccount = $(this).attr("data");
+			if (sourceAccount == currentBatchTransferAccount) {
+				$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Failed!</button>");
+			}
+		});
+	} else {
+		$(".transferButton").each(function(index) {
+			var sourceAccount = $(this).attr("data");
+			if (sourceAccount == currentBatchTransferAccount) {
+				$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Complete</button>");
+				//removes row and updates table sorter index:
+				//$(this).closest('tr').remove();
+				//$("#balanceSheet table").trigger("update");
+			}
+		});
+	}
 }
 
 function buildBalanceSheet(accountsArray) {
@@ -254,8 +278,17 @@ function getLiveAccountBalances(accountsArray) {
 
 
 function onGetBlockchainBalance(returnData, currentAccount, accountsArray) {
-	console.log (JSON.stringify(returnData));
+	//Blockchain.info API return:
+	if (String(returnData) != "0") {
+		var satoshisPerBitcoin = new BigNumber("100000000");
+		var satoshiBalance = new BigNumber(returnData);
+		var btcBalance = satoshiBalance.dividedBy(satoshisPerBitcoin);
+		addNewAccountRow(currentAccount, btcBalance.toString(10));
+	}
+	/**
+	//Block Explorer API return:
 	addNewAccountRow(currentAccount, returnData.balance);
+	*/
 	getLiveAccountBalances(accountsArray);
 }
 

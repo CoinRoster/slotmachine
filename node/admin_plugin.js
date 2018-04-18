@@ -151,7 +151,7 @@ var rpc_getAccounts = function* (postData, requestObj, responseObj, batchRespons
 	switch (requestData.params.type) {
 		case "dormant":
 			//var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `btc_balance_available`=\"0\" AND `deposit_complete`=1 AND `btc_deposit_account` IS NULL AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
-			var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `deposit_complete`=1 AND `btc_balance_verified`!=\"0\" AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
+			var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `deposit_complete`=1 AND (`btc_balance_available`!=\"0\" OR `btc_balance_verified`!=\"0\") AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
 			var accountsQueryResult = yield db.query(SQL, generator);	
 			if (accountsQueryResult.error != null) {
 				trace ("Database error on rpc_getAccounts: "+accountsQueryResult.error);
@@ -209,7 +209,7 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	currentAvailSatoshiBalance = currentAvailSatoshiBalance.minus(serverConfig.APIInfo.blockcypher.minerFee);
 	//var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount
 	var withdrawalBTC = new BigNumber(requestData.params.btc); //withdraw amount specified by admin interface (may not match our records!)
-	withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //do we want to specify fees otherwise here?
+	withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)).plus(10); //do we want to specify fees otherwise here?
 	var withdrawalSatoshis = withdrawalBTC.times(satoshiPerBTC);
 	var extraData = JSON.parse(querystring.unescape(queryResult.rows[0].extra_data));
 	wif = extraData.wif;
@@ -232,6 +232,11 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	if (signedTx == null) {
 		trace ("      Error signing transaction skeleton.");
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "There was a problem signing the transaction.");
+		return;
+	}
+	if (signedTx["errors"] != null) {
+		trace ("      Error creating transaction: "+signedTx.errors[0].error);
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "There was a problem creating the transaction: \n\n"+signedTx.errors[0].error);
 		return;
 	}
 	trace ("  Signed transaction:");
