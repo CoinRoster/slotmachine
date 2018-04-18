@@ -18,6 +18,7 @@ var defaultTransferTargetAddress = "mqRSzumcT9mXcjZbSr5LTsJXABAXpj42kQ"; // defa
 var blockchainAPI = new Object();
 blockchainAPI.mainnet = new Object();
 blockchainAPI.testnet = new Object();
+blockchainAPI.provider = "Blockchain.info"; //symbolic name
 blockchainAPI.mainnet.checkBalanceAddress = "https://blockchain.info/q/addressbalance/%addr%?confirmations=0";
 blockchainAPI.testnet.checkBalanceAddress = "https://testnet.blockchain.info/q/addressbalance/%addr%?confirmations=0";
 //blockchainAPI.testnet.checkBalanceAddress = "https://testnet.blockexplorer.com/api/addr/%addr%";
@@ -250,7 +251,7 @@ function buildBalanceSheet(accountsArray) {
 	var returnHTML = "<div id=\"balanceSheet\"><table>";
 	returnHTML += "<thead><tr>";
 	returnHTML += "<th class=\"header\">Account</th>";
-	returnHTML += "<th class=\"header\">blockchain Balance (BTC)</th>";
+	returnHTML += "<th class=\"header\">"+blockchainAPI.provider+" Balance (BTC)</th>";
 	returnHTML += "<th class=\"header\">Last Login</th>";
 	returnHTML += "<th class=\"header\">Actions</th>";
 	returnHTML += "</tr></thead>";
