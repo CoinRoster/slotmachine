@@ -148,33 +148,66 @@ var rpc_getAccounts = function* (postData, requestObj, responseObj, batchRespons
 		return;
 	}
 	var responseData = new Object();
-	switch (requestData.params.type) {
-		case "dormant":
-			//var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `btc_balance_available`=\"0\" AND `deposit_complete`=1 AND `btc_deposit_account` IS NULL AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
-			var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `deposit_complete`=1 AND (`btc_balance_available`!=\"0\" OR `btc_balance_verified`!=\"0\") AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
-			var accountsQueryResult = yield db.query(SQL, generator);	
-			if (accountsQueryResult.error != null) {
-				trace ("Database error on rpc_getAccounts: "+accountsQueryResult.error);
-				trace ("   Request ID: "+requestData.id);
-				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
+	var accountTypes = requestData.params.type.split(",");
+	for (var count = 0; count < accountTypes.length; count++) {
+		switch (accountTypes[count].split(" ").join("")) {
+			case "havebalance":
+				//var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `btc_balance_available`=\"0\" AND `deposit_complete`=1 AND `btc_deposit_account` IS NULL AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
+				var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `deposit_complete`=1 AND (`btc_balance_available`!=\"0\" OR `btc_balance_verified`!=\"0\") AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
+				var accountsQueryResult = yield db.query(SQL, generator);	
+				if (accountsQueryResult.error != null) {
+					trace ("Database error on rpc_getAccounts: "+accountsQueryResult.error);
+					trace ("   Request ID: "+requestData.id);
+					replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
+					return;
+				}
+				responseData.accounts = new Array();
+				for (var count1 = 0; count1 < accountsQueryResult.rows.length; count1++) {
+					var currentResult = accountsQueryResult.rows[count1];
+					var accountObj = new Object();
+					accountObj.btc_account = currentResult.btc_account;
+					accountObj.btc_balance_verified = currentResult.btc_balance_verified;
+					accountObj.last_login = currentResult.last_login;
+					accountObj.affiliate = currentResult.affiliate;
+					accountObj.email = currentResult.email;
+					accountObj.last_deposit_check = currentResult.last_deposit_check;
+					responseData.accounts.push(accountObj);
+				}
+				break;
+			case "wallets":
+				responseData.wallets = new Array();
+				for (var count1 = 0; count1 < serverConfig.withdrawalAccounts.length; count1++) {
+					var accountObj = new Object();
+					if ((serverConfig.APIInfo.blockcypher.network == "btc/test3") && (serverConfig.withdrawalAccounts[count1].type == "tbtc")) {
+						//testnet
+						accountObj.btc_account = serverConfig.withdrawalAccounts[count1].account;
+						responseData.wallets.push(accountObj);
+					} else if (serverConfig.APIInfo.blockcypher.network == "btc/main") {
+						accountObj.btc_account = serverConfig.withdrawalAccounts[count1].account;
+						responseData.wallets.push(accountObj);
+					}
+
+				}
+				break;
+			case "coldstorage":
+				responseData.coldstorage = new Array();
+				for (var count1 = 0; count1 < serverConfig.coldStorageAccounts.length; count1++) {
+					accountObj = new Object();
+					if ((serverConfig.APIInfo.blockcypher.network == "btc/test3") && (serverConfig.coldStorageAccounts[count1].type == "tbtc")) {
+						//testnet
+						accountObj.btc_account = serverConfig.coldStorageAccounts[count1].account;
+						responseData.coldstorage.push(accountObj);
+					} else if (serverConfig.APIInfo.blockcypher.network == "btc/main") {
+						accountObj.btc_account = serverConfig.coldStorageAccounts[count1].account;
+						responseData.coldstorage.push(accountObj);
+					}
+				}
+				break;
+			default: 
+				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Unrecognized accounts type: \""+accountTypes[count].split(" ").join("")+"\"");
 				return;
-			}
-			responseData.dormant = new Array();
-			for (var count=0; count < accountsQueryResult.rows.length; count++) {
-				var currentResult = accountsQueryResult.rows[count];
-				var dormantObj = new Object();
-				dormantObj.btc_account = currentResult.btc_account;
-				dormantObj.btc_balance_verified = currentResult.btc_balance_verified;
-				dormantObj.last_login = currentResult.last_login;
-				dormantObj.affiliate = currentResult.affiliate;
-				dormantObj.email = currentResult.email;
-				dormantObj.last_deposit_check = currentResult.last_deposit_check;
-				responseData.dormant.push(dormantObj);
-			}
-			break;
-		default: 
-			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Unrecognized accounts \"type\".");
-			break;
+				break;
+		}
 	}
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
 }
@@ -207,7 +240,7 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	var currentAvailSatoshiBalance = currentAvailBTCBalance.times(satoshiPerBTC);
 	currentAvailBTCBalance = currentAvailBTCBalance.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //subtract miner fee
 	currentAvailSatoshiBalance = currentAvailSatoshiBalance.minus(serverConfig.APIInfo.blockcypher.minerFee);
-	//var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount
+	//var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount according to our records
 	var withdrawalBTC = new BigNumber(requestData.params.btc); //withdraw amount specified by admin interface (may not match our records!)
 	withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)).plus(10); //do we want to specify fees otherwise here?
 	var withdrawalSatoshis = withdrawalBTC.times(satoshiPerBTC);

@@ -49,7 +49,7 @@
 		<link href='../common/styles/CarterOne.css' rel='stylesheet'>
 		<!-- Game styles -->
 		<link rel="stylesheet" href="../styles/game.css">
-		<link rel="stylesheet" href="../styles/account.css">
+		<link rel="stylesheet" href="./styles/admin.css">
 		<!-- Bootstrap JS-->
 		<script src="../common/js/libs/bootstrap.min.js"></script>
 	</head>
@@ -61,6 +61,9 @@
 		<label for="transferTargetAddress">Transfer target address:&nbsp;</label><input type="text" id="transferTargetAddress" style="width:250px;" value="Enter valid Bitcoin address" />&nbsp;&nbsp;
 		<div id="balanceSheetProgress"></div>
 		<button id="transferAllAccountsButton" onclick="onTransferAllAccountsClick()">Transfer All Accounts Funds</button>
-		<div id="balanceSheet"></div>
+		<div id="balanceSheetAssetsHeader">Assets</div>
+		<div id="balanceSheetAssets"></div>
+		<div id="balanceSheetLiabilitiesHeader">Liabilities</div>
+		<div id="balanceSheetLiabilities"></div>
 	</body>
 </html>

@@ -31,11 +31,11 @@ exports.largeWithdrawalNotificationEmails = ["patrickbayca@gmail.com", "james@ma
 exports.maxWithdrawal = {
 	//maximum unapproved BTC withdrawal amount (up to and including)
 	"btc": new BigNumber("2"),
-	//contacts to notify of large withdrawal(s) request
+	//contacts to notify of large withdrawal requests
 	"emails": exports.largeWithdrawalNotificationEmails
 }
 
-//accounts used for withdrawals that exceed original deposit amount (bankroll accounts)
+//accounts used for withdrawals (bankroll accounts)
 exports.withdrawalAccounts = [
 	{
 		"type":"btc",
@@ -51,7 +51,19 @@ exports.withdrawalAccounts = [
 		"publicKey":"03d92345040e56fa8399d299501824e2c4677e2e031f2988fc0174cb288248a4ae",
 		"wif":"cSJCaYkib6zseyntVzeXHau1j8hNgG2epLYDCAEWi2oH58bkEEqX"
 	}
-]; 
+];
+
+//cold storage (receive-only) addresses
+exports.coldStorageAccounts = [
+	{
+		"type":"btc",
+		"account":""
+	},
+	{	
+		"type":"tbtc",
+		"account":"mqRSzumcT9mXcjZbSr5LTsJXABAXpj42kQ"
+	}
+]
 
 exports.getNextWithdrawalAccount = (accountType) => {
 	for (var count=0; count < exports.withdrawalAccounts.length; count++) {

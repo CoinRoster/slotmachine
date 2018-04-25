@@ -1489,7 +1489,6 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		}
 	}
 	if (requestData.params["jackpots"] == true) {
-		var investmentsQuerySQL = "SELECT * FROM `gaming`.`investments` WHERE `last_update` BETWEEN \""+startPeriod+"\" AND \""+endPeriod+"\" ORDER BY `last_update` ASC";				
 		var jackpotsQueryResult = yield db.query("SELECT * FROM `gaming`.`jackpots`", generator);		
 		if (jackpotsQueryResult.error != null) {
 			trace ("Database error on rpc_getInvestmentStats: "+jackpotsQueryResult.error);
@@ -1507,6 +1506,19 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 			jackpotObj.timestamp = jackpotsQueryResult.rows[count].last_update;
 			responseData.jackpots.push (jackpotObj);
 		}
+	}
+	if (requestData.params["rake"] == true) {
+		var investmentTxsQuerySQL = "SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\"RAKE_ACCOUNT\" ORDER BY `last_update` DESC LIMIT 1";				
+		var investmentTxsQueryResult = yield db.query(investmentTxsQuerySQL, generator);		
+		if (investmentTxsQueryResult.error != null) {
+			trace ("Database error on rpc_getInvestmentStats: "+investmentTxsQueryResult.error);
+			trace ("   Request ID: "+requestData.id);
+			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
+			return;
+		}
+		responseData.rake = new Array();
+		investmentTxsQueryResult.rows[0].investments = JSON.parse(investmentTxsQueryResult.rows[0].investments);
+		responseData.rake.push(investmentTxsQueryResult.rows[0]); //only return the latest row for the rake account
 	}
 	global.assertAnyValue("NaN", "0", responseData);
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	

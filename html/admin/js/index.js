@@ -14,6 +14,11 @@ var batchTransferAccounts = new Array();
 var currentBatchTransferAccount = null;
 var currentTransferButton = null;
 
+//Sum of assets and liabilities as displayed in the balance sheet:
+var assetsTotal = new BigNumber(0);
+var liabilitiesTotal = new BigNumber(0);
+var satoshisPerBitcoin = new BigNumber("100000000"); //as described
+
 var defaultTransferTargetAddress = "mqRSzumcT9mXcjZbSr5LTsJXABAXpj42kQ"; // default transfer-to Bitcoin address for use with dormant accounts
 var blockchainAPI = new Object();
 blockchainAPI.mainnet = new Object();
@@ -56,8 +61,24 @@ function getRakeStats() {
 	callServerMethod("admin_getRakeStats",{}, onGetRakeStats);
 }
 
-function getDormantAccounts() {
-	callServerMethod("admin_getAccounts",{"type":"dormant"}, onGetDormantAccounts);
+function getAssets() {
+	callServerMethod("admin_getAccounts",{"type":"havebalance, wallets, coldstorage"}, onGetAssets);	
+}
+
+function getLiabilities() {
+	callServerMethod("getInvestmentStats", {"user_balances":true, "investments_total":true, "investments_charts":true, "jackpots":true, "rake":true}, onGetLiabilities);
+}
+
+function onGetLiabilities(returnData) {	
+	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
+		alert(returnData.error.message);
+	} else {
+		var liabTable = buildBalanceSheetLiabilities(returnData.result);
+		liabTable += generatePagerDiv("balanceSheetLiabilitiesPager");
+		$("#balanceSheetLiabilities").replaceWith(liabTable);
+		paginateSortableTable("#balanceSheetLiabilities table", "#balanceSheetLiabilitiesPager");
+		updateLiabilitiesTotal(liabilitiesTotal.toString(10));
+	}
 }
 
 function onTxTablePreviousClick() {
@@ -241,27 +262,87 @@ function onTransferAccountFunds(resultData) {
 				$(this).replaceWith("<button class=\"transferButton\" data =\""+sourceAccount+"\" disabled>Transfer Complete</button>");
 				//removes row and updates table sorter index:
 				//$(this).closest('tr').remove();
-				//$("#balanceSheet table").trigger("update");
+				//$("#balanceSheetAssets table").trigger("update");
 			}
 		});
 	}
 }
 
-function buildBalanceSheet(accountsArray) {
-	var returnHTML = "<div id=\"balanceSheet\"><table>";
+function buildBalanceSheetAssets(accountsArray) {
+	var returnHTML = "<div id=\"balanceSheetAssets\"><table>";
 	returnHTML += "<thead><tr>";
 	returnHTML += "<th class=\"header\">Account</th>";
 	returnHTML += "<th class=\"header\">"+blockchainAPI.provider+" Balance (BTC)</th>";
-	returnHTML += "<th class=\"header\">Last Login</th>";
+	returnHTML += "<th class=\"header\">Description</th>";
 	returnHTML += "<th class=\"header\">Actions</th>";
 	returnHTML += "</tr></thead>";
 	returnHTML += "<tbody>";
 	returnHTML += "</tbody>";
+	returnHTML += "<tfoot>";
+	returnHTML += "<tr class=\"header assetsTotalRow\"><td>TOTALS:</td>";
+	returnHTML += "<td id=\"balanceTotal\"></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "</tr>";
+	returnHTML += "</tfoot>";
 	returnHTML += "</table>";
 	return (returnHTML);
 }
 
-function getLiveAccountBalances(accountsArray) {
+function buildBalanceSheetLiabilities(resultObj) {
+	console.log("buildBalanceSheetLiabilities");
+	console.log(JSON.stringify(resultObj));
+	var returnHTML = "<div id=\"balanceSheetLiabilities\"><table>";
+	returnHTML += "<thead><tr>";
+	returnHTML += "<th class=\"header\">Account</th>";
+	returnHTML += "<th class=\"header\">Balance (BTC)</th>";
+	returnHTML += "<th class=\"header\">Description</th>";
+	returnHTML += "</tr></thead>";
+	returnHTML += "<tbody>";
+	returnHTML += "<tr><td>In-Game Balances</td>";
+	returnHTML += "<td>"+resultObj.user_balances.btc_available_total+"</td>";
+	liabilitiesTotal = liabilitiesTotal.plus(new BigNumber(resultObj.user_balances.btc_available_total));
+	returnHTML += "<td></td>";
+	returnHTML += "</tr>";
+	returnHTML += "<tr><td>Total Investment Balances</td>";
+	returnHTML += "<td>"+resultObj.investments_total.btc_balance+"</td>";
+	liabilitiesTotal = liabilitiesTotal.plus(new BigNumber(resultObj.investments_total.btc_balance));
+	returnHTML += "<td></td>";
+	returnHTML += "</tr>";
+	for (var count=0; count < resultObj.rake.length; count++) {
+		var currentRakeInvestment = resultObj.rake[count];
+		for (var count2 = 0; count2 < currentRakeInvestment.investments.length; count2++) {
+			returnHTML += "<tr><td>Rake Account Balance</td>";
+			var currentInvestment = currentRakeInvestment.investments[count2];
+			returnHTML += "<td>"+currentInvestment.user_investment_btc+"</td>";
+			returnHTML += "<td>"+currentRakeInvestment.name+"</td>";
+			liabilitiesTotal = liabilitiesTotal.plus(new BigNumber(currentInvestment.user_investment_btc));
+		}
+	}
+	returnHTML += "</tr>";
+	returnHTML += "</tbody>";
+	returnHTML += "<tfoot>";
+	returnHTML += "<tr class=\"header liabilitiesTotalRow\"><td>TOTALS:</td>";
+	returnHTML += "<td id=\"balanceTotal\"></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "</tr>";
+	returnHTML += "</tfoot>";
+	returnHTML += "</table>";
+	return (returnHTML);
+}
+
+
+function updateAssetsTotal(value) {
+	var balanceHTML = "<td id=\"balanceTotal\">"+value+"</div>";
+	$(".assetsTotalRow #balanceTotal").replaceWith(balanceHTML);
+}
+
+function updateLiabilitiesTotal(value) {
+	var balanceHTML = "<td id=\"balanceTotal\">"+value+"</div>";
+	$(".liabilitiesTotalRow #balanceTotal").replaceWith(balanceHTML);
+}
+
+function getLiveAccountBalances(accountsArray, accountsType) {
 	if (accountsArray.length == 0) {
 		//all done
 		$("#balanceSheetProgress").replaceWith("<div id=\"balanceSheetProgress\"></div>");
@@ -272,37 +353,97 @@ function getLiveAccountBalances(accountsArray) {
 	var currentAccount = accountsArray.shift();
 	var url = blockchainAPI.testnet.checkBalanceAddress.split("%addr%").join(currentAccount.btc_account).toString();
 	console.log($.get(url, function(data) {
-		onGetBlockchainBalance(data, currentAccount, accountsArray);
+		onGetBlockchainBalance(data, currentAccount, accountsArray, accountsType);
 	}));
 }
 
 
 
-function onGetBlockchainBalance(returnData, currentAccount, accountsArray) {
-	//Blockchain.info API return:
-	if (String(returnData) != "0") {
-		var satoshisPerBitcoin = new BigNumber("100000000");
-		var satoshiBalance = new BigNumber(returnData);
-		var btcBalance = satoshiBalance.dividedBy(satoshisPerBitcoin);
-		addNewAccountRow(currentAccount, btcBalance.toString(10));
+function onGetBlockchainBalance(returnData, currentAccount, accountsArray, accountsType) {
+	try {
+		switch (accountsType) {
+			case "havebalance":
+				//Blockchain.info API return:
+				if (String(returnData) != "0") {
+					var satoshiBalance = new BigNumber(returnData);
+					var btcBalance = satoshiBalance.dividedBy(satoshisPerBitcoin);
+					assetsTotal = assetsTotal.plus(btcBalance);
+					addNewAccountAssetRow(currentAccount, btcBalance.toString(10), accountsType);
+					updateAssetsTotal(assetsTotal.toString(10));
+				}
+				/**
+				//Block Explorer API return:
+				addNewAccountAssetRow(currentAccount, returnData.balance);
+				*/
+				break;
+			case "wallets":
+				//Blockchain.info API return:
+				if (String(returnData) != "0") {
+					satoshiBalance = new BigNumber(returnData);
+					btcBalance = satoshiBalance.dividedBy(satoshisPerBitcoin);
+					assetsTotal = assetsTotal.plus(btcBalance);
+					addNewAccountAssetRow(currentAccount, btcBalance.toString(10), accountsType);
+					updateAssetsTotal(assetsTotal.toString(10));
+				}
+				/**
+				//Block Explorer API return:
+				addNewAccountAssetRow(currentAccount, returnData.balance);
+				*/
+				break;
+			case "coldstorage":
+				//Blockchain.info API return:
+				if (String(returnData) != "0") {
+					satoshiBalance = new BigNumber(returnData);
+					btcBalance = satoshiBalance.dividedBy(satoshisPerBitcoin);
+					assetsTotal = assetsTotal.plus(btcBalance);
+					addNewAccountAssetRow(currentAccount, btcBalance.toString(10), accountsType);
+					updateAssetsTotal(assetsTotal.toString(10));
+				}
+				/**
+				//Block Explorer API return:
+				addNewAccountAssetRow(currentAccount, returnData.balance);
+				*/
+				break;
+		}
+	} catch (err) {
+	} finally {
+		getLiveAccountBalances(accountsArray, accountsType);
 	}
-	/**
-	//Block Explorer API return:
-	addNewAccountRow(currentAccount, returnData.balance);
-	*/
-	getLiveAccountBalances(accountsArray);
 }
 
-function addNewAccountRow(currentAccount, balance) {
-	var onClickJS = "transferAccountFunds(\""+balance+"\", \""+currentAccount.btc_account+"\",null,this)"; //JavaScript function to invoke, including parameter(s), when "transfer" action button is clicked
+function addNewAccountAssetRow(currentAccount, balance, accountType) {
 	var row = "<tr>";
-	row += "<td>"+currentAccount.btc_account+"</td>";
-	row += "<td>"+balance+"</td>";
-	row += "<td>"+createDateTimeString(new Date(currentAccount.last_login))+"</td>";
-	row += "<td><button class=\"transferButton\" onclick='"+onClickJS+"' data=\""+currentAccount.btc_account+"\">Transfer All Funds</button></td>";
-	row += "</tr>";
-	$row = $(row),
-	$("#balanceSheet table").find("tbody").append($row).trigger("addRows", [$row, true]);
+	switch (accountType) {
+		case "havebalance":
+			var onClickJS = "transferAccountFunds(\""+balance+"\", \""+currentAccount.btc_account+"\",null,this)"; //JavaScript function to invoke, including parameter(s), when "transfer" action button is clicked
+			row += "<td>"+currentAccount.btc_account+"</td>";
+			row += "<td>"+balance+"</td>";
+			//row += "<td>"+createDateTimeString(new Date(currentAccount.last_login))+"</td>";
+			row += "<td>User</td>";
+			row += "<td><button class=\"transferButton\" onclick='"+onClickJS+"' data=\""+currentAccount.btc_account+"\">Transfer All Funds</button></td>";
+			row += "</tr>";
+			$row = $(row),
+			$("#balanceSheetAssets table").find("tbody").append($row).trigger("addRows", [$row, true]);
+			break;
+		case "wallets":
+			row += "<td>"+currentAccount.btc_account+"</td>";
+			row += "<td>"+balance+"</td>";
+			row += "<td>Live Wallet</td>";
+			row += "<td></td>";
+			row += "</tr>";
+			$row = $(row),
+			$("#balanceSheetAssets table").find("tfoot").prepend($row).trigger("addRows", [$row, true]);
+			break;
+		case "coldstorage":
+			row += "<td>"+currentAccount.btc_account+"</td>";
+			row += "<td>"+balance+"</td>";
+			row += "<td>Cold Storage</td>";
+			row += "<td></td>";
+			row += "</tr>";
+			$row = $(row),
+			$("#balanceSheetAssets table").find("tfoot").prepend($row).trigger("addRows", [$row, true]);
+			break;
+	}
 }
 
 function createDateTimeString(dateObj) {
@@ -494,20 +635,23 @@ function onGetRakeStats(returnData) {
 		txTable += generatePagerDiv("rakeTransactionsPager")
 		$("#rakeAccountHistory").replaceWith(txTable);
 		paginateSortableTable("#rakeAccountHistory table", "#rakeTransactionsPager");
-		getDormantAccounts();
+		getAssets();
+		getLiabilities();
 	}
 }
 
-function onGetDormantAccounts(returnData) {
-	console.log(JSON.stringify(returnData));
+function onGetAssets(returnData) {
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		alert (returnData.error.message);
 	} else {
-		var accountsTable = buildBalanceSheet(returnData.result.dormant);
-		accountsTable += generatePagerDiv("balanceSheetPager");
-		$("#balanceSheet").replaceWith(accountsTable);
-		paginateSortableTable("#balanceSheet table", "#balanceSheetPager");
-		getLiveAccountBalances(returnData.result.dormant);
+		var assetsTable = buildBalanceSheetAssets(returnData.result);
+		assetsTable += generatePagerDiv("balanceSheetAssetsPager");
+		$("#balanceSheetAssets").replaceWith(assetsTable);
+		paginateSortableTable("#balanceSheetAssets table", "#balanceSheetAssetsPager");
+		getLiveAccountBalances(returnData.result.accounts, "havebalance");
+		getLiveAccountBalances(returnData.result.wallets, "wallets");
+		getLiveAccountBalances(returnData.result.coldstorage, "coldstorage");
+		updateAssetsTotal(assetsTotal.toString(10));
 	}
 }
 
