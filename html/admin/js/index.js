@@ -127,32 +127,21 @@ function onTxTableRefreshClick() {
 	getTransactions();
 }
 
-function buildRakeTransactionTable(collatedTxArray, itemsPerPage, pageNum) {
-	if ((itemsPerPage == null) || (itemsPerPage == undefined) || (isNaN(itemsPerPage))) {
-		itemsPerPage = _txTableItemsPerPage;
-	}
-	if ((pageNum == null) || (pageNum == undefined) || (isNaN(pageNum))) {
-		pageNum = 0;
-	}
+function buildRakeTransactionTable(collatedTxArray) {
 	var returnHTML = "<div id=\"rakeAccountHistory\"><table>";
 	returnHTML += "<thead><tr>";
 	returnHTML += "<th class=\"header\">Date</th>";
-	returnHTML += "<th class=\"header\">Type</th>";
-	returnHTML += "<th class=\"header\">Total Value (btc)</th>";
-	returnHTML += "<th class=\"header\">Amount</th>";
+	returnHTML += "<th class=\"header\">Description</th>";
+	returnHTML += "<th class=\"header\">Amount (BTC)</th>";
+	returnHTML += "<th class=\"header\">Balance (BTC)</th>";
 	returnHTML += "</tr></thead>";
-	var startIndex = itemsPerPage * pageNum;
-	var endIndex = startIndex + itemsPerPage - 1;
-	if (endIndex > (collatedTxArray.length - 1)) {
-		endIndex = collatedTxArray.length - 1;
-	}
 	returnHTML += "<tbody>";
 	var investmentHistory = new Object();
-	for (var count=startIndex; count <= endIndex; count++) {
+	for (var count = 0; count < collatedTxArray.length; count++) {
 		try {			
 			var currentTx = collatedTxArray[count];						
-			for (var count2 = 0; count2<currentTx.investments.length; count2++) {
-				var investmentID = currentTx.investments[count2].investment_id; //incorrect! currently always "poloniex"
+			for (var count2 = 0; count2 < currentTx.investments.length; count2++) {
+				var investmentID = currentTx.investments[count2].investment_id;
 				var investmentBalanceBTC = currentTx.investments[count2].user_investment_btc;
 				var userInvestmentBalanceBTC = currentTx.investments[count2].user_investment_btc;
 				var userInvestmentBaseBTC = currentTx.investments[count2].user_investment_base_btc;	
@@ -161,13 +150,13 @@ function buildRakeTransactionTable(collatedTxArray, itemsPerPage, pageNum) {
 				rowHTML += createDateTimeString(new Date(currentTx.timestamp));
 				rowHTML += "</td>";			
 				rowHTML += "<td>"+currentTx.name+"</td>";
-				rowHTML += "<td>"+investmentBalanceBTC+"</td>";				
 				rowHTML += "<td><span id\"rake_transaction\">"+currentTx.investments[count2].change+"</span></td>";
+				rowHTML += "<td>"+investmentBalanceBTC+"</td>";	
 				rowHTML += "</tr>";
 				returnHTML += rowHTML;
 			}
 		} catch (err) {
-			alert (err)
+			alert (err);
 		}		
 	}
 	returnHTML += "</tbody></table></div>";
