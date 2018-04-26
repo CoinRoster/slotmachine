@@ -81,52 +81,6 @@ function onGetLiabilities(returnData) {
 	}
 }
 
-function onTxTablePreviousClick() {
-	_txTablePageNum--;
-	var txTable = buildRakeTransactionTable(currentTransactionsData, _txTableItemsPerPage, _txTablePageNum);
-	$("#rakeAccountHistory").replaceWith(txTable);
-}
-
-function onTxTableNextClick() {
-	_txTablePageNum++;
-	var txTable = buildRakeTransactionTable(currentTransactionsData, _txTableItemsPerPage, _txTablePageNum);
-	$("#rakeAccountHistory").replaceWith(txTable);
-}
-
-function onTxHistoryOptionClick() {
-	var options = new Object();
-	if ($("#transactionHistoryOptions #options #accountTransactions").prop("checked")) {
-		options.accountHistory = true;
-	} else {
-		options.accountHistory = false;
-	}
-	if ($("#transactionHistoryOptions #options #gameTransactions").prop("checked")) {
-		options.gameHistory = true;
-	} else {
-		options.gameHistory = false;
-	}
-	if ($("#transactionHistoryOptions #options #investmentTransactions").prop("checked")) {
-		options.investmentHistory = true;
-	} else {
-		options.investmentHistory = false;
-	}
-	if ($("#transactionHistoryOptions #options #affiliateTransactions").prop("checked")) {
-		options.affiliateHistory = true;
-	} else {
-		options.affiliateHistory = false;
-	}
-	transactionTableOptions = options;
-	var txTable = buildRakeTransactionTable(currentTransactionsData, _txTableItemsPerPage, _txTablePageNum);
-	txTable += generatePagerDiv("rakeTransactionsPager")
-	$("#rakeAccountHistory").replaceWith(txTable);
-	paginateSortableTable("#rakeAccountHistory table", "#rakeTransactionsPager");
-}
-
-function onTxTableRefreshClick() {
-	_txTablePageNum = 0;
-	getTransactions();
-}
-
 function buildRakeTransactionTable(collatedTxArray) {
 	var returnHTML = "<div id=\"rakeAccountHistory\"><table>";
 	returnHTML += "<thead><tr>";
@@ -294,8 +248,10 @@ function buildBalanceSheetLiabilities(resultObj) {
 	returnHTML += "<td></td>";
 	returnHTML += "</tr>";
 	returnHTML += "<tr><td>Total Investment Balances</td>";
-	returnHTML += "<td>"+resultObj.investments_total.btc_balance+"</td>";
-	liabilitiesTotal = liabilitiesTotal.plus(new BigNumber(resultObj.investments_total.btc_balance));
+	var totalInvestmentsBalance = new BigNumber(resultObj.investments_total.btc_total_balance);
+	totalInvestmentsBalance = totalInvestmentsBalance.plus(new BigNumber(resultObj.investments_total.btc_gains));
+	returnHTML += "<td>"+totalInvestmentsBalance.toString(10)+"</td>";
+	liabilitiesTotal = liabilitiesTotal.plus(totalInvestmentsBalance);
 	returnHTML += "<td></td>";
 	returnHTML += "</tr>";
 	for (var count=0; count < resultObj.rake.length; count++) {
