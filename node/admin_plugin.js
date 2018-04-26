@@ -242,7 +242,8 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	currentAvailSatoshiBalance = currentAvailSatoshiBalance.minus(serverConfig.APIInfo.blockcypher.minerFee);
 	//var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount according to our records
 	var withdrawalBTC = new BigNumber(requestData.params.btc); //withdraw amount specified by admin interface (may not match our records!)
-	withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)).plus(10); //do we want to specify fees otherwise here?
+	withdrawalBTC = withdrawalBTC.minus(new BigNumber("0.00000001"));
+	//withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //do we want to specify fees otherwise here?
 	var withdrawalSatoshis = withdrawalBTC.times(satoshiPerBTC);
 	var extraData = JSON.parse(querystring.unescape(queryResult.rows[0].extra_data));
 	wif = extraData.wif;
@@ -291,13 +292,13 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 				btcBalanceVerified = new BigNumber(0);
 			}
 			//reset the database entry
-			var dbUpdates = "`btc_balance_available`=\"0\",";	
-			dbUpdates += "`btc_balance_verified`=\"0\",";
+			//var dbUpdates = "`btc_balance_available`=\"0\",";	
+			var dbUpdates =  "`btc_balance_verified`=\"0\",";
 			dbUpdates += "`btc_deposit_account`=\""+requestData.params.receiver+"\",";
 			dbUpdates += "`last_login`=NOW()";
 			//update gaming.accounts
 			global.logTx("   New confirmed balance in Bitcoin: "+currentBTCBalance.toString(10));
-			global.logTx("   New availabble balance in Bitcoin: "+btcBalanceVerified.toString(10));
+			//global.logTx("   New availabble balance in Bitcoin: "+btcBalanceVerified.toString(10));
 			var txInfo = new Object();
 			txInfo.type = "withdrawal";
 			txInfo.subType = "internal";
@@ -319,10 +320,20 @@ exports.rpc_transferAccountFunds = rpc_transferAccountFunds;
 * @param sathoshis The number of satoshis to send in the transaction.
 */
 function getTxSkeleton (generator, fromAddr, toAddr, sathoshis) {
+	/*
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/new?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
 		body:{"inputs":[{"addresses":[fromAddr]}], "outputs":[{"addresses":[toAddr], "value": Number(sathoshis)}], "fees":Number(serverConfig.APIInfo.blockcypher.minerFee.toString(10))},
+		json: true  
+	}, function (error, response, body){
+		generator.next(body);
+	});
+	*/
+	request({
+		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/new?token="+serverConfig.APIInfo.blockcypher.token,
+		method: "POST",
+		body:{"inputs":[{"addresses":[fromAddr]}], "outputs":[{"addresses":[toAddr], "value": Number(sathoshis)}], "fees":1},
 		json: true  
 	}, function (error, response, body){
 		generator.next(body);
