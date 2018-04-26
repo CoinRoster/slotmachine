@@ -242,8 +242,8 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	currentAvailSatoshiBalance = currentAvailSatoshiBalance.minus(serverConfig.APIInfo.blockcypher.minerFee);
 	//var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount according to our records
 	var withdrawalBTC = new BigNumber(requestData.params.btc); //withdraw amount specified by admin interface (may not match our records!)
-	withdrawalBTC = withdrawalBTC.minus(new BigNumber("0.00000001"));
-	//withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //do we want to specify fees otherwise here?
+	//withdrawalBTC = withdrawalBTC.minus(new BigNumber("0.00000001")); //subtract 1 satoshi miner's fee
+	withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //subtract standard miner's fee
 	var withdrawalSatoshis = withdrawalBTC.times(satoshiPerBTC);
 	var extraData = JSON.parse(querystring.unescape(queryResult.rows[0].extra_data));
 	wif = extraData.wif;
@@ -320,7 +320,6 @@ exports.rpc_transferAccountFunds = rpc_transferAccountFunds;
 * @param sathoshis The number of satoshis to send in the transaction.
 */
 function getTxSkeleton (generator, fromAddr, toAddr, sathoshis) {
-	/*
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/new?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
@@ -329,7 +328,7 @@ function getTxSkeleton (generator, fromAddr, toAddr, sathoshis) {
 	}, function (error, response, body){
 		generator.next(body);
 	});
-	*/
+	/*
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/new?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
@@ -338,6 +337,7 @@ function getTxSkeleton (generator, fromAddr, toAddr, sathoshis) {
 	}, function (error, response, body){
 		generator.next(body);
 	});
+	*/
 }
 
 /**

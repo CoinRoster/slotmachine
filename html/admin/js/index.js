@@ -373,7 +373,7 @@ function addNewAccountAssetRow(currentAccount, balance, accountType) {
 		case "wallets":
 			row += "<td>"+currentAccount.btc_account+"</td>";
 			row += "<td>"+balance+"</td>";
-			row += "<td>Live Wallet</td>";
+			row += "<td>Cash Register</td>";
 			row += "<td></td>";
 			row += "</tr>";
 			$row = $(row),
