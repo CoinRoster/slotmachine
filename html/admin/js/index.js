@@ -78,7 +78,24 @@ function onGetLiabilities(returnData) {
 		$("#balanceSheetLiabilities").replaceWith(liabTable);
 		paginateSortableTable("#balanceSheetLiabilities table", "#balanceSheetLiabilitiesPager");
 		updateLiabilitiesTotal(liabilitiesTotal.toString(10));
+		getDividendTransactions();
 	}
+}
+
+function getDividendTransactions() {
+	callServerMethod("admin_getInvestmentsHistory", {}, onGetDividendTransactions);
+}
+
+function onGetDividendTransactions(returnData) {
+	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
+		alert(returnData.error.message);
+	} else {
+		var dtTable = buildDividendTransactionsTable(returnData.result);
+		dtTable += generatePagerDiv("dividendTransactionsPager");
+		$("#dividendTransactionsTable").replaceWith(dtTable);
+		paginateSortableTable("#dividendTransactionsTable table", "#dividendTransactionsPager");
+	}
+	
 }
 
 function buildRakeTransactionTable(collatedTxArray) {
@@ -271,6 +288,60 @@ function buildBalanceSheetLiabilities(resultObj) {
 	returnHTML += "<td id=\"balanceTotal\"></td>";
 	returnHTML += "<td></td>";
 	returnHTML += "</tr>";
+	returnHTML += "</tfoot>";
+	returnHTML += "</table>";
+	return (returnHTML);
+}
+
+function buildDividendTransactionsTable(resultArray) {
+	console.log("buildDividendTransactionsTable");
+	console.log(JSON.stringify(resultArray));
+	var returnHTML = "<div id=\"dividendTransactionsTable\"><table>";
+	returnHTML += "<thead><tr>";
+	returnHTML += "<th class=\"header\">Date</th>";
+	returnHTML += "<th class=\"header\">Description</th>";
+	returnHTML += "<th class=\"header\">Gross Dividend</th>";
+	returnHTML += "<th class=\"header\">Rake Amount</th>";
+	returnHTML += "<th class=\"header\">Net Dividend</th>";
+	returnHTML += "<th class=\"header\">Balance</th>";
+	returnHTML += "</tr></thead>";
+	returnHTML += "<tbody>";
+	//NB: the following structure may change in future implementations if we need to include additional data!
+	for (var count = 0; count < resultArray.length; count++) {
+		var currentRowHTML = "";
+		try {
+			currentRowHTML += "<tr>";
+			var currentItem = resultArray[count];
+			var currentHistory = currentItem.history;
+			var investmentsArr = currentHistory.investments; //resultArray[count].history.investments
+			currentRowHTML += "<td>"+createDateTimeString(new Date(currentItem.timestamp))+"</td>"; //Date
+			for (var count2 = 0; count2 < investmentsArr.length; count2++) {
+				var currentInvestment = investmentsArr[count2];
+				currentRowHTML += "<td>"+currentInvestment.name+"</td>"; //Description
+				currentRowHTML += "<td>"+currentInvestment.gross_dividend_btc+"</td>"; //Gross Dividend
+				currentRowHTML += "<td>"+currentInvestment.rake_amount_btc+"</td>"; //Rake Amount
+				currentRowHTML += "<td>"+currentInvestment.net_dividend_btc+"</td>"; //Net Dividend
+				currentRowHTML += "<td>"+currentInvestment.balance_btc+"</td>"; //Balance
+			}
+			currentRowHTML += "</tr>";
+		} catch (err) {
+			console.error(err.stack);
+			currentRowHTML = "";
+		}
+		returnHTML += currentRowHTML;
+	}
+	returnHTML += "</tbody>";
+	returnHTML += "<tfoot>";
+	/*
+	returnHTML += "<tr>";
+	returnHTML += "<td></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "<td></td>";
+	returnHTML += "</tr>";
+	*/
 	returnHTML += "</tfoot>";
 	returnHTML += "</table>";
 	return (returnHTML);

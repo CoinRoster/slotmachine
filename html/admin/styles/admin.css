@@ -31,20 +31,22 @@ td, th {
     background-color: #3399FF; 
 }
 
-#balanceSheetHeader {
+.tableHeader {
 	font-size: 1.5em;
+	margin-top: 20px;
+}
+
+#balanceSheetHeader {
 }
 
 #balanceSheetAssetsHeader {
 	font-size: 1.25em;
 	color: green;
-	margin-top: 20px;
 }
 
 #balanceSheetLiabilitiesHeader {
 	font-size: 1.25em;
 	color: red;
-	margin-top: 20px;
 }
 
 #balanceSheetAssets .assetsTotalRow td {

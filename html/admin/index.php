@@ -54,16 +54,18 @@
 		<script src="../common/js/libs/bootstrap.min.js"></script>
 	</head>
 	<body onload="start()">
-		<div id="rakeAccountHistoryHeader">Rake Account Transaction History</div>
+		<div id="rakeAccountHistoryHeader" class="tableHeader">Rake Account Transaction History</div>
 		<div id="rakeAccountHistory"></div>
 		<br/><br/>		
-		<div id="balanceSheetHeader">Balance Sheet</div>
+		<div id="balanceSheetHeader" class="tableHeader">Balance Sheet</div>
 		<label for="transferTargetAddress">Transfer target address:&nbsp;</label><input type="text" id="transferTargetAddress" style="width:250px;" value="Enter valid Bitcoin address" />&nbsp;&nbsp;
 		<div id="balanceSheetProgress"></div>
 		<button id="transferAllAccountsButton" onclick="onTransferAllAccountsClick()">Transfer All Accounts Funds</button>
-		<div id="balanceSheetAssetsHeader">Assets</div>
+		<div id="balanceSheetAssetsHeader" class="tableHeader">Assets</div>
 		<div id="balanceSheetAssets"></div>
-		<div id="balanceSheetLiabilitiesHeader">Liabilities</div>
-		<div id="balanceSheetLiabilities"></div>
+		<div id="balanceSheetLiabilitiesHeader" class="tableHeader">Liabilities</div>
+		<div id="balanceSheetLiabilities" class="tableHeader"></div>
+		<div id="dividendTransactionsTableHeader" class="tableHeader">Dividend Transactions</div>
+		<div id="dividendTransactionsTable"></div>
 	</body>
 </html>

@@ -41,6 +41,10 @@ exports.pluginInfo = {
 		{
 			external : "admin_transferAccountFunds",
 			internal : "rpc_transferAccountFunds"
+		},
+		{
+			external : "admin_getInvestmentsHistory",
+			internal : "rpc_getInvestmentsHistory"
 		}
 	],
 	"dbschema":{},
@@ -80,10 +84,10 @@ exports.onCreateColumn = () => {
 
 exports.createColumn = (columnName, columnSchema, connection, databaseName, tableName) => {
 	console.log("   Attempting to create new column: \""+columnName+"\" ("+JSON.stringify(columnSchema)+")");	
-	connection.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(error, result, fields) {
-		if (error==null) {
+	db.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(result) {
+		if (result.error == null) {
 			console.log ("      Column \"" + columnName + "\" successfully created on table \"" + tableName + "\".");
-		} else if (error.toString().indexOf("ER_DUP_FIELDNAME") > -1) {
+		} else if (result.error.toString().indexOf("ER_DUP_FIELDNAME") > -1) {
 			console.log ("      Column \"" + columnName + "\" already exists on table \"" + tableName + "\". Skipping.");
 		} else {
 			console.log ("      Error creating column \""+columnName+"\" on table \"" + tableName + " \": "+error);
@@ -137,6 +141,30 @@ var rpc_getRakeStats = function* (postData, requestObj, responseObj, batchRespon
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
 }
 exports.rpc_getRakeStats = rpc_getRakeStats;
+
+/**
+* Retrieves the dividend payment / distribution history, at time of processing, for all active investments.
+*/
+var rpc_getInvestmentsHistory = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
+	var generator = yield;
+	var requestData = JSON.parse(postData);		
+	var responseData = new Array();		
+	var historyQueryResult = yield db.query("SELECT * FROM `gaming`.`investments_history` ORDER BY `last_update` DESC", generator);	
+	if (historyQueryResult.error != null) {
+		trace ("Database error on rpc_getInvestmentsHistory: "+historyQueryResult.error);
+		trace ("   Request ID: "+requestData.id);
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
+		return;
+	}
+	for (var count=0; count < historyQueryResult.rows.length; count++) {
+		var historyObj = new Object();
+		historyObj.history = JSON.parse(historyQueryResult.rows[count].history);
+		historyObj.timestamp = historyQueryResult.rows[count].last_update;
+		responseData.push(historyObj);
+	}
+	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
+}
+exports.rpc_getInvestmentsHistory = rpc_getInvestmentsHistory;
 
 var rpc_getAccounts = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;

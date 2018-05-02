@@ -26,7 +26,7 @@ exports.install = (pluginFilePath) => {
 	} catch (err) {		
 		try {			
 			pluginFilePath += ".js";
-			var pluginData = filesystem.readFileSync(pluginFilePath);		
+			var pluginData = filesystem.readFileSync(pluginFilePath);
 		} catch (err) {
 			trace ("   Plugin not found!");
 			return;
@@ -38,25 +38,52 @@ exports.install = (pluginFilePath) => {
 		rawRegistryData = "[]";
 		filesystem.writeFileSync(registryFilePath, rawRegistryData);
 	}
+	var updating = false; //is this an update rather than a new install?
 	_plugins = JSON.parse(rawRegistryData);	
 	pluginFilePath = "./"+pluginFilePath;
+	try {
+		var newPlugin = require(pluginFilePath);
+	} catch (err) {
+		trace ("   Error loading plugin:\n"+err);
+		return;
+	}
+	var pluginFileVersion = newPlugin.pluginInfo.version;
 	trace ("   Using install path: "+pluginFilePath);
+	trace ("   Detected install plugin version: "+pluginFileVersion);
 	var pluginObj = new Object();
 	pluginObj.path = pluginFilePath;
 	var verify = false;
 	for (var count=0; count<_plugins.length; count++) {
-		if (_plugins[count].path == pluginFilePath) {
+		var newerVersionIndex = newerVersion(_plugins[count].version, pluginFileVersion); 
+		if ((_plugins[count].path == pluginFilePath) && (newerVersionIndex == 0)) {
 			verify = true;
 			trace ("   Plugin already installed? Searching installation...");
 			break;
 		}
+		if ((_plugins[count].path == pluginFilePath) && (newerVersionIndex == 1)) {
+			trace ("   Existing plugin already at latest version "+_plugins[count].version+" (installation plugin version "+pluginFileVersion+")");
+			break;
+		}
+		if ((_plugins[count].path == pluginFilePath) && (newerVersionIndex == 2)) {
+			updating = true;
+			trace ("   Updating existin plugin from version "+_plugins[count].version+" to version "+pluginFileVersion);
+			break;
+		}
 	}	
 	try {
-		var newPlugin = require(pluginFilePath);
 		if (verify == false) {
 			trace ("   Installing \""+newPlugin.pluginInfo.name+" v"+newPlugin.pluginInfo.version+"\"...");			
 			pluginObj.version = newPlugin.pluginInfo.version;
-			_plugins.push(pluginObj);
+			if (!updating) {
+				_plugins.push(pluginObj);
+			} else {
+				for (count = 0; count < _plugins.length; count++) {
+					if (_plugins[count].path == pluginFilePath) {
+						_plugins[count].version = newPlugin.pluginInfo.version;
+						break;
+					}
+				}
+			}
 			filesystem.writeFileSync(registryFilePath, JSON.stringify(_plugins));
 			exports._activePluginInstalls++;
 			newPlugin.install(exports.onInstall);
@@ -64,8 +91,41 @@ exports.install = (pluginFilePath) => {
 			trace ("   Found existing plugin: \""+newPlugin.pluginInfo.name+" v"+newPlugin.pluginInfo.version+"\"");	
 		}	
 	} catch (err) {
-		trace ("   Error Loading plugin: "+err);		
+		trace ("   Error installing plugin: \n"+err);		
 	}
+}
+
+/**
+* Compares two simple version values (major.minor) and returns the parameter index of the newer or latest one.
+*
+* @param versionString1 The first version string to compare.
+* @param versionString2 The second version string to compare.
+*
+* @return -1 if the comparison couldn't be completed (invalid input), 0 if both versions are the same, 1 if versionString1 is the newest or latest,
+* and 2 if versionString2 is the newest or latest.
+*/
+function newerVersion (versionString1, versionString2) {
+	try {
+		var verSplit1 = versionString1.split(".");
+		var verSplit2 = versionString2.split(".");
+		if ((verSplit1.length > 2) || (verSplit2.length > 2)) {
+			return (-1);
+		}
+		if (parseInt(verSplit1[0]) > parseInt(verSplit2[0])) {
+			return (1);
+		} else if (parseInt(verSplit1[0]) < parseInt(verSplit2[0])) {
+			return (2);
+		}
+		//...major version is the same
+		if (parseInt(verSplit1[1]) > parseInt(verSplit2[1])) {
+			return (1);
+		} else if (parseInt(verSplit1[1]) < parseInt(verSplit2[1])) {
+			return (2);
+		}
+	} catch (err) {
+		return (-1);
+	}
+	return (0);
 }
 
 /**
@@ -176,7 +236,7 @@ exports.timerHandler = () => {
 *
 * @return True if the named tfDefinition.func function is executable, false otherwise.
 */
-exports.timerFunctionCanExecute = (tfDefinition) => {	
+exports.timerFunctionCanExecute = (tfDefinition) => {
 	try {
 		if (typeof(tfDefinition.plugin[tfDefinition.func]) == "function") {
 			return (true)
@@ -200,26 +260,34 @@ exports.timerFunctionExecute = (tfDefinition) => {
 	var hours = parseInt(timeSplit[0]);
 	var minutes = parseInt(timeSplit[1]);
 	var now = new Date();
-	//trigger immediately on startup, used for testing:
-	//hours = now.getHours();
-	//minutes = now.getMinutes();
 	var h24MS = 86400000; //24 hours in milliseconds
 	var h12MS = 43200000; //12 hours in milliseconds
 	//var h1MS = 3600000; //1 hour in milliseconds
-	if ((tfDefinition["lastCalled"] == undefined) || (tfDefinition["lastCalled"] == null)) {
+	if ((tfDefinition["lastCalled"] == undefined) || (tfDefinition["lastCalled"] == null) || (isNaN(tfDefinition["lastCalled"]))) {
 		tfDefinition.lastCalled = Date.now() - h24MS; //default: last called 24 hours ago
 	}
+	//testing section starts: trigger immediately
+	//hours = now.getHours();
+	//minutes = now.getMinutes();
+	//testing section ends
 	if ((hours == now.getHours()) && (minutes == now.getMinutes()) && ((Date.now() - tfDefinition.lastCalled) > h12MS)) {
 		if ((tfDefinition.plugin.pluginInfo != undefined) && (tfDefinition.plugin.pluginInfo != null)) {
-			trace ("Trigerring timed execution in plugin \""+tfDefinition.plugin.pluginInfo.name+"\" @ "+now.toTimeString());
+			trace ("Trigerring timed function \""+tfDefinition.func+"\" in plugin \""+tfDefinition.plugin.pluginInfo.name+"\" @ "+now.toTimeString());
 		} else {
-			trace ("Trigerring timed execution in global scope @ "+now.toTimeString())				
+			trace ("Trigerring timed function \""+tfDefinition.func+"\" in global scope @ "+now.toTimeString())				
 		}
-		var gen = tfDefinition.plugin[tfDefinition.func](); //execute generator
-		gen.next();
-		gen.next(gen);	
-		tfDefinition.lastCalled = Date.now();
+		try {
+			var gen = tfDefinition.plugin[tfDefinition.func](tfDefinition.plugin.scriptContext()); //execute generator
+			gen.next();
+			gen.next(gen);
+			tfDefinition.lastCalled = Date.now();
+		} catch (err) {
+			tfDefinition.lastCalled = Date.now();
+			trace ("Error executing timed function: \n\n"+err.stack+"\n");
+			return (false);
+		}
 		return (true);
+	} else {
 	}
 	return (false);
 }

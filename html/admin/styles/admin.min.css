@@ -3,9 +3,10 @@ td,th{border:1px solid black;padding:15px;text-align:left;width:20%;}
 .header{background-image:url(../../common/js/libs/tablesorter_themes/blue/bg.gif);cursor:pointer;font-weight:bold;background-repeat:no-repeat;background-position:center left;padding-left:20px;border-right:1px solid #dad9c7;margin-left:-1px;}
 .headerSortUp{background-image:url(../../common/js/libs/tablesorter_themes/blue/asc.gif);background-color:#3399FF;}
 .headerSortDown{background-image:url(../../common/js/libs/tablesorter_themes/blue/desc.gif);background-color:#3399FF;}
-#balanceSheetHeader{font-size:1.5em;}
-#balanceSheetAssetsHeader{font-size:1.25em;color:green;margin-top:20px;}
-#balanceSheetLiabilitiesHeader{font-size:1.25em;color:red;margin-top:20px;}
+.tableHeader{font-size:1.5em;margin-top:20px;}
+#balanceSheetHeader{}
+#balanceSheetAssetsHeader{font-size:1.25em;color:green;}
+#balanceSheetLiabilitiesHeader{font-size:1.25em;color:red;}
 #balanceSheetAssets .assetsTotalRow td{background:black;color:white;}
 #balanceSheetAssets .assetsTotalRow #balanceTotal{font-size:1.1em;}
 #balanceSheetLiabilities .liabilitiesTotalRow td{background:black;color:white;}

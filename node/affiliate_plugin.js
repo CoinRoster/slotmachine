@@ -614,10 +614,10 @@ exports.columnIsPrimaryKey = (columnSchema) => {
 
 exports.createColumn = (columnName, columnSchema, connection, databaseName, tableName) => {
 	console.log("   Attempting to create new column: \""+columnName+"\" ("+JSON.stringify(columnSchema)+")");	
-	connection.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(error, result, fields) {
-		if (error==null) {
+	db.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(result) {
+		if (result.error == null) {
 			console.log ("      Column \"" + columnName + "\" successfully created on table \"" + tableName + "\".");
-		} else if (error.toString().indexOf("ER_DUP_FIELDNAME") > -1) {
+		} else if (result.error.toString().indexOf("ER_DUP_FIELDNAME") > -1) {
 			console.log ("      Column \"" + columnName + "\" already exists on table \"" + tableName + "\". Skipping.");
 		} else {
 			console.log ("      Error creating column \""+columnName+"\" on table \"" + tableName + " \": "+error);
