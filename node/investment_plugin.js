@@ -247,7 +247,7 @@ exports.createColumn = (columnName, columnSchema, connection, databaseName, tabl
 		} else if (result.error.toString().indexOf("ER_DUP_FIELDNAME") > -1) {
 			console.log ("      Column \"" + columnName + "\" already exists on table \"" + tableName + "\". Skipping.");
 		} else {
-			console.log ("      Error creating column \""+columnName+"\" on table \"" + tableName + " \": "+error);
+			console.log ("      Error creating column \""+columnName+"\" on table \"" + tableName + " \": "+result.error);
 		}
 		exports.onCreateColumn();
 	});	
