@@ -76,6 +76,9 @@ var timer_payDividends = function *(context)  {
 			trace("Affiliate Plugin, required to calculate credit deductions, not found!");
 			global.logTx("Affiliate Plugin, required to calculate credit deductions, not found!");
 		}
+		var gen = affiliate_plugin.applyAffiliateGamePlayCredits(); //apply game play credits
+		gen.next();
+		gen.next(gen);
 		historyObj.investments = new Array();
 		for (var invCount = 0; invCount < investmentsQueryResult.rows.length; invCount++) {
 			var localHistoryObj = new Object();
@@ -157,7 +160,7 @@ var timer_payDividends = function *(context)  {
 			global.logTx ("   Bankroll/investment gains, pre-rake (investment_btc_gains): "+investment_btc_gains.toString(10));
 			global.logTx("   Rake deduction percent: "+exports.pluginInfo.rake.percent.toString(10));
 			global.logTx("   Rake amount (rake_amount_btc): "+rake_amount_btc.toString(10));	
-			global.logTx("   Affiliate amount (affiliate_amount_btc): "+affiliate_amount_btc.toString(10));
+			global.logTx("   Aggregate Affiliate amount (affiliate_amount_btc): "+affiliate_amount_btc.toString(10));
 			var investment_btc_gains = investment_btc_gains.minus(rake_amount_btc).minus(affiliate_amount_btc);
 			localHistoryObj.net_dividend_btc = investment_btc_gains.toString(10);
 			trace ("   Bankroll/investment gains raked (investment_btc_gains): "+investment_btc_gains.toString(10));
@@ -250,8 +253,10 @@ var timer_payDividends = function *(context)  {
 						global.logTx("   Investment balance in Bitcoin at time of last calculation: "+valid_user_investment_balance_btc.toString(10));
 						global.logTx("   User investment balance in Bitcoin at time of last calculation: "+valid_user_investment_btc.toString(10));
 						//perform calculations but exclude rake account
-						if (validResult.account != exports.pluginInfo.rake.address) {					
+						if (validResult.account != exports.pluginInfo.rake.address) {	
+							trace ("processing NON-RAKE account...");
 							var paramObject = new Object();
+							paramObject.affiliate_btc_credit = new BigNumber(0);
 							paramObject.investment_btc_balance = investment_btc_balance;					
 							paramObject.investment_btc_balance_snapshot = investment_btc_balance_snapshot ;
 							paramObject.investment_btc_balance_delta = investment_btc_balance_delta ;
@@ -280,6 +285,7 @@ var timer_payDividends = function *(context)  {
 									//return;
 								}
 							}
+							var affiliate_btc_credit = paramObject.affiliate_btc_credit;
 							investment_btc_balance = paramObject.investment_btc_balance;
 							investment_btc_balance_snapshot = paramObject.investment_btc_balance_snapshot;
 							investment_btc_balance_delta = paramObject.investment_btc_balance_delta;
@@ -287,6 +293,7 @@ var timer_payDividends = function *(context)  {
 							investment_btc_gains = paramObject.investment_btc_gains;
 							snapshot_available = paramObject.snapshot_available;
 							rake_amount_btc = paramObject.rake_amount_btc;
+							localHistoryObj.rake_amount_btc = rake_amount_btc.toString(10);
 							affiliate_amount_btc = paramObject.affiliate_amount_btc;
 							current_user_investment_btc = paramObject.current_user_investment_btc;
 							current_user_investment_balance_btc = paramObject.current_user_investment_balance_btc;
@@ -294,8 +301,9 @@ var timer_payDividends = function *(context)  {
 							valid_user_investment_btc = paramObject.valid_user_investment_btc;
 							valid_user_investment_balance_btc = paramObject.valid_user_investment_balance_btc;
 							valid_user_ownership_percent = paramObject.valid_user_ownership_percent;
-							total_gains_dist_btc = paramObject.total_gains_dist_btc;					
-							var user_dividend = investment_btc_gains_full.times(valid_user_ownership_percent).minus(rake_amount_btc.times(valid_user_ownership_percent)).minus(affiliate_amount_btc.times(valid_user_ownership_percent));										
+							total_gains_dist_btc = paramObject.total_gains_dist_btc;
+							var affiliate_deduction_btc = affiliate_amount_btc.times(valid_user_ownership_percent);
+							var user_dividend = investment_btc_gains_full.times(valid_user_ownership_percent).minus(rake_amount_btc.times(valid_user_ownership_percent)).minus(affiliate_deduction_btc);
 							total_gains_dist_btc = total_gains_dist_btc.plus(user_dividend);					
 							current_user_investment_btc = current_user_investment_btc.plus(user_dividend);
 							validInvestment.user_investment_btc = current_user_investment_btc.toString(10);
@@ -323,8 +331,12 @@ var timer_payDividends = function *(context)  {
 								for (var count3=0; count3 < validInvestments.length; count3++) {
 									message += "   "+validInvestments[count3].investment_id+": BTC"+validInvestments[count3].user_investment_btc+" (yours) / BTC"+validInvestments[count3].investment_balance_btc+" (total)\n";
 								}							
-								//accountPlugin.sendEmail("myfruitgame@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
+								accountPlugin.sendEmail("myfruitgame@gmail.com", accountQueryResult.rows[0].email, "Investment Update (Distribution)", message);							
 							}
+							//apply affiliate credits
+							gen = affiliate_plugin.applyAffiliateInvestmentCredits(currentResult.account, affiliate_btc_credit, investmentsQueryResult.rows[invCount]);
+							gen.next();
+							gen.next(gen);
 							var txInfo = new Object();
 							txInfo.info = new Object();
 							txInfo.info = new Object();
@@ -359,11 +371,10 @@ var timer_payDividends = function *(context)  {
 			trace ("Total daily investment gains, in Bitcoin (investment_btc_gains_full): "+investment_btc_gains_full);
 			trace ("Allocated daily investment gains, in Bitcoin (total_gains_dist_btc): "+total_gains_dist_btc);
 			var unallocated_gains_btc = investment_btc_gains_full.minus(total_gains_dist_btc);
-			trace ("Unallocated daily investment gains going to rake, in Bitcoin (unallocated_gains_btc): "+unallocated_gains_btc);	
+			trace ("Unallocated daily investment gains going to rake, in Bitcoin (unallocated_gains_btc): "+unallocated_gains_btc);			
 			if (currentRakeAccountResult == null) {
 				investments = new Array();
 				var investmentObj = new Object();
-				//investmentObj.investment_id = "smb";
 				investmentObj.investment_id = investmentsQueryResult.rows[invCount].id;
 				trace ("Rake account receiving initial credit of (BTC): "+unallocated_gains_btc.toString(10));
 				investmentObj.user_investment_btc = unallocated_gains_btc.toString(10);
@@ -375,19 +386,16 @@ var timer_payDividends = function *(context)  {
 			} else {		
 				var investments = JSON.parse(currentRakeAccountResult.investments);
 				for (var count = 0; count<investments.length; count++) {
-					//if (investments[count].investment_id == "smb") {
-						investmentObj = investments[count];
-						var current_rake_balance_btc = new BigNumber(investmentObj.user_investment_btc);
-						trace ("Rake account current balance (BTC): "+current_rake_balance_btc.toString(10));
-						trace ("Applying rake credit (BTC): "+unallocated_gains_btc.toString(10));
-						current_rake_balance_btc = current_rake_balance_btc.plus(unallocated_gains_btc);				
-						investmentObj.user_investment_btc = current_rake_balance_btc.toString(10);
-						investmentObj.investment_balance_btc = investment_btc_total_balance.toString(10);
-						investmentObj.user_investment_base_btc = "0";
-						total_gains_dist_btc = total_gains_dist_btc.plus(unallocated_gains_btc);
-						unallocated_gains_btc = total_gains_dist_btc.minus(unallocated_gains_btc);
-						break;
-					//}
+					investmentObj = investments[count];
+					var current_rake_balance_btc = new BigNumber(investmentObj.user_investment_btc);
+					trace ("Rake account current balance (BTC): "+current_rake_balance_btc.toString(10));
+					trace ("Applying rake credit (BTC): "+unallocated_gains_btc.toString(10));
+					current_rake_balance_btc = current_rake_balance_btc.plus(unallocated_gains_btc);				
+					investmentObj.user_investment_btc = current_rake_balance_btc.toString(10);
+					investmentObj.investment_balance_btc = investment_btc_total_balance.toString(10);
+					investmentObj.user_investment_base_btc = "0";
+					total_gains_dist_btc = total_gains_dist_btc.plus(unallocated_gains_btc);
+					unallocated_gains_btc = total_gains_dist_btc.minus(unallocated_gains_btc);
 				}		
 			}		
 			//add new row to 'investment_txs' table	

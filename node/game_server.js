@@ -84,7 +84,7 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 	var serviceResponse = yield getNewAccountAddress(generator);
 	//Hard-coded address response for testing:
 	//var serviceResponse = new Object();
-	//serviceResponse.address = "TEST";
+	//serviceResponse.address = "TEST2";
 	if ((serviceResponse["error"] != null) && (serviceResponse["error"] != undefined)) {
 		trace ("API error response on RPC_newGamingAccount: "+serviceResponse.error);		
 		trace ("   Request ID: "+requestData.id);
@@ -439,8 +439,7 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 		var btc_per_satoshis = new BigNumber("0.00000001");
 		live = true;
 		var accountInfo = yield checkAccountBalance(generator, requestData.params.account);
-		if ((accountInfo != undefined) && (accountInfo != "undefined")) {
-			//trace (JSON.stringify(accountInfo));
+		if ((accountInfo != null) && (accountInfo != undefined) && (accountInfo != "undefined")) {
 			var update_btc_balance_conf = new BigNumber(String(accountInfo.balance)); //convert from Satoshis to Bitcoin
 			update_btc_balance_conf = update_btc_balance_conf.times(btc_per_satoshis);
 			var update_btc_balance_unc = new BigNumber(String(accountInfo.unconfirmed_balance)); //convert from Satoshis to Bitcoin
@@ -2176,7 +2175,7 @@ var busyAccounts = [];
 function checkAccountBalance(generator, account) {
 	for (var count=0; count < busyAccounts.length; count++) {
 		if (busyAccounts[count] == account) {
-			generator.next(null);
+			setTimeout(function(){generator.next(null);}, 1);
 		}
 	}
 	busyAccounts.push(account);

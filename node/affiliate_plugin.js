@@ -235,7 +235,7 @@ var RPC_dividend_gen = function *(txRow, paramObject, parentGenerator) {
 		return;
 	}
 	trace ("Applying affiliate dividend calculations to: "+affiliateQueryResult.rows[0].id);
-	trace ("affiliateQueryResult.rows[0].balance="+affiliateQueryResult.rows[0].balance);
+	trace ("                                    Account: "+affiliateQueryResult.rows[0].account);
 	if ((affiliateQueryResult.rows[0].balance == null) || (affiliateQueryResult.rows[0].balance == "NULL") || (affiliateQueryResult.rows[0].balance == "")) {
 		affiliateQueryResult.rows[0].balance = "{}";
 	}	
@@ -248,7 +248,7 @@ var RPC_dividend_gen = function *(txRow, paramObject, parentGenerator) {
 		affiliateBalance.btc = "0";
 	}
 	paramObject.affiliate_btc_balance = new BigNumber(affiliateBalance.btc);
-	trace("                paramObject.affiliate_btc_balance pre="+paramObject.affiliate_btc_balance);
+	paramObject.affiliate_btc_credit = new BigNumber(0); 
 	var actionRow = getActionTriggerRow("dividend");	
 	var script = null;
 	if (actionRow != null) {
@@ -263,6 +263,8 @@ var RPC_dividend_gen = function *(txRow, paramObject, parentGenerator) {
 	} catch (err) {
 		trace (err);
 	}
+	trace ("   Investment affiliate credit: "+paramObject.affiliate_btc_credit);
+	/*
 	affiliateBalance.btc = paramObject.affiliate_btc_balance.toString(10);
 	var insertFields = "`id`,";		
 	insertFields += "`account`,";		
@@ -285,7 +287,8 @@ var RPC_dividend_gen = function *(txRow, paramObject, parentGenerator) {
 		parentGenerator.next({"code":serverConfig.JSONRPC_SQL_ERROR, "message":"The database returned an error."});
 		return;
 	}
-	trace ("Affiliate \""+affiliateID+"\" balance updated to: "+affiliateBalance.btc+" (BTC)");				
+	trace ("Affiliate \""+affiliateID+"\" balance updated to: "+affiliateBalance.btc+" (BTC)");
+	*/
 	setTimeout(function() {parentGenerator.next(null);},1);
 }
 exports.RPC_dividendGen = RPC_dividend_gen;
@@ -667,7 +670,7 @@ exports.aggregateAffiliateCredits = (affiliateQueryResult) => {
 	}
 	var historyObj = new Object(); //processing history for affiliates to prevent duplicate calculations
 	for (var count=0; count < affiliateQueryResult.rows.length; count++) {		
-		var currentRow = affiliateQueryResult.rows[count];				
+		var currentRow = affiliateQueryResult.rows[count];
 		var affiliateID = currentRow.id;
 		var account = currentRow.account;
 		var balanceObj = JSON.parse(currentRow.balance);
@@ -685,6 +688,123 @@ exports.aggregateAffiliateCredits = (affiliateQueryResult) => {
 	return (returnObj);
 }
 
+var applyAffiliateGamePlayCredits = function* () {
+	var generator = yield;
+	var previousContrTotals = new Object();
+	var accountCreditTotals = new Object();
+	var affStartDateObj=new Date();
+	affStartDateObj.setHours(affStartDateObj.getHours()-24); //24 hours prior to now
+	var affEndDateObj=new Date(); //now
+	var startPeriodAff = getMySQLTimeStamp(affStartDateObj);
+	var endPeriodAff = getMySQLTimeStamp(affEndDateObj);
+	var affiliateQuerySQL = "SELECT * FROM `gaming`.`affiliates` WHERE `last_update` BETWEEN \""+startPeriodAff+"\" AND \""+endPeriodAff+"\" ORDER BY `index` ASC";
+	var affiliateQueryResult = yield db.query(affiliateQuerySQL, generator);
+	for (var count = 0; count < affiliateQueryResult.rows.length; count++) {
+		var currentAffiliateRow = affiliateQueryResult.rows[count];
+		var targetAccount = currentAffiliateRow.account;
+		var last_update = new Date(currentAffiliateRow.last_update);
+		var balanceObj = JSON.parse(currentAffiliateRow.balance);
+		var total_contributions = new BigNumber(0);
+		for (var contributorAccount in balanceObj.contributions) {
+			var currentContribution = balanceObj.contributions[contributorAccount];
+			if (previousContrTotals[contributorAccount] != currentContribution.btc_total) {
+				if ((accountCreditTotals[targetAccount] == null) || (accountCreditTotals[targetAccount] == undefined)) {
+					accountCreditTotals[targetAccount] = new BigNumber(0);
+				}
+				accountCreditTotals[targetAccount] = accountCreditTotals[targetAccount].plus(new BigNumber(currentContribution.btc)); //add the current contribution
+			}
+			previousContrTotals[contributorAccount] = currentContribution.btc_total;
+		}
+	}
+	for (var account in accountCreditTotals) {
+		var accountQuerySQL = "SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+account+"\" ORDER BY `index` DESC LIMIT 1";
+		var accountQueryResult = yield db.query(accountQuerySQL, generator);
+		var currentAccountRow = accountQueryResult.rows[0]; //should exist!
+		var current_available_balance_btc = new BigNumber(currentAccountRow.btc_balance_available);
+		trace ("Applying affiliate game credit to account: "+account+" with "+accountCreditTotals[account].toString(10));
+		trace ("   Current account balance: "+current_available_balance_btc.toString(10));
+		current_available_balance_btc = current_available_balance_btc.plus(accountCreditTotals[account]);
+		trace ("   Updated account balance: "+current_available_balance_btc.toString(10));
+		var dbUpdates = "`btc_balance_available`=\""+current_available_balance_btc.toString(10)+"\",";
+		dbUpdates += "`last_login`=NOW(),";	
+		dbUpdates += "`last_deposit_check`=NOW()";	
+		//update gaming.accounts
+		var txInfo = new Object();
+		txInfo.type = "affiliate_credit";
+		txInfo.subType = "game";
+		txInfo.info = new Object();
+		txInfo.info.btc = accountCreditTotals[targetAccount].toString(10);
+		txInfo.info.btc_total = accountCreditTotals[account].toString(10);
+		txInfo.info.btc_balance = current_available_balance_btc.toString(10);
+		var accountUpdateResult = yield global.updateAccount(accountQueryResult, dbUpdates, txInfo, generator);
+		if (accountUpdateResult.error != null) {
+			trace ("Database error on applyAffiliateGamePlayCredits: "+accountUpdateResult.error);
+		}
+	}
+}
+exports.applyAffiliateGamePlayCredits = applyAffiliateGamePlayCredits;
+
+/**
+* @param account The affiliate account / address -- or the address providing the credit. This will be cross-referenced to determine what parent account, if any, to apply the credit to.
+* @param creditAmount The amount to credit to the affiliate's parent account.
+* @param investmentInfo Info object (result row) containing information about the investment being applied.
+*/
+var applyAffiliateInvestmentCredits = function* (account, creditAmount, investmentInfo) {
+	var generator = yield;
+	//look up affiliate account to determine registered affiliate id (if any)
+	var accountQuerySQL = "SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+account+"\" ORDER BY `index` DESC LIMIT 1";
+	var accountQueryResult = yield db.query(accountQuerySQL, generator);
+	var currentAccountRow = accountQueryResult.rows[0];
+	if ((currentAccountRow == null) || (currentAccountRow == undefined)) {
+		trace ("Affiliate account \""+account+"\" not found.");
+		return;
+	}
+	if ((currentAccountRow["affiliate"] == "") || (currentAccountRow["affiliate"] == null) || (currentAccountRow["affiliate"] == "NULL") || (currentAccountRow["affiliate"] == undefined)) {
+		trace ("Affiliate account \""+account+"\" has no referrer.");
+		return;
+	}
+	//look up affiliate id in the affiliates from above step
+	var affiliateQuerySQL = "SELECT * FROM `gaming`.`affiliates` WHERE `id`=\""+currentAccountRow.affiliate+"\" ORDER BY `index` DESC LIMIT 1";
+	var affiliateQueryResult = yield db.query(affiliateQuerySQL, generator);
+	var currentAffiliateRow = affiliateQueryResult.rows[0];
+	if ((currentAffiliateRow == "") || (currentAffiliateRow == null) || (currentAffiliateRow == "NULL")) {
+		trace ("Affiliate \""+currentAccountRow.affiliate+"\" not found. Can't apply credit of "+creditAmount.toString(10)+" BTC");
+		return;
+	}
+	//look up referrer (affiliate parent) account from affiliate row in step above
+	accountQuerySQL = "SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+currentAffiliateRow.account+"\" ORDER BY `index` DESC LIMIT 1";
+	accountQueryResult = yield db.query(accountQuerySQL, generator);
+	var currentAccountRow = accountQueryResult.rows[0];
+	if (accountQueryResult.rows.length == 0) {
+		trace ("Affiliate parent account (referer) not found: "+currentAffiliateRow.account);
+		return;
+	}
+	var current_available_balance_btc = new BigNumber(currentAccountRow.btc_balance_available);
+	trace ("Source affiliate account: "+account);
+	trace ("Crediting referrer account: "+currentAffiliateRow.account+" with "+creditAmount.toString(10)+" BTC");
+	trace ("   Current referrer account balance: "+current_available_balance_btc.toString(10));
+	current_available_balance_btc = current_available_balance_btc.plus(creditAmount);
+	trace ("   Updated referrer account balance: "+current_available_balance_btc.toString(10));
+	var dbUpdates = "`btc_balance_available`=\""+current_available_balance_btc.toString(10)+"\",";
+	dbUpdates += "`last_login`=NOW(),";	
+	dbUpdates += "`last_deposit_check`=NOW()";	
+	//update gaming.accounts
+	var txInfo = new Object();
+	txInfo.type = "affiliate_credit";
+	txInfo.subType = "investment";
+	txInfo.info = new Object();
+	txInfo.info.investment_id = investmentInfo.id;
+	txInfo.info.investment_name = investmentInfo.name;
+	txInfo.info.btc = creditAmount.toString(10);
+	txInfo.info.btc_total = creditAmount.toString(10);
+	txInfo.info.btc_balance = current_available_balance_btc.toString(10);
+	//affiliateQueryResult instead of accountQueryResult!
+	var accountUpdateResult = yield global.updateAccount(accountQueryResult, dbUpdates, txInfo, generator);
+	if (accountUpdateResult.error != null) {
+		trace ("Database error on applyAffiliateInvestmentCredits: "+accountUpdateResult.error);
+	}
+}
+exports.applyAffiliateInvestmentCredits = applyAffiliateInvestmentCredits;
 
 /**
 * Adds unique credits for an affiliate from the current row.

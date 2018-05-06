@@ -133,10 +133,7 @@ function findInvestment(investmentID, investmentArray) {
 		investmentArray = JSON.parse(investmentArray);
 	}
 	for (var count=0; count<investmentArray.length; count++) {
-		trace ("     investmentArray["+count+"]="+JSON.stringify(investmentArray[count]));
-		//trace ("      investmentID="+investmentID);
-		if (investmentArray[count].investment_id == investmentID) {			
-			trace ("matches!");
+		if (investmentArray[count].investment_id == investmentID) {
 			return (investmentArray[count]);
 		}
 	}

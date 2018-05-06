@@ -621,7 +621,7 @@ function buildTransactionTable(collatedTxArray) {
 	var previousLiveBalance = "0";
 	for (var count = 0; count < collatedTxArray.length; count++) {
 		var currentTx = collatedTxArray[count];		
-	//	alert (JSON.stringify(currentTx));
+		//alert (JSON.stringify(currentTx));
 		var txInfo = JSON.parse(currentTx.txInfo);		
 		var balanceAdd = addUserInvestments(txInfo);
 		var newRowHTML = "<tr>";		
@@ -754,7 +754,25 @@ function buildTransactionTable(collatedTxArray) {
 					} else {
 						newRowHTML = "";						
 					}
-					break;		
+					break;
+				case "affiliate_credit":
+					if (transactionTableOptions.affiliateHistory) {
+						try {
+							var rowHTML = "<td>Affiliate Credit - "+txInfo.subType+"</td>";
+							rowHTML += "<td>"+convertAmount(txInfo.info.btc_total, "btc", displayCurrency).toFormat()+"</td>";
+							rowHTML += "<td>"+convertAmount(txInfo.info.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
+							rowHTML += "<td>My Fruit Game</td>";
+						} catch (err) {
+							rowHTML = "<td>Affiliate Credit - pre-update</td>";
+							rowHTML += "<td>"+convertAmount(txInfo.btc_total, "btc", displayCurrency).toFormat()+"</td>";
+							rowHTML += "<td></td>";
+							rowHTML += "<td>My Fruit Game</td>";
+						}
+						newRowHTML += rowHTML;
+					} else {
+						newRowHTML = "";
+					}
+					break;
 				case null:
 					//no txInfo object included, this is an unsupported transaction type
 					newRowHTML = ""; 
@@ -948,7 +966,7 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 						rowHTML = "";
 					}
 					break;
-				default:					
+				default:	
 					break;
 			}			
 			returnHTML += rowHTML;
@@ -1358,11 +1376,7 @@ function onCompleteWithdraw(returnData) {
 
 //called by external window handler to start main functionality
 function setAccountInfo(accountInfoStr) {
-	alert ("setAccountInfo");
 	accountInfo = JSON.parse(accountInfoStr);
-	for (var item in accountInfo) {
-		alert (item+" = "+accountInfo[item]);
-	}
 	$("#depositButton").button();
     $("#depositButton").click(onDepositClick);
 	$("#investmentSelectorDeposit").menu();

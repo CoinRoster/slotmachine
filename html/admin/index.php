@@ -56,7 +56,8 @@
 	<body onload="start()">
 		<div id="rakeAccountHistoryHeader" class="tableHeader">Rake Account Transaction History</div>
 		<div id="rakeAccountHistory"></div>
-		<br/><br/>		
+		<div id="dividendTransactionsTableHeader" class="tableHeader">Dividend Transactions</div>
+		<div id="dividendTransactionsTable"></div>
 		<div id="balanceSheetHeader" class="tableHeader">Balance Sheet</div>
 		<label for="transferTargetAddress">Transfer target address:&nbsp;</label><input type="text" id="transferTargetAddress" style="width:250px;" value="Enter valid Bitcoin address" />&nbsp;&nbsp;
 		<div id="balanceSheetProgress"></div>
@@ -65,7 +66,5 @@
 		<div id="balanceSheetAssets"></div>
 		<div id="balanceSheetLiabilitiesHeader" class="tableHeader">Liabilities</div>
 		<div id="balanceSheetLiabilities" class="tableHeader"></div>
-		<div id="dividendTransactionsTableHeader" class="tableHeader">Dividend Transactions</div>
-		<div id="dividendTransactionsTable"></div>
 	</body>
 </html>
