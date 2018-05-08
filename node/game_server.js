@@ -315,7 +315,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 		}
 	} else {
 		if (queryResult.rows[0].deposit_complete) {
-			trace ("Deposit is completed...");
+			trace ("Deposit is complete...");
 			var accountInfo=yield checkAccountBalance(generator, requestData.params.account);
 			if ((accountInfo == null) || (accountInfo == undefined)) {
 				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_API_ERROR, "An external API cannot be reached.");

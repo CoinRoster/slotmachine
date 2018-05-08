@@ -320,13 +320,12 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 				btcBalanceVerified = new BigNumber(0);
 			}
 			//reset the database entry
-			//var dbUpdates = "`btc_balance_available`=\"0\",";	
 			var dbUpdates =  "`btc_balance_verified`=\"0\",";
+			dbUpdates +=  "`btc_balance_total`=\"0\",";
+			dbUpdates +=  "`btc_balance_total_previous`=\"0\",";
 			dbUpdates += "`btc_deposit_account`=\""+requestData.params.receiver+"\",";
 			dbUpdates += "`last_login`=NOW()";
 			//update gaming.accounts
-			global.logTx("   New confirmed balance in Bitcoin: "+currentBTCBalance.toString(10));
-			//global.logTx("   New availabble balance in Bitcoin: "+btcBalanceVerified.toString(10));
 			var txInfo = new Object();
 			txInfo.type = "withdrawal";
 			txInfo.subType = "internal";
