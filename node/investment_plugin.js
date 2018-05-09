@@ -1123,8 +1123,12 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 			return;
 		}
 		responseData.rake = new Array();
-		investmentTxsQueryResult.rows[0].investments = JSON.parse(investmentTxsQueryResult.rows[0].investments);
-		responseData.rake.push(investmentTxsQueryResult.rows[0]); //only return the latest row for the rake account
+		if ((investmentTxsQueryResult["rows"] != null) && (investmentTxsQueryResult["rows"] != undefined)) {
+			if (investmentTxsQueryResult.rows.length > 0) {
+				investmentTxsQueryResult.rows[0].investments = JSON.parse(investmentTxsQueryResult.rows[0].investments);
+				responseData.rake.push(investmentTxsQueryResult.rows[0]); //only return the latest row for the rake account
+			}
+		}
 	}
 	global.assertAnyValue("NaN", "0", responseData);
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
