@@ -61,7 +61,7 @@ exports.coldStorageAccounts = [
 	},
 	{	
 		"type":"tbtc",
-		"account":"n34ugLGjWSdebKLSRGJ3yWpkcRcjMF2BRC"
+		"account":"n3128z4TbBy36nYzrcQjXJZRDmNeYjZLCe"
 	}
 ]
 
