@@ -148,6 +148,7 @@ function transferAccountFunds(btcAmount, sourceAddress, targetAddress, sourceBut
 		targetAddress = $("#transferTargetAddress").val();
 	}
 	if ((targetAddress==null) || (targetAddress==undefined) || (targetAddress=="")) {
+		alert ("No target address specified. Cannot transfer funds.");
 		throw (new Error("No target address specified. Cannot transfer funds."));
 	}
 	var params = new Object();
