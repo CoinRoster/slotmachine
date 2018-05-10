@@ -19,7 +19,7 @@ var assetsTotal = new BigNumber(0);
 var liabilitiesTotal = new BigNumber(0);
 var satoshisPerBitcoin = new BigNumber("100000000"); //as described
 
-var defaultTransferTargetAddress = "mqRSzumcT9mXcjZbSr5LTsJXABAXpj42kQ"; // default transfer-to Bitcoin address for use with dormant accounts
+var defaultTransferTargetAddress = ""; // default transfer-to Bitcoin address for use with dormant accounts
 var blockchainAPI = new Object();
 blockchainAPI.mainnet = new Object();
 blockchainAPI.testnet = new Object();
