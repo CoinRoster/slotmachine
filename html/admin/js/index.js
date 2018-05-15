@@ -31,11 +31,11 @@ blockchainAPI.testnet.checkBalanceAddress = "https://testnet.blockchain.info/q/a
 
 
 
-function callServerMethod(methodName, params, resultCallback) {	
-	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};			
-	$.post(accountInfo.gameServerURL, 
+function callServerMethod(methodName, params, resultCallback) {
+	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};
+	$.post(accountInfo.gameServerURL,
 			JSON.stringify(request),
-			resultCallback);	
+			resultCallback);
 	request.callback = resultCallback;
 	rpcMsgID++;
 	return (request);
@@ -62,14 +62,14 @@ function getRakeStats() {
 }
 
 function getAssets() {
-	callServerMethod("admin_getAccounts",{"type":"havebalance, wallets, coldstorage"}, onGetAssets);	
+	callServerMethod("admin_getAccounts",{"type":"havebalance, wallets, coldstorage"}, onGetAssets);
 }
 
 function getLiabilities() {
 	callServerMethod("getInvestmentStats", {"user_balances":true, "investments_total":true, "investments_charts":true, "jackpots":true, "rake":true}, onGetLiabilities);
 }
 
-function onGetLiabilities(returnData) {	
+function onGetLiabilities(returnData) {
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		alert(returnData.error.message);
 	} else {
@@ -95,7 +95,7 @@ function onGetDividendTransactions(returnData) {
 		$("#dividendTransactionsTable").replaceWith(dtTable);
 		paginateSortableTable("#dividendTransactionsTable table", "#dividendTransactionsPager");
 	}
-	
+
 }
 
 function buildRakeTransactionTable(collatedTxArray) {
@@ -109,26 +109,26 @@ function buildRakeTransactionTable(collatedTxArray) {
 	returnHTML += "<tbody>";
 	var investmentHistory = new Object();
 	for (var count = 0; count < collatedTxArray.length; count++) {
-		try {			
-			var currentTx = collatedTxArray[count];						
+		try {
+			var currentTx = collatedTxArray[count];
 			for (var count2 = 0; count2 < currentTx.investments.length; count2++) {
 				var investmentID = currentTx.investments[count2].investment_id;
 				var investmentBalanceBTC = currentTx.investments[count2].user_investment_btc;
 				var userInvestmentBalanceBTC = currentTx.investments[count2].user_investment_btc;
-				var userInvestmentBaseBTC = currentTx.investments[count2].user_investment_base_btc;	
+				var userInvestmentBaseBTC = currentTx.investments[count2].user_investment_base_btc;
 				var rowHTML = "<tr>";
 				rowHTML += "<td>"
 				rowHTML += createDateTimeString(new Date(currentTx.timestamp));
-				rowHTML += "</td>";			
+				rowHTML += "</td>";
 				rowHTML += "<td>"+currentTx.name+"</td>";
 				rowHTML += "<td><span id\"rake_transaction\">"+currentTx.investments[count2].change+"</span></td>";
-				rowHTML += "<td>"+investmentBalanceBTC+"</td>";	
+				rowHTML += "<td>"+investmentBalanceBTC+"</td>";
 				rowHTML += "</tr>";
 				returnHTML += rowHTML;
 			}
 		} catch (err) {
 			alert (err);
-		}		
+		}
 	}
 	returnHTML += "</tbody></table></div>";
 	return (returnHTML);
@@ -303,6 +303,7 @@ function buildDividendTransactionsTable(resultArray) {
 	returnHTML += "<th class=\"header\">Description</th>";
 	returnHTML += "<th class=\"header\">Gross Dividend</th>";
 	returnHTML += "<th class=\"header\">Rake Amount</th>";
+	returnHTML += "<th class=\"header\">Affiliate Amount</th>";
 	returnHTML += "<th class=\"header\">Net Dividend</th>";
 	returnHTML += "<th class=\"header\">Balance</th>";
 	returnHTML += "</tr></thead>";
@@ -318,8 +319,10 @@ function buildDividendTransactionsTable(resultArray) {
 			currentRowHTML += "<td>"+createDateTimeString(new Date(currentItem.timestamp))+"</td>"; //Date
 			for (var count2 = 0; count2 < investmentsArr.length; count2++) {
 				var currentInvestment = investmentsArr[count2];
+				alert (JSON.stringify(currentInvestment));
 				currentRowHTML += "<td>"+currentInvestment.name+"</td>"; //Description
 				currentRowHTML += "<td>"+currentInvestment.gross_dividend_btc+"</td>"; //Gross Dividend
+				currentRowHTML += "<td>"+currentInvestment.affiliate_amount_btc+"</td>"; //Dividend Affiliate Amount
 				currentRowHTML += "<td>"+currentInvestment.rake_amount_btc+"</td>"; //Rake Amount
 				currentRowHTML += "<td>"+currentInvestment.net_dividend_btc+"</td>"; //Net Dividend
 				currentRowHTML += "<td>"+currentInvestment.balance_btc+"</td>"; //Balance
@@ -512,7 +515,7 @@ function insertInvestmentDeltas(previousInvestmentsTx, currentInvestmentsTx) {
 			if (previousTx != null) {
 				previousInvBalance = new BigNumber(previousTx.user_investment_btc);
 				currentInvBalance = new BigNumber(currentTx.user_investment_btc);
-				currentTx.delta = currentInvBalance.minus(previousInvBalance);				
+				currentTx.delta = currentInvBalance.minus(previousInvBalance);
 				currentTx.change = currentTx.delta.toString(10);
 				currentTx.delta = currentTx.delta.toString(10);
 			}
@@ -631,13 +634,13 @@ function generatePagerDiv(divID) {
 function updateTransactionDeltas(transactionsArr) {
 	var previousTxs = new Object();
 	for (var count=0; count < transactionsArr.length ; count++) {
-		var currentTx = transactionsArr[count];		
+		var currentTx = transactionsArr[count];
 		insertInvestmentDeltas(previousTxs[currentTx.name], currentTx);
 		previousTxs[currentTx.name] = currentTx;
 	}
 }
 
-function onGetRakeStats(returnData) {	
+function onGetRakeStats(returnData) {
 	console.log(JSON.stringify(returnData));
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		alert (returnData.error.message);
@@ -688,7 +691,7 @@ function start() {
 	// COMMENT SECTION BELOW IF STARTING AS POPUP
 	accountInfo.playerAccount = localStorage.playerAccount;
 	accountInfo.playerPassword = localStorage.playerPassword;
-	accountInfo.gameServerURL = localStorage.gameServerURL;	
+	accountInfo.gameServerURL = localStorage.gameServerURL;
 	getRakeStats();
 	// COMMENT SECTION ABOVE IF STARTING AS POPUP
 	ready = true;
