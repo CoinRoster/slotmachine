@@ -34,7 +34,7 @@ exports.pluginInfo = {
 		{
 			external : "updateInvestorInfo",
 			internal : "rpc_updateInvestorInfo"
-		},		
+		},
 		{
 			external : "getInvestmentStats",
 			internal : "rpc_getInvestmentStats"
@@ -75,7 +75,7 @@ exports.pluginInfo = {
 		"percent":new BigNumber("0.05")
 	},
 	"affiliate": {
-		"percent":new BigNumber("0.05")
+		"percent":new BigNumber("0.01")
 	},
 	"onInstallCallback":null,
 	"activeInstalls":0,
@@ -119,8 +119,8 @@ function excludeDuplicate(dupField, queryResults) {
 	return (returnResults);
 }
 
-function getLastInvestmentTx(account, transactionResults) {		
-	for (var count=0; count < transactionResults.length; count++) {		
+function getLastInvestmentTx(account, transactionResults) {
+	for (var count=0; count < transactionResults.length; count++) {
 		if (transactionResults[count].account == account) {
 			return (transactionResults[count]);
 		}
@@ -151,7 +151,7 @@ function resultsContainValue (resultsArray, field, value) {
 
 // ---- PLUGIN INSTALLATION ROUTINES ----
 
-exports.install = (onInstallCallback) => {	
+exports.install = (onInstallCallback) => {
 	trace ("Triggered install process in "+exports.pluginInfo.name);
 	exports.pluginInfo.onInstallCallback = onInstallCallback;
 	db.connect(exports.onDBConnect, exports.onDBConnectFail);
@@ -169,15 +169,15 @@ exports.onDBConnect = (connection) => {
 				exports.createColumn (columnName, columnType, connection, global.database_name, tableName);
 			}
 		}
-	}	
+	}
 }
 
 exports.onDBConnectFail = () => {
 	exports.pluginInfo.onInstallCallback(false, "Could not establish connection to database.");
 }
 
-exports.onCreateColumn = () => {	
-	exports.pluginInfo.activeInstalls--;	
+exports.onCreateColumn = () => {
+	exports.pluginInfo.activeInstalls--;
 	if (exports.pluginInfo.activeInstalls == 0) {
 		db.closeAll();
 		exports.pluginInfo.onInstallCallback(true, exports.pluginInfo);
@@ -196,7 +196,7 @@ exports.createTable = (connection, databaseName, tableSchema, tableName) => {
 				console.log ("   Table \""+tableName+"\" already exists. Skipping.");
 			} else {
 				console.log ("   Error creating \""+tableName+"\": "+error);
-			}		
+			}
 		});
 	} else {
 		console.log ("   Primary key for table \""+tableName+"\": "+primaryKeyObj.column);
@@ -207,14 +207,14 @@ exports.createTable = (connection, databaseName, tableSchema, tableName) => {
 				console.log ("   Table \""+tableName+"\" already exists. Skipping.");
 			} else {
 				console.log ("   Error creating \""+tableName+"\": "+error);
-			}		
-		});	
+			}
+		});
 	}
 }
 
-exports.getPrimaryKeyForCreate = (tableSchema, tableName) => {	
+exports.getPrimaryKeyForCreate = (tableSchema, tableName) => {
 	for (var column in tableSchema) {
-		var currentColumn = tableSchema[column];		
+		var currentColumn = tableSchema[column];
 		if (exports.columnIsPrimaryKey(currentColumn)) {
 			var returnObj = new Object();
 			returnObj.SQLInsert = "(`"+tableName+"`.`"+column+"` BIGINT NOT NULL AUTO_INCREMENT, PRIMARY KEY (`"+column+"`));";
@@ -222,7 +222,7 @@ exports.getPrimaryKeyForCreate = (tableSchema, tableName) => {
 			returnObj.type = "BIGINT NOT NULL AUTO_INCREMENT";
 			return (returnObj);
 		}
-	}	
+	}
 	return (null);
 }
 
@@ -237,7 +237,7 @@ exports.columnIsPrimaryKey = (columnSchema) => {
 }
 
 exports.createColumn = (columnName, columnSchema, connection, databaseName, tableName) => {
-	console.log("   Attempting to create new column: \""+columnName+"\" ("+JSON.stringify(columnSchema)+")");	
+	console.log("   Attempting to create new column: \""+columnName+"\" ("+JSON.stringify(columnSchema)+")");
 	db.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(result) {
 		if (result.error == null) {
 			console.log ("      Column \"" + columnName + "\" successfully created on table \"" + tableName + "\".");
@@ -247,10 +247,10 @@ exports.createColumn = (columnName, columnSchema, connection, databaseName, tabl
 			console.log ("      Error creating column \""+columnName+"\" on table \"" + tableName + " \": "+result.error);
 		}
 		exports.onCreateColumn();
-	});	
+	});
 }
 
-exports.onInstallComplete = () => {	
+exports.onInstallComplete = () => {
 	exports.onInstallCallback (true, "Database successfully set up.");
 }
 
@@ -266,14 +266,14 @@ exports.start = (traceFunc) => {
 	if ((PAPMajor == 1) && (PAPMinor < 1)) {
 		trace ("Investment plugin requires Portable Account Plugin version 1.1 (minimum)! Some functions may fail.");
 	}
-	trace (exports.pluginInfo.name+" v "+exports.pluginInfo.version+" started."); 
+	trace (exports.pluginInfo.name+" v "+exports.pluginInfo.version+" started.");
 }
 
 var RPC_onBet_gen = function *(accountQueryResult, postData, betInfo, parentGenerator) {
 	var generator = yield;
 	var requestData = JSON.parse(postData);
 	trace ("Bet amount (BTC): "+betInfo.btc);
-	trace ("Jackpot deduction (BTC): "+betInfo.deduction);	
+	trace ("Jackpot deduction (BTC): "+betInfo.deduction);
 	//selects the newest row, by 'last_update'
 	var investmentQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`investments` GROUP BY `id`)", generator);
 	//var investmentQueryResult = yield db.query("SELECT * FROM (SELECT * FROM `gaming`.`investments` ORDER BY `last_update` DESC) x GROUP BY `id`", generator); //the "x" is a table alias required by MySQL
@@ -281,14 +281,14 @@ var RPC_onBet_gen = function *(accountQueryResult, postData, betInfo, parentGene
 		//how do we get this functionality into external files?
 		serverConfig.gameConfigs[requestData.params.gameID].bankrollID
 		switch (investmentQueryResult.rows[count].id) {
-			case serverConfig.gameConfigs[requestData.params.gameID].bankrollID:				
+			case serverConfig.gameConfigs[requestData.params.gameID].bankrollID:
 				trace ("   Updating \""+serverConfig.gameConfigs[requestData.params.gameID].bankrollID+"\" investment gains.");
 				if ((investmentQueryResult.rows[count].btc_gains==null) || (investmentQueryResult.rows[count].btc_gains=="") || (investmentQueryResult.rows[count].btc_gains==undefined)) {
 					investmentQueryResult.rows[count].btc_gains = "0";
 				}
-				var gainsBalance = new BigNumber(investmentQueryResult.rows[count].btc_gains);				
+				var gainsBalance = new BigNumber(investmentQueryResult.rows[count].btc_gains);
 				trace ("  Previous balance: "+gainsBalance.toString(10));
-				gainsBalance = gainsBalance.plus(betInfo.btc).minus(betInfo.deduction); //include jackpot deduction		
+				gainsBalance = gainsBalance.plus(betInfo.btc).minus(betInfo.deduction); //include jackpot deduction
 				investmentQueryResult.rows[count].btc_gains = gainsBalance.toString(10);
 				trace ("  New balance: "+gainsBalance.toString(10));
 				var insertFields = "`id`,";
@@ -298,7 +298,7 @@ var RPC_onBet_gen = function *(accountQueryResult, postData, betInfo, parentGene
 				insertFields += "`btc_total_balance`,";
 				insertFields += "`btc_gains`,";
 				insertFields += "`last_update`";
-				var insertValues = "\""+investmentQueryResult.rows[count].id+"\",";		
+				var insertValues = "\""+investmentQueryResult.rows[count].id+"\",";
 				insertValues += "\""+investmentQueryResult.rows[count].name+"\",";
 				if (investmentQueryResult.rows[count].btc_balance == null) {
 					insertValues += "NULL,";
@@ -322,33 +322,33 @@ var RPC_onBet_gen = function *(accountQueryResult, postData, betInfo, parentGene
 				var investmentUpdateResult = yield db.query(insertSQL, generator);
 				break;
 			default: break;
-		} 
-	}	
+		}
+	}
 	parentGenerator.next(null);
 }
 exports.RPC_onBetGen = RPC_onBet_gen;
 
-var RPC_onWin_gen = function *(accountQueryResult, postData, winInfo, parentGenerator) {	
+var RPC_onWin_gen = function *(accountQueryResult, postData, winInfo, parentGenerator) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);	
+	var requestData = JSON.parse(postData);
 	var investmentQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`investments` GROUP BY `id`)", generator);
 	//var investmentQueryResult = yield db.query("SELECT * FROM (SELECT * FROM `gaming`.`investments` ORDER BY `last_update` DESC) AS x GROUP BY `id`", generator);
-	trace ("Win amount (BTC): "+winInfo.btc);	
+	trace ("Win amount (BTC): "+winInfo.btc);
 	for (var count=0; count<investmentQueryResult.rows.length; count++) {
 		//how do we get this functionality into external files?
 		switch (investmentQueryResult.rows[count].id) {
-			case "bankroll":		
+			case "bankroll":
 				if ((investmentQueryResult.rows[count].btc_gains==null) || (investmentQueryResult.rows[count].btc_gains=="") || (investmentQueryResult.rows[count].btc_gains==undefined)) {
 					investmentQueryResult.rows[count].btc_gains = "0";
 				}
 				var gainsBalance = new BigNumber(investmentQueryResult.rows[count].btc_gains);
 				var previousGains = investmentQueryResult.rows[count].btc_gains;
-				gainsBalance = gainsBalance.minus(winInfo.btc); //include jackpot deduction	
+				gainsBalance = gainsBalance.minus(winInfo.btc); //include jackpot deduction
 				investmentQueryResult.rows[count].btc_gains = gainsBalance.toString(10);
 				/*
-				var dbUpdates = "`btc_gains`=\""+gainsBalance.toString(10)+"\",";	
-				dbUpdates += "`last_update`=NOW()";	
-				var investmentUpdateResult = yield db.query("UPDATE `gaming`.`investments` SET "+dbUpdates+" WHERE `index`="+investmentQueryResult.rows[0].index+" LIMIT 1", generator);				
+				var dbUpdates = "`btc_gains`=\""+gainsBalance.toString(10)+"\",";
+				dbUpdates += "`last_update`=NOW()";
+				var investmentUpdateResult = yield db.query("UPDATE `gaming`.`investments` SET "+dbUpdates+" WHERE `index`="+investmentQueryResult.rows[0].index+" LIMIT 1", generator);
 				*/
 				if (previousGains != gainsBalance.toString(10)) {
 					var insertFields = "`id`,";
@@ -358,7 +358,7 @@ var RPC_onWin_gen = function *(accountQueryResult, postData, winInfo, parentGene
 					insertFields += "`btc_total_balance`,";
 					insertFields += "`btc_gains`,";
 					insertFields += "`last_update`";
-					var insertValues = "\""+investmentQueryResult.rows[count].id+"\",";		
+					var insertValues = "\""+investmentQueryResult.rows[count].id+"\",";
 					insertValues += "\""+investmentQueryResult.rows[count].name+"\",";
 					if (investmentQueryResult.rows[count].btc_balance == null) {
 						insertValues += "NULL,";
@@ -377,7 +377,7 @@ var RPC_onWin_gen = function *(accountQueryResult, postData, winInfo, parentGene
 					}
 					insertValues += "\""+gainsBalance.toString(10)+"\",";
 					insertValues += "NOW(6)";
-	
+
 					trace ("   Adjusted gains balance for investment \""+investmentQueryResult.rows[count].id+"\": "+gainsBalance.toString(10));
 					trace ("RPC_onWin_gen inserting into investments table");
 					var insertSQL = "INSERT INTO `gaming`.`investments` ("+insertFields+") VALUES ("+insertValues+")";
@@ -385,48 +385,48 @@ var RPC_onWin_gen = function *(accountQueryResult, postData, winInfo, parentGene
 				}
 				break;
 			default: break;
-		} 
-	}	
+		}
+	}
 	parentGenerator.next(null);
 }
 exports.RPC_onWinGen = RPC_onWin_gen;
 
 exports.checkParameter = (requestData, param) => {
 	if ((requestData["params"] == null) || (requestData["params"] == undefined)) {
-		return ({"code":serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "message":"Required \"params\" not found in request."});		
+		return ({"code":serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "message":"Required \"params\" not found in request."});
 	}
-	if (requestData.params[param] == undefined) {		
-		return ({"code":serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "message":"Required parameter \""+param+"\" not found in request."});		
+	if (requestData.params[param] == undefined) {
+		return ({"code":serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "message":"Required parameter \""+param+"\" not found in request."});
 	}
 	return (null);
 }
 
 var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);		
-	var responseData = new Object();	
+	var requestData = JSON.parse(postData);
+	var responseData = new Object();
 	var checkResult = exports.checkParameter(requestData, "account");
 	if (checkResult != null) {
-		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);	
+		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);
 		return;
 	}
 	checkResult = exports.checkParameter(requestData, "password");
 	if (checkResult != null) {
-		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);	
+		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);
 		return;
 	}
 	checkResult = exports.checkParameter(requestData, "investment_id");
 	if (checkResult != null) {
-		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);	
+		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);
 		return;
 	}
 	checkResult = exports.checkParameter(requestData, "transaction");
 	if (checkResult != null) {
-		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);	
+		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);
 		return;
 	}
 	if ((requestData.params.transaction["deposit"] == undefined) && (requestData.params.transaction["withdraw"] == undefined)) {
-		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "No \"deposit\" or \"withdraw\" object found in transaction.");	
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "No \"deposit\" or \"withdraw\" object found in transaction.");
 		return;
 	}
 	if (isNaN(requestData.params["bankroll_multiplier"])) {
@@ -438,10 +438,10 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	}
 	var investmentQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `id`=\""+requestData.params.investment_id+"\" ORDER BY `index` DESC LIMIT 1", generator);
 	if (investmentQueryResult.error != null) {
-		trace ("Database error on rpc_updateInvestorInfo: "+investmentQueryResult.error);		
+		trace ("Database error on rpc_updateInvestorInfo: "+investmentQueryResult.error);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
 		return;
-	}	
+	}
 	if (investmentQueryResult.rows.length == 0) {
 		trace ("No matching investment: \""+requestData.params.investment_id+"\"");
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "No matching investment.", requestData.params.investment_id);
@@ -454,10 +454,10 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		return;
 	}
 	if (accountQueryResult.error != null) {
-		trace ("Database error on rpc_updateInvestorInfo: "+accountQueryResult.error);		
+		trace ("Database error on rpc_updateInvestorInfo: "+accountQueryResult.error);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
 		return;
-	}	
+	}
 	if (accountQueryResult.rows.length == 0) {
 		trace ("No matching account address: "+requestData.params.account);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "No matching account.", requestData.params.account);
@@ -485,7 +485,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	if ((investmentQueryResult.rows[0].btc_total_balance == null) || (investmentQueryResult.rows[0].btc_total_balance == "NULL") || (investmentQueryResult.rows[0].btc_total_balance == "")) {
 		var btc_investment_total_balance = new BigNumber(investmentQueryResult.rows[0].btc_balance);
 	} else {
-		var btc_investment_total_balance = new BigNumber(investmentQueryResult.rows[0].btc_total_balance);		
+		var btc_investment_total_balance = new BigNumber(investmentQueryResult.rows[0].btc_total_balance);
 	}
 	if (btc_balance_conf.equals(0)) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_ACTION_ERROR, "Deposit not yet confirmed.");
@@ -494,15 +494,15 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	//create transaction amount based on transaction type
 	if (depositing) {
 		try {
-			var btc_tx_amount = new BigNumber(requestData.params.transaction.deposit.btc);			
+			var btc_tx_amount = new BigNumber(requestData.params.transaction.deposit.btc);
 		} catch (err) {
 			trace ("Invalid deposit object format: "+err);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Invalid deposit transaction object. Expecting \"btc\":\"NUMERIC_VALUE\"");
 			return;
 		}
 	} else {
-		try {			
-			btc_tx_amount = new BigNumber(requestData.params.transaction.withdraw.btc);			
+		try {
+			btc_tx_amount = new BigNumber(requestData.params.transaction.withdraw.btc);
 		} catch (err) {
 			trace ("Invalid deposit object format: "+err);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Invalid deposit transaction object. Expecting \"btc\":\"NUMERIC_VALUE\"");
@@ -513,8 +513,8 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	var current_btc_balance_conf = new BigNumber(accountQueryResult.rows[0].btc_balance_verified);
 	var current_btc_balance_total = new BigNumber(accountQueryResult.rows[0].btc_balance_total);
 	var current_btc_balance_avail = new BigNumber(accountQueryResult.rows[0].btc_balance_available);
-	var current_btc_balance_total_previous = new BigNumber(accountQueryResult.rows[0].btc_balance_total_previous);	
-	var btc_per_satoshis = new BigNumber("0.00000001");	
+	var current_btc_balance_total_previous = new BigNumber(accountQueryResult.rows[0].btc_balance_total_previous);
+	var btc_per_satoshis = new BigNumber("0.00000001");
 	if (depositing) {
 		var accountInfo = yield checkAccountBalance(generator, requestData.params.account);
 		if ((accountInfo != undefined) && (accountInfo != null)) {
@@ -532,9 +532,9 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	var btc_balance_conf = current_btc_balance_conf;
 	var btc_balance_avail = current_btc_balance_avail;
 	var btc_balance_total = current_btc_balance_total;
-	var btc_balance_total_previous = current_btc_balance_total_previous;	
+	var btc_balance_total_previous = current_btc_balance_total_previous;
 	if (depositing) {
-		//check to make sure current account balance supports deposit (to investment)		
+		//check to make sure current account balance supports deposit (to investment)
 		btc_balance_avail = btc_balance_avail.minus(btc_tx_amount);
 		btc_investment_balance = btc_investment_balance.plus(btc_tx_amount);
 		btc_investment_total_balance = btc_investment_total_balance.plus(btc_tx_amount);
@@ -548,16 +548,16 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		btc_investment_total_balance = btc_investment_total_balance.minus(btc_tx_amount);
 	}
 	//get latest investor row
-	var investorQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\""+requestData.params.account+"\" ORDER BY  `last_update` DESC LIMIT 1", generator);	
-	var total_investment_amount = new BigNumber(0);		
+	var investorQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\""+requestData.params.account+"\" ORDER BY  `last_update` DESC LIMIT 1", generator);
+	var total_investment_amount = new BigNumber(0);
 	if (investorQueryResult.error != null) {
-		trace ("Database error on rpc_updateInvestorInfo: "+investorQueryResult.error);		
+		trace ("Database error on rpc_updateInvestorInfo: "+investorQueryResult.error);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
 		return;
-	}		
-	if (investorQueryResult.rows.length == 0) {		
+	}
+	if (investorQueryResult.rows.length == 0) {
 		if (!depositing) {
-			trace ("No investment records exist for specified account: "+requestData.params.account);		
+			trace ("No investment records exist for specified account: "+requestData.params.account);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "No investment records exist for specified account.");
 			return;
 		}
@@ -568,7 +568,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		try {
 			investmentObj.user_investment_btc = requestData.params.transaction.deposit.btc;
 			investmentObj.user_investment_base_btc = requestData.params.transaction.deposit.btc;
-			investmentObj.user_investment_exclude_btc = "0"; //requestData.params.transaction.deposit.btc; //the latest deposit/withdrawal by the user to be excluded from 
+			investmentObj.user_investment_exclude_btc = "0"; //requestData.params.transaction.deposit.btc; //the latest deposit/withdrawal by the user to be excluded from
 		} catch (err) {
 			trace ("Invalid initial deposit object format: "+err);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Invalid initial deposit transaction object. Expecting \"btc\":\"NUMERIC_VALUE\"");
@@ -611,16 +611,16 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 					investmentObj = currentInvestment;
 					investmentUpdated = true;
 				} catch (err) {
-					trace ("Couldn't update \"btc\" amount on investment object \""+requestData.params.investment_id+"\": "+err);		
+					trace ("Couldn't update \"btc\" amount on investment object \""+requestData.params.investment_id+"\": "+err);
 					replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
 					return;
 				}
 				break;
 			}
-		}	
+		}
 		if (!investmentUpdated) {
 			if (!depositing) {
-				trace ("Account \""+requestData.params.account+"\" has no investment in \""+requestData.params.investment_id+"\"");	
+				trace ("Account \""+requestData.params.account+"\" has no investment in \""+requestData.params.investment_id+"\"");
 				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_ACTION_ERROR, "No investment record for account found.");
 				return;
 			}
@@ -648,10 +648,10 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	if (depositing) {
 		txInfo.type = "deposit";
 	} else {
-		txInfo.type = "withdrawal";		
+		txInfo.type = "withdrawal";
 	}
 	txInfo.subType = "investment";
-	txInfo.info = new Object();	
+	txInfo.info = new Object();
 	txInfo.info.btc = btc_tx_amount.toString(10);
 	txInfo.info.investment_id = investmentQueryResult.rows[0].id;
 	txInfo.info.investment_name = investmentQueryResult.rows[0].name;
@@ -678,15 +678,15 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		var accountPlugin = exports.pluginInfo._manager.getPlugin("Portable Account Plugin");
 		var dateStr = new Date().toISOString();
 		if (depositing) {
-			accountPlugin.sendEmail("myfruitgame@gmail.com", 
+			accountPlugin.sendEmail("myfruitgame@gmail.com",
 				accountQueryResult.rows[0].email,
-				"Investment Update (Deposit)", 
+				"Investment Update (Deposit)",
 				"You deposited BTC"+btc_tx_amount.toString(10)+" to investment \""+requestData.params.investment_id+"\" on "+dateStr+". Available BTC balance is now: "+btc_balance_avail.toString(10)
 			);
 		} else {
-			accountPlugin.sendEmail("myfruitgame@gmail.com", 
+			accountPlugin.sendEmail("myfruitgame@gmail.com",
 				accountQueryResult.rows[0].email,
-				"Investment Update (Withdrawal)", 
+				"Investment Update (Withdrawal)",
 				"You withdrew BTC"+btc_tx_amount.toString(10)+" from investment \""+requestData.params.investment_id+"\" on "+dateStr+". Available BTC balance now: "+btc_balance_avail.toString(10)
 			);
 		}
@@ -699,7 +699,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	insertFields += "`btc_total_balance`,";
 	insertFields += "`btc_gains`,";
 	insertFields += "`last_update`";
-	var insertValues = "\""+investmentQueryResult.rows[0].id+"\",";		
+	var insertValues = "\""+investmentQueryResult.rows[0].id+"\",";
 	insertValues += "\""+investmentQueryResult.rows[0].name+"\",";
 	insertValues += "\""+btc_investment_balance.toString(10)+"\",";
 	if (investmentQueryResult.rows[0].btc_balance_snapshot == null) {
@@ -721,13 +721,13 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	var insertSQL = "INSERT INTO `gaming`.`investments` ("+insertFields+") VALUES ("+insertValues+")";
 	var investmentUpdateResult = yield db.query(insertSQL, generator);
 	if (investmentUpdateResult.error != null) {
-		trace ("Database error on rpc_updateInvestorInfo: "+investmentUpdateResult.error);		
+		trace ("Database error on rpc_updateInvestorInfo: "+investmentUpdateResult.error);
 		trace ("   SQL: "+updateSQL);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
 		return;
 	}
-	//add new row to 'investment_txs' table	
+	//add new row to 'investment_txs' table
 	var insertFields = "`account`,";
 	if ((requestData.params["name"] != undefined) && (requestData.params["name"] != null) && (requestData.params["name"] != "")) {
 		insertFields += "`name`,";
@@ -750,7 +750,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
 		return;
 	}
-	replyResult(postData, requestObj, responseObj, batchResponses, "OK");	
+	replyResult(postData, requestObj, responseObj, batchResponses, "OK");
 }
 exports.rpc_updateInvestorInfo = rpc_updateInvestorInfo;
 
@@ -758,9 +758,9 @@ function checkAccountBalance(generator, account) {
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/addrs/"+account+"/full",
 		method: "GET",
-		json: true		
-	}, function (error, response, body){   		
-		generator.next(body);				
+		json: true
+	}, function (error, response, body){
+		generator.next(body);
 	});
 }
 
@@ -773,7 +773,7 @@ function getMySQLTimeStamp(dateObj) {
 	var returnStr = new String();
 	returnStr += String(now.getFullYear())+"-";
 	returnStr += String(now.getMonth()+1)+"-";
-	returnStr += String(now.getDate())+" ";	
+	returnStr += String(now.getDate())+" ";
 	if (now.getHours() < 10) {
 		returnStr += "0";
 	}
@@ -791,7 +791,7 @@ function getMySQLTimeStamp(dateObj) {
 
 var rpc_getInvestmentsInfo = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);		
+	var requestData = JSON.parse(postData);
 	var responseData = new Object();
 	responseData.investments = new Array();
 	var investmentsQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`investments` GROUP BY `id`)", generator);
@@ -811,22 +811,22 @@ var rpc_getInvestmentsInfo = function* (postData, requestObj, responseObj, batch
 		responseData.investments.push (newInvestment);
 	}
 	global.assertAnyValue("NaN", "0", responseData);
-	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
+	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 exports.rpc_getInvestmentsInfo=rpc_getInvestmentsInfo;
 
 var rpc_getInvestorInfo = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);		
-	var responseData = new Object();	
+	var requestData = JSON.parse(postData);
+	var responseData = new Object();
 	var checkResult = exports.checkParameter(requestData, "account");
 	if (checkResult != null) {
-		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);	
+		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);
 		return;
 	}
 	checkResult = exports.checkParameter(requestData, "password");
 	if (checkResult != null) {
-		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);	
+		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);
 		return;
 	}
 	var transactionHistory = 6; //default number of most recent items
@@ -843,13 +843,13 @@ var rpc_getInvestorInfo = function* (postData, requestObj, responseObj, batchRes
 			transactionHistory = 6;
 		}
 	}
-	var investorQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT "+String(transactionHistory)+" OFFSET "+THPage, generator);	
+	var investorQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT "+String(transactionHistory)+" OFFSET "+THPage, generator);
 	if (investorQueryResult.error != null) {
 		trace ("Database error on rpc_getInvestorInfo: "+investorQueryResult.error);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
 		return;
-	}	
+	}
 	/*if (investorQueryResult.rows.length == 0) {
 		trace ("No matching address");
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "No matching account.", requestData.params.email);
@@ -861,7 +861,7 @@ var rpc_getInvestorInfo = function* (postData, requestObj, responseObj, batchRes
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_AUTH_ERROR, "Login failed.");
 		return;
 	}
-	var returnObj = new Object();		
+	var returnObj = new Object();
 	returnObj.transactions = new Array();
 	for (var count=0; count<investorQueryResult.rows.length; count++) {
 		var currentRow = investorQueryResult.rows[count];
@@ -869,10 +869,10 @@ var rpc_getInvestorInfo = function* (postData, requestObj, responseObj, batchRes
 		delete currentRow.index;
 		delete currentRow.last_update;
 		currentRow.investments = JSON.parse(currentRow.investments);
-		returnObj.transactions.push(currentRow);		
+		returnObj.transactions.push(currentRow);
 	}
 	global.assertAnyValue("NaN", "0", returnObj);
-	replyResult(postData, requestObj, responseObj, batchResponses, returnObj);	
+	replyResult(postData, requestObj, responseObj, batchResponses, returnObj);
 }
 exports.rpc_getInvestorInfo = rpc_getInvestorInfo;
 
@@ -887,10 +887,10 @@ exports.getInvestmentByID = (investments, id) => {
 
 var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);		
-	var responseData = new Object();	
+	var requestData = JSON.parse(postData);
+	var responseData = new Object();
 	if (requestData.params["user_balances"] == true) {
-		var accountsQueryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)", generator);	
+		var accountsQueryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)", generator);
 		if (accountsQueryResult.error != null) {
 			trace ("Database error on rpc_getInvestmentStats: "+accountsQueryResult.error);
 			trace ("   Request ID: "+requestData.id);
@@ -904,13 +904,13 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 			if ((currentRow.btc_balance_available == null) || (currentRow.btc_balance_available == "") || (currentRow.btc_balance_available == "NULL") || (currentRow.btc_balance_available == "null")) {
 				currentRow.btc_balance_available = "0";
 			}
-			var currentAvailableBalance = new BigNumber(currentRow.btc_balance_available);			
-			totalAvailableBalance = totalAvailableBalance.plus(currentAvailableBalance);			
+			var currentAvailableBalance = new BigNumber(currentRow.btc_balance_available);
+			totalAvailableBalance = totalAvailableBalance.plus(currentAvailableBalance);
 		}
 		responseData.user_balances.btc_available_total = totalAvailableBalance.toString(10);
 	}
 	if (requestData.params["investments_total"] == true) {
-		var investmentsQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`investments` GROUP BY `id`)", generator);	
+		var investmentsQueryResult = yield db.query("SELECT * FROM `gaming`.`investments` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`investments` GROUP BY `id`)", generator);
 		if (investmentsQueryResult.error != null) {
 			trace ("Database error on rpc_getInvestmentStats: "+investmentsQueryResult.error);
 			trace ("   Request ID: "+requestData.id);
@@ -924,7 +924,7 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		var gains = new BigNumber(0);
 		var latestUpdate = new Date(1970,0,0,0,0,0,0);
 		for (var count=0; count<investmentsQueryResult.rows.length; count++) {
-			var currentRow = investmentsQueryResult.rows[count];					
+			var currentRow = investmentsQueryResult.rows[count];
 			if ((currentRow.btc_balance == null) || (currentRow.btc_balance == "") || (currentRow.btc_balance == "NULL") || (currentRow.btc_balance == "null")) {
 				currentRow.btc_balance = "0";
 			}
@@ -938,7 +938,7 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 				currentRow.btc_gains = "0";
 			}
 			if ((currentRow.last_update == null) || (currentRow.last_update == "") || (currentRow.last_update == "NULL") || (currentRow.last_update == "null")) {
-				var updatedAt = new Date(1970,0,0,0,0,0,0);				
+				var updatedAt = new Date(1970,0,0,0,0,0,0);
 			} else {
 				updatedAt = new Date(currentRow.last_update);
 			}
@@ -962,10 +962,10 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		startDateObj.setDate(startDateObj.getDate()-historyDays);
 		var startPeriod = getMySQLTimeStamp(startDateObj);
 		var endDateObj = new Date();
-		var endPeriod = getMySQLTimeStamp(endDateObj);		
+		var endPeriod = getMySQLTimeStamp(endDateObj);
 		//var investmentsQuerySQL = "SELECT * FROM `gaming`.`investments` WHERE `last_update` BETWEEN \""+startPeriod+"\" AND \""+endPeriod+"\" ORDER BY `last_update` ASC";
 		var investmentsQuerySQL = "SELECT * FROM `gaming`.`investments` WHERE `index` IN (SELECT MAX(`index`) FROM `gaming`.`investments` GROUP BY `id`)";
-		var investmentsQueryResult = yield db.query(investmentsQuerySQL, generator);		
+		var investmentsQueryResult = yield db.query(investmentsQuerySQL, generator);
 		var investmentStatusObj = new Object();
 		if (investmentsQueryResult.error != null) {
 			trace ("Database error on rpc_getInvestmentStats: "+investmentsQueryResult.error);
@@ -977,27 +977,27 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		for (var count=0; count<investmentsQueryResult.rows.length; count++) {
 			var currentRow = investmentsQueryResult.rows[count];
 			if ((investmentStatusObj[currentRow.id] == undefined) || (investmentStatusObj[currentRow.id] == null)) {
-				investmentStatusObj[currentRow.id] = new Object();	
+				investmentStatusObj[currentRow.id] = new Object();
 				investmentStatusObj[currentRow.id].name = currentRow.name;
 				investmentStatusObj[currentRow.id].base_deposit = new BigNumber(0);
-				investmentStatusObj[currentRow.id].total_gains = new BigNumber(0);				
-			} else {				
+				investmentStatusObj[currentRow.id].total_gains = new BigNumber(0);
+			} else {
 				var previousRow = investmentStatusObj[currentRow.id].previousRow;
-				if (currentRow.btc_total_balance != previousRow.btc_total_balance) {					
-					//dividends payment function (above) has been triggered at this point; previous row is just before function call	
+				if (currentRow.btc_total_balance != previousRow.btc_total_balance) {
+					//dividends payment function (above) has been triggered at this point; previous row is just before function call
 					if ((previousRow.btc_gains == null) || (previousRow.btc_gains == "") || (previousRow.btc_gains == undefined) || (previousRow.btc_gains == "NULL") || (previousRow.btc_gains == "null")) {
 						previousRow.btc_gains = "0";
 					}
 					investmentStatusObj[currentRow.id].total_gains = investmentStatusObj[currentRow.id].total_gains.plus(new BigNumber(previousRow.btc_gains));
 					if ((currentRow.btc_balance == null) || (currentRow.btc_balance == "") || (currentRow.btc_balance == undefined) || (currentRow.btc_balance == "NULL") || (currentRow.btc_balance == "null")) {
 						currentRow.btc_balance = "0";
-					}					
+					}
 					investmentStatusObj[currentRow.id].base_deposit = new BigNumber(currentRow.btc_balance); //store most current base deposit amount
 				}
 			}
 			if ((currentRow.btc_total_balance == null) || (currentRow.btc_total_balance == "") || (currentRow.btc_total_balance == undefined) || (currentRow.btc_total_balance == "NULL") || (currentRow.btc_balance_snapshot == "null")) {
 				currentRow.btc_total_balance = "0";
-			}	
+			}
 			if ((currentRow.btc_gains == null) || (currentRow.btc_gains == "") || (currentRow.btc_gains == undefined) || (currentRow.btc_gains == "NULL") || (currentRow.btc_gains == "null")) {
 				currentRow.btc_gains = "0";
 			}
@@ -1029,9 +1029,9 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		startDateObj.setDate(startDateObj.getDate()-historyDays);
 		var startPeriod = getMySQLTimeStamp(startDateObj);
 		var endDateObj = new Date();
-		var endPeriod = getMySQLTimeStamp(endDateObj);		
-		var investmentsQuerySQL = "SELECT * FROM `gaming`.`investments` WHERE `last_update` BETWEEN \""+startPeriod+"\" AND \""+endPeriod+"\" ORDER BY `last_update` ASC";				
-		var investmentsQueryResult = yield db.query(investmentsQuerySQL, generator);		
+		var endPeriod = getMySQLTimeStamp(endDateObj);
+		var investmentsQuerySQL = "SELECT * FROM `gaming`.`investments` WHERE `last_update` BETWEEN \""+startPeriod+"\" AND \""+endPeriod+"\" ORDER BY `last_update` ASC";
+		var investmentsQueryResult = yield db.query(investmentsQuerySQL, generator);
 		var investmentStatusObj = new Object();
 		if (investmentsQueryResult.error != null) {
 			trace ("Database error on rpc_getInvestmentStats: "+investmentsQueryResult.error);
@@ -1039,7 +1039,7 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "The database returned an error.");
 			return;
 		}
-		responseData.investments_charts = new Object();		
+		responseData.investments_charts = new Object();
 		var currentRow = null
 		for (var count=0; count<investmentsQueryResult.rows.length; count++) {
 			currentRow = investmentsQueryResult.rows[count];
@@ -1095,7 +1095,7 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		}
 	}
 	if (requestData.params["jackpots"] == true) {
-		var jackpotsQueryResult = yield db.query("SELECT * FROM `gaming`.`jackpots`", generator);		
+		var jackpotsQueryResult = yield db.query("SELECT * FROM `gaming`.`jackpots`", generator);
 		if (jackpotsQueryResult.error != null) {
 			trace ("Database error on rpc_getInvestmentStats: "+jackpotsQueryResult.error);
 			trace ("   Request ID: "+requestData.id);
@@ -1114,8 +1114,8 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		}
 	}
 	if (requestData.params["rake"] == true) {
-		var investmentTxsQuerySQL = "SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\"RAKE_ACCOUNT\" ORDER BY `last_update` DESC LIMIT 1";				
-		var investmentTxsQueryResult = yield db.query(investmentTxsQuerySQL, generator);		
+		var investmentTxsQuerySQL = "SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\"RAKE_ACCOUNT\" ORDER BY `last_update` DESC LIMIT 1";
+		var investmentTxsQueryResult = yield db.query(investmentTxsQuerySQL, generator);
 		if (investmentTxsQueryResult.error != null) {
 			trace ("Database error on rpc_getInvestmentStats: "+investmentTxsQueryResult.error);
 			trace ("   Request ID: "+requestData.id);
@@ -1131,6 +1131,6 @@ var rpc_getInvestmentStats = function* (postData, requestObj, responseObj, batch
 		}
 	}
 	global.assertAnyValue("NaN", "0", responseData);
-	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
+	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 exports.rpc_getInvestmentStats = rpc_getInvestmentStats;

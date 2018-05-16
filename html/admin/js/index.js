@@ -312,6 +312,7 @@ function buildDividendTransactionsTable(resultArray) {
 	for (var count = 0; count < resultArray.length; count++) {
 		var currentRowHTML = "";
 		try {
+			//standard investment row
 			currentRowHTML += "<tr>";
 			var currentItem = resultArray[count];
 			var currentHistory = currentItem.history;
@@ -319,13 +320,29 @@ function buildDividendTransactionsTable(resultArray) {
 			currentRowHTML += "<td>"+createDateTimeString(new Date(currentItem.timestamp))+"</td>"; //Date
 			for (var count2 = 0; count2 < investmentsArr.length; count2++) {
 				var currentInvestment = investmentsArr[count2];
-				alert (JSON.stringify(currentInvestment));
-				currentRowHTML += "<td>"+currentInvestment.name+"</td>"; //Description
+				currentRowHTML += "<td>Affiliate Credit - "+currentInvestment.name+"</td>"; //Description
 				currentRowHTML += "<td>"+currentInvestment.gross_dividend_btc+"</td>"; //Gross Dividend
-				currentRowHTML += "<td>"+currentInvestment.affiliate_amount_btc+"</td>"; //Dividend Affiliate Amount
 				currentRowHTML += "<td>"+currentInvestment.rake_amount_btc+"</td>"; //Rake Amount
+				currentRowHTML += "<td>"+currentInvestment.affiliate_amount_inv_btc+"</td>"; //Dividend Affiliate Amount
 				currentRowHTML += "<td>"+currentInvestment.net_dividend_btc+"</td>"; //Net Dividend
 				currentRowHTML += "<td>"+currentInvestment.balance_btc+"</td>"; //Balance
+			}
+			currentRowHTML += "</tr>";
+			//game play affiliate distribution row
+			currentRowHTML += "<tr>";
+			var currentHistory = currentItem.history;
+			var investmentsArr = currentHistory.investments; //resultArray[count].history.investments
+			currentRowHTML += "<td>"+createDateTimeString(new Date(currentItem.timestamp))+"</td>"; //Date
+			for (count2 = 0; count2 < investmentsArr.length; count2++) {
+				currentInvestment = investmentsArr[count2];
+				var balanceAmount = new BigNumber(currentInvestment.balance_btc);
+				var deduction = new BigNumber(currentInvestment.affiliate_amount_game_btc);
+				currentRowHTML += "<td>Affiliate Credit - game</td>"; //Description
+				currentRowHTML += "<td>0</td>"; //Gross Dividend
+				currentRowHTML += "<td>"+deduction.toString(10)+"</td>"; //Rake Amount
+				currentRowHTML += "<td>0</td>"; //Dividend Affiliate Amount
+				currentRowHTML += "<td>0</td>"; //Net Dividend
+				currentRowHTML += "<td>"+balanceAmount.minus(deduction).toString(10)+"</td>"; //Balance
 			}
 			currentRowHTML += "</tr>";
 		} catch (err) {
@@ -518,7 +535,19 @@ function insertInvestmentDeltas(previousInvestmentsTx, currentInvestmentsTx) {
 				currentTx.delta = currentInvBalance.minus(previousInvBalance);
 				currentTx.change = currentTx.delta.toString(10);
 				currentTx.delta = currentTx.delta.toString(10);
+			} else {
+				previousInvBalance = new BigNumber(0);
+				currentInvBalance = new BigNumber(currentTx.user_investment_btc);
+				currentTx.delta = currentInvBalance.minus(previousInvBalance);
+				currentTx.change = currentTx.delta.toString(10);
+				currentTx.delta = currentTx.delta.toString(10);
 			}
+		} else {
+			previousInvBalance = new BigNumber(0);
+			currentInvBalance = new BigNumber(currentTx.user_investment_btc);
+			currentTx.delta = currentInvBalance.minus(previousInvBalance);
+			currentTx.change = currentTx.delta.toString(10);
+			currentTx.delta = currentTx.delta.toString(10);
 		}
 	}
 }

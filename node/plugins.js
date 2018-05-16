@@ -8,7 +8,7 @@ var serverConfig = require("./game_server_config.js");
 
 var _plugins  = new Array(); //registered plugins
 var registryFilePath = "./plugins_registry.json";
-var _timerFunctions = new Array(); //plugin timer functions registered 
+var _timerFunctions = new Array(); //plugin timer functions registered
 const _timerCheckInterval = 1000; //milliseconds to check for timer function(s) execution
 var trace = function(msg){console.log(msg);}; //trace function (formatted console.log output); should be replaced when "start" is invoked
 
@@ -20,11 +20,11 @@ exports._gameServer = null; //reference to the main game server object
 *
 * @param pluginFilePath The file path to the new plugin to install. The ".js" may be omitted.
 */
-exports.install = (pluginFilePath) => {	
+exports.install = (pluginFilePath) => {
 	try {
 		var pluginData = filesystem.readFileSync(pluginFilePath);
-	} catch (err) {		
-		try {			
+	} catch (err) {
+		try {
 			pluginFilePath += ".js";
 			var pluginData = filesystem.readFileSync(pluginFilePath);
 		} catch (err) {
@@ -33,13 +33,13 @@ exports.install = (pluginFilePath) => {
 		}
 	}
 	try {
-		var rawRegistryData = filesystem.readFileSync(registryFilePath);		
+		var rawRegistryData = filesystem.readFileSync(registryFilePath);
 	} catch (err) {
 		rawRegistryData = "[]";
 		filesystem.writeFileSync(registryFilePath, rawRegistryData);
 	}
 	var updating = false; //is this an update rather than a new install?
-	_plugins = JSON.parse(rawRegistryData);	
+	_plugins = JSON.parse(rawRegistryData);
 	pluginFilePath = "./"+pluginFilePath;
 	try {
 		var newPlugin = require(pluginFilePath);
@@ -54,7 +54,7 @@ exports.install = (pluginFilePath) => {
 	pluginObj.path = pluginFilePath;
 	var verify = false;
 	for (var count=0; count<_plugins.length; count++) {
-		var newerVersionIndex = newerVersion(_plugins[count].version, pluginFileVersion); 
+		var newerVersionIndex = newerVersion(_plugins[count].version, pluginFileVersion);
 		if ((_plugins[count].path == pluginFilePath) && (newerVersionIndex == 0)) {
 			verify = true;
 			trace ("   Plugin already installed? Searching installation...");
@@ -69,10 +69,10 @@ exports.install = (pluginFilePath) => {
 			trace ("   Updating existin plugin from version "+_plugins[count].version+" to version "+pluginFileVersion);
 			break;
 		}
-	}	
+	}
 	try {
 		if (verify == false) {
-			trace ("   Installing \""+newPlugin.pluginInfo.name+" v"+newPlugin.pluginInfo.version+"\"...");			
+			trace ("   Installing \""+newPlugin.pluginInfo.name+" v"+newPlugin.pluginInfo.version+"\"...");
 			pluginObj.version = newPlugin.pluginInfo.version;
 			if (!updating) {
 				_plugins.push(pluginObj);
@@ -88,10 +88,10 @@ exports.install = (pluginFilePath) => {
 			exports._activePluginInstalls++;
 			newPlugin.install(exports.onInstall);
 		} else {
-			trace ("   Found existing plugin: \""+newPlugin.pluginInfo.name+" v"+newPlugin.pluginInfo.version+"\"");	
-		}	
+			trace ("   Found existing plugin: \""+newPlugin.pluginInfo.name+" v"+newPlugin.pluginInfo.version+"\"");
+		}
 	} catch (err) {
-		trace ("   Error installing plugin: \n"+err);		
+		trace ("   Error installing plugin: \n"+err);
 	}
 }
 
@@ -147,7 +147,7 @@ exports.getPlugin = (pluginName) => {
 
 /**
 * Callback function invoked when a plugin install process has completed.
-* 
+*
 * @param success True if the installation was successful, false otherwise.
 * @param info An object containing additional information about the successful or failed installation.
 */
@@ -157,7 +157,7 @@ exports.onInstall = (success, info) => {
 		trace ("Plugin "+info.name+" successfully installed.");
 	} else {
 		trace (info); //just a string
-	}	
+	}
 }
 
 /**
@@ -171,13 +171,13 @@ exports.start = (traceFunc, serverRef) => {
 	exports._gameServer = serverRef;
 	trace ("Loading plugins:");
 	try {
-		var rawRegistryData = filesystem.readFileSync(registryFilePath);		
+		var rawRegistryData = filesystem.readFileSync(registryFilePath);
 	} catch (err) {
 		rawRegistryData = "[]";
 		filesystem.writeFileSync(registryFilePath, rawRegistryData);
 	}
 	_plugins = JSON.parse(rawRegistryData);
-	for (var count=0; count < _plugins.length; count++) {		
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = require(_plugins[count].path);
 		currentPlugin.pluginInfo._manager = this;
 		trace ("   #"+String(count+1)+" "+currentPlugin.pluginInfo.name+" v"+currentPlugin.pluginInfo.version+" loaded");
@@ -201,7 +201,7 @@ exports.start = (traceFunc, serverRef) => {
 * Registers a new timer function with the plugin manager.
 *
 * @param tfDefinition An object containing information about the timer function to register. Expected properties include:
-*			time (String): The "hours:minutes" based time to invoke the timer function at (in 24-hour format with midnight being "00:00"). 
+*			time (String): The "hours:minutes" based time to invoke the timer function at (in 24-hour format with midnight being "00:00").
 *			func (String): The name of the function to invoke within the plugin at the specified time.
 */
 exports.registerTimerFunction = (tfDefinition) => {
@@ -211,18 +211,18 @@ exports.registerTimerFunction = (tfDefinition) => {
 /**
 * Called every _timerCheckInterval to manage the execution of registered timer functions.
 */
-exports.timerHandler = () => {	
-	var parsedFunctions = new Array();	
-	for (var count=0; count<_timerFunctions.length; count++) {		
+exports.timerHandler = () => {
+	var parsedFunctions = new Array();
+	for (var count=0; count<_timerFunctions.length; count++) {
 		if (exports.timerFunctionCanExecute(_timerFunctions[count])) {
 			parsedFunctions.push(_timerFunctions[count]);
 			var executed = exports.timerFunctionExecute(_timerFunctions[count]);
 			if (executed) {
 				//store state?
 			}
-		} else {			
+		} else {
 		}
-	}	
+	}
 	_timerFunctions = parsedFunctions;
 	if (_timerFunctions.length > 0) {
 		setTimeout(exports.timerHandler, _timerCheckInterval);
@@ -243,7 +243,7 @@ exports.timerFunctionCanExecute = (tfDefinition) => {
 		}
 	} catch (err) {
 	}
-	return (false);	
+	return (false);
 }
 
 /**
@@ -274,7 +274,7 @@ exports.timerFunctionExecute = (tfDefinition) => {
 		if ((tfDefinition.plugin.pluginInfo != undefined) && (tfDefinition.plugin.pluginInfo != null)) {
 			trace ("Trigerring timed function \""+tfDefinition.func+"\" in plugin \""+tfDefinition.plugin.pluginInfo.name+"\" @ "+now.toTimeString());
 		} else {
-			trace ("Trigerring timed function \""+tfDefinition.func+"\" in global scope @ "+now.toTimeString())				
+			trace ("Trigerring timed function \""+tfDefinition.func+"\" in global scope @ "+now.toTimeString())
 		}
 		try {
 			var gen = tfDefinition.plugin[tfDefinition.func](tfDefinition.plugin.scriptContext()); //execute generator
@@ -300,8 +300,8 @@ exports.timerFunctionExecute = (tfDefinition) => {
 * @return True if the specified method exists in a registered plugin, false otherwise.
 */
 exports.rpcMethodExists = (methodName) => {
-	for (var count=0; count < _plugins.length; count++) {		
-		var currentPlugin = _plugins[count].plugin;	
+	for (var count=0; count < _plugins.length; count++) {
+		var currentPlugin = _plugins[count].plugin;
 		var methods = currentPlugin.pluginInfo.rpc;
 		for (var count2=0; count2<methods.length; count2++) {
 			if (methods[count2].external == methodName) {
@@ -313,8 +313,8 @@ exports.rpcMethodExists = (methodName) => {
 }
 
 exports.rpc_invoke = (method, postData, requestObj, responseObj, batchResponses, replyResultFunc, replyErrorFunc) => {
-	for (var count=0; count < _plugins.length; count++) {		
-		var currentPlugin = _plugins[count].plugin;	
+	for (var count=0; count < _plugins.length; count++) {
+		var currentPlugin = _plugins[count].plugin;
 		for (var count2 = 0; count2<currentPlugin.pluginInfo.rpc.length; count2++) {
 			var currentRPCRef = currentPlugin.pluginInfo.rpc[count2];
 			if (currentRPCRef.external == method) {
@@ -322,7 +322,7 @@ exports.rpc_invoke = (method, postData, requestObj, responseObj, batchResponses,
 				gen.next();
 				gen.next(gen);
 			}
-		}		
+		}
 	}
 }
 
@@ -330,21 +330,21 @@ exports.rpc_invoke = (method, postData, requestObj, responseObj, batchResponses,
 * Apply RPC plugin filters to any pre-new-account action
 */
 exports.RPC_newAccount = (parsedRequestData, generator) => {
-	for (var count=0; count < _plugins.length; count++) {		
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = _plugins[count].plugin;
 		try {
 			if (typeof(currentPlugin["RPC_newAccount"]) == "function") {
 				//try standard RPC filter
 				var filterResult = currentPlugin.RPC_newAccount(parsedRequestData);
-			} else if (typeof(currentPlugin["RPC_newAccountGen"]) == "function") {				
+			} else if (typeof(currentPlugin["RPC_newAccountGen"]) == "function") {
 				//try generator filter
-				var gen = currentPlugin.RPC_newAccountGen(parsedRequestData, generator);				
-				gen.next();				
+				var gen = currentPlugin.RPC_newAccountGen(parsedRequestData, generator);
+				gen.next();
 				filterResult = gen.next(gen);
 			} else {
 				//RPC filter function not implemented
 				filterResult = null;
-			}			
+			}
 		} catch (err) {
 			trace ("plugins.RPC_newAccount error: "+err);
 			return ({"code":serverConfig.JSONRPC_INTERNAL_ERROR,"msg":err});
@@ -356,22 +356,22 @@ exports.RPC_newAccount = (parsedRequestData, generator) => {
 * Apply RPC plugin filters to any login action
 */
 exports.RPC_login = (accountQueryResult, postData, generator) => {
-	for (var count=0; count < _plugins.length; count++) {		
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = _plugins[count].plugin;
 		try {
-			if (typeof(currentPlugin["RPC_login"]) == "function") {				
+			if (typeof(currentPlugin["RPC_login"]) == "function") {
 				//try standard RPC filter
-				var filterResult = currentPlugin.RPC_login(accountQueryResult, postData, generator);								
+				var filterResult = currentPlugin.RPC_login(accountQueryResult, postData, generator);
 				generatorCBDelay(generator, filterResult);
 			} else if (typeof(currentPlugin["RPC_loginGen"]) == "function") {
 				//try generator filter
 				var gen = currentPlugin.RPC_loginGen(accountQueryResult, postData, generator);
 				gen.next();
-				filterResult = gen.next(gen);				
+				filterResult = gen.next(gen);
 			} else {
 				//RPC filter function not implemented
 				filterResult = null;
-			}			
+			}
 		} catch (err) {
 			trace ("plugins.RPC_login error: "+err);
 			return ({"code":serverConfig.JSONRPC_INTERNAL_ERROR,"msg":err});
@@ -380,7 +380,7 @@ exports.RPC_login = (accountQueryResult, postData, generator) => {
 }
 
 function generatorCBDelay(generator, resultObj) {
-	setTimeout(function() {		
+	setTimeout(function() {
 		generator.next(resultObj);
 	}, 1);
 }
@@ -389,7 +389,7 @@ function generatorCBDelay(generator, resultObj) {
 * Apply RPC pre-bet plugin filters
 */
 exports.RPC_bet = (accountQueryResult, requestData, generator) => {
-	for (var count=0; count < _plugins.length; count++) {		
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = _plugins[count].plugin;
 		try {
 			if (typeof(currentPlugin["RPC_bet"]) == "function") {
@@ -406,7 +406,7 @@ exports.RPC_bet = (accountQueryResult, requestData, generator) => {
 			} else {
 				//RPC filter function not implemented
 				filterResult = null;
-			}			
+			}
 		} catch (err) {
 			trace ("plugins.RPC_bet error: "+err);
 			return ({"code":serverConfig.JSONRPC_INTERNAL_ERROR,"msg":err});
@@ -418,13 +418,13 @@ exports.RPC_bet = (accountQueryResult, requestData, generator) => {
 /**
 * Apply RPC pre-dividend-calculation plugin filters
 */
-exports.RPC_dividend = (accountQueryResult, requestData, betInfoObj, generator) => {	
-	for (var count=0; count < _plugins.length; count++) {		
+exports.RPC_dividend = (accountQueryResult, requestData, betInfoObj, generator) => {
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = _plugins[count].plugin;
 		try {
 			if (typeof(currentPlugin["RPC_dividend"]) == "function") {
 				//try standard RPC filter
-				var filterResult = currentPlugin.RPC_dividend(accountQueryResult, requestData, betInfoObj, generator);			
+				var filterResult = currentPlugin.RPC_dividend(accountQueryResult, requestData, betInfoObj, generator);
 				generatorCBDelay(generator, filterResult);
 			} else if (typeof(currentPlugin["RPC_dividendGen"]) == "function") {
 				//try generator filter
@@ -434,7 +434,7 @@ exports.RPC_dividend = (accountQueryResult, requestData, betInfoObj, generator) 
 			} else {
 				//RPC filter function not implemented
 				filterResult = null;
-			}			
+			}
 		} catch (err) {
 			trace ("plugins.RPC_dividend error: "+err);
 			return ({"code":serverConfig.JSONRPC_INTERNAL_ERROR,"msg":err});
@@ -446,12 +446,12 @@ exports.RPC_dividend = (accountQueryResult, requestData, betInfoObj, generator) 
 * Apply RPC pre-jackpot-calculation plugin filters
 */
 exports.RPC_jackpot = (accountQueryResult, requestData, betInfoObj, generator) => {
-	for (var count=0; count < _plugins.length; count++) {		
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = _plugins[count].plugin;
 		try {
 			if (typeof(currentPlugin["RPC_jackpot"]) == "function") {
 				//try standard RPC filter
-				var filterResult = currentPlugin.RPC_jackpot(accountQueryResult, requestData, betInfoObj, generator);			
+				var filterResult = currentPlugin.RPC_jackpot(accountQueryResult, requestData, betInfoObj, generator);
 				generatorCBDelay(generator, filterResult);
 			} else if (typeof(currentPlugin["RPC_jackpotGen"]) == "function") {
 				//try generator filter
@@ -461,7 +461,7 @@ exports.RPC_jackpot = (accountQueryResult, requestData, betInfoObj, generator) =
 			} else {
 				//RPC filter function not implemented
 				filterResult = null;
-			}			
+			}
 		} catch (err) {
 			trace ("plugins.RPC_jackpot error: "+err);
 			return ({"code":serverConfig.JSONRPC_INTERNAL_ERROR,"msg":err});
@@ -473,7 +473,7 @@ exports.RPC_jackpot = (accountQueryResult, requestData, betInfoObj, generator) =
 * Apply RPC post-bet plugin filters
 */
 exports.RPC_onBet = (accountQueryResult, postData, betInfo, generator) => {
-	for (var count=0; count < _plugins.length; count++) {		
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = _plugins[count].plugin;
 		try {
 			if (typeof(currentPlugin["RPC_onBet"]) == "function") {
@@ -488,7 +488,7 @@ exports.RPC_onBet = (accountQueryResult, postData, betInfo, generator) => {
 			} else {
 				//RPC filter function not implemented
 				filterResult = null;
-			}			
+			}
 		} catch (err) {
 			trace ("plugins.RPC_onBet error: "+err);
 			return ({"code":serverConfig.JSONRPC_INTERNAL_ERROR,"msg":err});
@@ -500,7 +500,7 @@ exports.RPC_onBet = (accountQueryResult, postData, betInfo, generator) => {
 * Apply RPC post-win plugin filters.
 */
 exports.RPC_onWin = (accountQueryResult, postData, winInfo, generator) => {
-	for (var count=0; count < _plugins.length; count++) {		
+	for (var count=0; count < _plugins.length; count++) {
 		var currentPlugin = _plugins[count].plugin;
 		try {
 			if (typeof(currentPlugin["RPC_onWin"]) == "function") {
@@ -531,7 +531,7 @@ function cli_start() {
 	trace ("--------------------------------------");
 	try {
 		switch (process.argv[2]) {
-			case "install": 
+			case "install":
 				exports.install (process.argv[3]);
 				break;
 			default:

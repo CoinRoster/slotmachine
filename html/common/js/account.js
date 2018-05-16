@@ -23,11 +23,11 @@ var numberFormat = {
 }
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR, FORMAT:numberFormat });
 
-function callServerMethod(methodName, params, resultCallback) {	
-	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};			
-	$.post(accountInfo.gameServerURL, 
+function callServerMethod(methodName, params, resultCallback) {
+	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};
+	$.post(accountInfo.gameServerURL,
 			JSON.stringify(request),
-			resultCallback);	
+			resultCallback);
 	request.callback = resultCallback;
 	rpcMsgID++;
 	return (request);
@@ -52,13 +52,13 @@ function onCopyAffiliateLinkClick(event) {
 }
 
 function getAccountBalance() {
-	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) || 
-		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) || 
+	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) ||
+		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) ||
 		(accountInfo.playerAccount == "") || (accountInfo.playerPassword == "")) {
 			console.log("Can't get account balance. User is logged out.");
 			return;
 	}
-	callServerMethod("getAccountBalance", {"account":accountInfo.playerAccount,"password":accountInfo.playerPassword,"refresh":true}, onGetAccountBalance);	
+	callServerMethod("getAccountBalance", {"account":accountInfo.playerAccount,"password":accountInfo.playerPassword,"refresh":true}, onGetAccountBalance);
 }
 
 function getAllInvestments() {
@@ -66,8 +66,8 @@ function getAllInvestments() {
 }
 
 function getOwnedInvestments() {
-	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) || 
-		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) || 
+	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) ||
+		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) ||
 		(accountInfo.playerAccount == "") || (accountInfo.playerPassword == "")) {
 			console.log("Can't get owned investments. User is logged out.");
 			return;
@@ -76,8 +76,8 @@ function getOwnedInvestments() {
 }
 
 function getAffiliateLink() {
-	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) || 
-		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) || 
+	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) ||
+		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) ||
 		(accountInfo.playerAccount == "") || (accountInfo.playerPassword == "")) {
 			console.log("Can't get affiliate link. User is logged out.");
 			return;
@@ -86,8 +86,8 @@ function getAffiliateLink() {
 }
 
 function getTransactions() {
-	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) || 
-		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) || 
+	if ((accountInfo.playerAccount == null) || (accountInfo.playerPassword == null) ||
+		(accountInfo.playerAccount == undefined) || (accountInfo.playerPassword == undefined) ||
 		(accountInfo.playerAccount == "") || (accountInfo.playerPassword == "")) {
 			console.log("Can't get transactions. User is logged out.");
 			return;
@@ -99,16 +99,16 @@ function getTransactions() {
 	callServerMethod("getAccountTransactions",{"account":accountInfo.playerAccount,"password":accountInfo.playerPassword, "searchParams":searchParams}, onGetTransactions);
 }
 /*
-txTypes (Array): An array of strings specifying which transaction types to include in the reply. 
+txTypes (Array): An array of strings specifying which transaction types to include in the reply.
 										Valid types include "account" for account-related transactions, "investment" for investment-related transactions, and
 										"affiliate" for affiliate-related transactions. Other plugins may define new types so this list may not be complete.
 							searchType (String): The type of search to perform. Valid search types are "date" and "recent".
-							search (*): The search to be performed. 
-										If searchType is "date", this must be an object with properties 'start' and 'end' containing ISO date strings of the 
+							search (*): The search to be performed.
+										If searchType is "date", this must be an object with properties 'start' and 'end' containing ISO date strings of the
 										starting and end range to include in the search.
 										is searchType is "recent", this must be a number (integer) denoting the number of most recent items to include in the reply.
 							limitResults (Number, optional): If included, only this many results will be returned in the reply.
-							page (Number, optional): The result page if limitResults is being used, igored otherwise. Default is 0 (first page). Pagination can be 
+							page (Number, optional): The result page if limitResults is being used, igored otherwise. Default is 0 (first page). Pagination can be
 										handled on the client by using the total result count included in the reply.*/
 
 function getAffiliateInfo(affiliateID) {
@@ -132,16 +132,16 @@ function getReferralInfo(referralHash) {
 
 function clearAllFields() {
 	var investmentListHTML = "<ul id=\"availableInvestments\"></ul>";
-	var investmentSelectHTML = "<select name=\"investmentsDeposit\" id=\"investmentSelectorDeposit\"></select>"; 
-	var investmentSelectWithdrawHTML = "<select name=\"investmentsWithdraw\" id=\"investmentSelectorWithdraw\"></select>"; 
+	var investmentSelectHTML = "<select name=\"investmentsDeposit\" id=\"investmentSelectorDeposit\"></select>";
+	var investmentSelectWithdrawHTML = "<select name=\"investmentsWithdraw\" id=\"investmentSelectorWithdraw\"></select>";
 	var ownedInvestmentListHTML = "<ul id=\"ownedInvestments\"></ul>";
-	$("#availableInvestments").replaceWith(investmentListHTML);		
+	$("#availableInvestments").replaceWith(investmentListHTML);
 	$("#investmentSelectorDeposit").replaceWith(investmentSelectHTML);
-	$("#investmentSelectorWithdraw").replaceWith(investmentSelectWithdrawHTML);	
+	$("#investmentSelectorWithdraw").replaceWith(investmentSelectWithdrawHTML);
 	$("#ownedInvestments").replaceWith(ownedInvestmentListHTML);
 }
 
-function onGetAccountBalance(returnData) {	
+function onGetAccountBalance(returnData) {
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		alert(returnData.error.message);
 	} else {
@@ -159,10 +159,10 @@ function onGetAllInvestments(returnData) {
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		allInvestments = null;
 		alert(returnData.error.message);
-	} else {	
+	} else {
 		allInvestments = returnData.result.investments;
-		var investmentSelectHTML ="<select name=\"investmentsDeposit\" id=\"investmentSelectorDeposit\">";    
-		var investmentWithdrawSelectHTML ="<select name=\"investmentsWithdraw\" id=\"investmentSelectorWithdraw\">";    
+		var investmentSelectHTML ="<select name=\"investmentsDeposit\" id=\"investmentSelectorDeposit\">";
+		var investmentWithdrawSelectHTML ="<select name=\"investmentsWithdraw\" id=\"investmentSelectorWithdraw\">";
 		for (var count=0; count<returnData.result.investments.length; count++) {
 			var investmentBalance = returnData.result.investments[count].btc_balance;
 			if ((investmentBalance==null) || (investmentBalance=="null") || (investmentBalance=="NULL") || (investmentBalance=="") || (investmentBalance==undefined)) {
@@ -174,8 +174,8 @@ function onGetAllInvestments(returnData) {
 		}
 		investmentSelectHTML +="</select>";
 		investmentWithdrawSelectHTML += "</select>";
-		$("#investmentSelectorDeposit").replaceWith(investmentSelectHTML);	
-		$("#investmentSelectorWithdraw").replaceWith(investmentWithdrawSelectHTML);	
+		$("#investmentSelectorDeposit").replaceWith(investmentSelectHTML);
+		$("#investmentSelectorWithdraw").replaceWith(investmentWithdrawSelectHTML);
 	}
 	getOwnedInvestments();
 }
@@ -280,7 +280,7 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 			var currentExcludeValue = new BigNumber(userInvestmentExclude);
 			currentTotalValue = currentTotalValue.minus(currentExcludeValue);
 			var investmentDelta = currentTotalValue.minus(currentBaseValue);
-			totalUserInvestmentBase = totalUserInvestmentBase.plus(currentBaseValue);			
+			totalUserInvestmentBase = totalUserInvestmentBase.plus(currentBaseValue);
 			totalInvestmentsBalance = totalInvestmentsBalance.plus(currentTotalValue);
 			totalInvestmentsGains = totalInvestmentsGains.plus(investmentDelta);
 			returnHTML += "<tr><td>"+investmentName+"</td><td>"+convertAmount(userInvestmentBase, "btc", displayCurrency).toFormat()+"</td><td>"+convertAmount(currentTotalValue, "btc", displayCurrency).toFormat()+"</td><td>"+convertAmount(investmentDelta, "btc", displayCurrency).toFormat()+"</td></tr>";
@@ -321,7 +321,7 @@ function onTxHistoryOptionClick() {
 	} else {
 		options.includeInvestmentTotals = false;
 	}
-	
+
 	transactionTableOptions = options;
 	_txTableTopItemIndex = 0;
 	var txTable = buildTransactionTable(currentTransactionsData.accountTransactions);
@@ -442,7 +442,7 @@ function existsPreviousPage (collatedTxArray) {
 								if (nextTx.type == "winsTransactions") {
 									winDeposit = true;
 								}
-							}							
+							}
 							if (!winDeposit) {
 								return (true);
 							}
@@ -457,26 +457,26 @@ function existsPreviousPage (collatedTxArray) {
 							if (!betWithdrawal) {
 								return (true);
 							}
-						} 									
+						}
 					}
 					break;
 				case "investmentsTransactions":
-					if (transactionTableOptions.investmentHistory) {						
+					if (transactionTableOptions.investmentHistory) {
 						return (true);
 					}
 					break;
 				case "affiliateTransactions":
-					if (transactionTableOptions.affiliateHistory) {						
+					if (transactionTableOptions.affiliateHistory) {
 						return (true);
 					}
 					break;
 				case "betsTransactions":
-					if (transactionTableOptions.gameHistory) {						
+					if (transactionTableOptions.gameHistory) {
 						return (true);
 					}
 					break;
 				case "winsTransactions":
-					if (transactionTableOptions.gameHistory) {						
+					if (transactionTableOptions.gameHistory) {
 						var totalWins = new BigNumber(0);
 						for (var gameID in currentTx.wins.games) {
 							var currentWin = convertAmount(currentTx.wins.games[gameID].btc, "btc", displayCurrency);
@@ -484,17 +484,17 @@ function existsPreviousPage (collatedTxArray) {
 						}
 						if (totalWins.greaterThan(0)) {
 							return (true);
-						}						
-					} 
+						}
+					}
 					break;
-				default:					
+				default:
 					break;
 			}
 		} catch (err) {
 			console.log (err);
 			//return (false);
-		}		
-	}	
+		}
+	}
 	return (false);
 }
 
@@ -503,8 +503,8 @@ function existsNextPage (collatedTxArray, itemsPerPage) {
 	var startIndex = _txTableTopItemIndex;
 	while ((numItems <= itemsPerPage) && (startIndex < collatedTxArray.length)){
 		startIndex++;
-		try {			
-			var currentTx = collatedTxArray[startIndex][0];			
+		try {
+			var currentTx = collatedTxArray[startIndex][0];
 			if ((currentTx == null) || (currentTx == undefined)) {
 				return (false);
 			}
@@ -528,7 +528,7 @@ function existsNextPage (collatedTxArray, itemsPerPage) {
 								if (nextTx.type == "winsTransactions") {
 									winDeposit = true;
 								}
-							}							
+							}
 							if (!winDeposit) {
 								numItems++;
 							}
@@ -553,36 +553,36 @@ function existsNextPage (collatedTxArray, itemsPerPage) {
 					break;
 				case "affiliateTransactions":
 					if (transactionTableOptions.affiliateHistory) {
-						numItems++;					
+						numItems++;
 					}
 					break;
 				case "betsTransactions":
 					if (transactionTableOptions.gameHistory) {
-						numItems++;						
+						numItems++;
 					}
 					break;
 				case "winsTransactions":
-					if (transactionTableOptions.gameHistory) {						
+					if (transactionTableOptions.gameHistory) {
 						var totalWins = new BigNumber(0);
 						for (var gameID in currentTx.wins.games) {
 							var currentWin = convertAmount(currentTx.wins.games[gameID].btc, "btc", displayCurrency);
-							totalWins = totalWins.plus(currentWin);						
-						}						
+							totalWins = totalWins.plus(currentWin);
+						}
 						if (totalWins.greaterThan(0)) {
 							numItems++;
-						}						
-					} 
+						}
+					}
 					break;
-				default:					
+				default:
 					break;
-			}			
-			if (numItems > itemsPerPage) {				
+			}
+			if (numItems > itemsPerPage) {
 				return (true);
 			}
 		} catch (err) {
 			return (false);
-		}		
-	}		
+		}
+	}
 	return (false);
 }
 
@@ -600,7 +600,7 @@ function addUserInvestments(txInfo) {
 	if ((txInfo.info["investments"] == undefined) || (txInfo.info["investments"] == null)) {
 		return (new BigNumber(0));
 	}
-	var returnNum = new BigNumber(0);	
+	var returnNum = new BigNumber(0);
 	for (var count=0; count < txInfo.info.investments.length; count++) {
 		var currentUserBalance = new BigNumber(txInfo.info.investments[count].user_investment_btc);
 		returnNum = returnNum.plus(currentUserBalance);
@@ -620,15 +620,15 @@ function buildTransactionTable(collatedTxArray) {
 	returnHTML += "<tbody>";
 	var previousLiveBalance = "0";
 	for (var count = 0; count < collatedTxArray.length; count++) {
-		var currentTx = collatedTxArray[count];		
+		var currentTx = collatedTxArray[count];
 		//alert (JSON.stringify(currentTx));
-		var txInfo = JSON.parse(currentTx.txInfo);		
+		var txInfo = JSON.parse(currentTx.txInfo);
 		var balanceAdd = addUserInvestments(txInfo);
-		var newRowHTML = "<tr>";		
+		var newRowHTML = "<tr>";
 		try {
 			newRowHTML += "<td>"+ createDateTimeString(new Date(currentTx.timestamp))+"</td>";
 			switch (txInfo.type) {
-				case "bet":	
+				case "bet":
 					if (transactionTableOptions.gameHistory) {
 						newRowHTML += "<td>Bet</td>";
 						newRowHTML += "<td>"+convertAmount(txInfo.info.bet.btc, "btc", displayCurrency).toFormat()+"</td>";
@@ -648,7 +648,7 @@ function buildTransactionTable(collatedTxArray) {
 						var winAmount = new BigNumber(txInfo.info.win.btc);
 						if (winAmount.equals(0)) {
 							//no win, just a game completion
-							newRowHTML = ""; 
+							newRowHTML = "";
 						} else {
 							newRowHTML += "<td>Win</td>";
 							newRowHTML += "<td>"+convertAmount(txInfo.info.win.btc, "btc", displayCurrency).toFormat()+"</td>";
@@ -664,7 +664,7 @@ function buildTransactionTable(collatedTxArray) {
 						newRowHTML = "";
 					}
 					break;
-				case "deposit":					
+				case "deposit":
 					if (txInfo.subType == "investment") {
 						if (transactionTableOptions.investmentHistory) {
 							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);
@@ -702,7 +702,7 @@ function buildTransactionTable(collatedTxArray) {
 						}
 					}
 					break;
-				case "withdrawal":					
+				case "withdrawal":
 					if (txInfo.subType == "investment") {
 						if (transactionTableOptions.investmentHistory) {
 							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);
@@ -712,9 +712,9 @@ function buildTransactionTable(collatedTxArray) {
 							if (transactionTableOptions.includeTxDetails) {
 								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
 								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
-							} else {								
+							} else {
 								newRowHTML += "<td>Investment ID: "+txInfo.info.investments[0].investment_id+"</td>";
-							}							
+							}
 						} else {
 							newRowHTML = "";
 						}
@@ -727,7 +727,7 @@ function buildTransactionTable(collatedTxArray) {
 							}
 							if (previousLiveBalance != balance.toFormat()) {
 								newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
-								newRowHTML += "<td>"+balance.toFormat()+"</td>";								
+								newRowHTML += "<td>"+balance.toFormat()+"</td>";
 								newRowHTML += "<td>Sent to: "+txInfo.info.recipientAddress+"</td>";
 							}
 							previousLiveBalance = balance.toFormat();
@@ -738,21 +738,12 @@ function buildTransactionTable(collatedTxArray) {
 					break;
 				case "investment":
 					if (txInfo.subType == "distribution") {
-						if (transactionTableOptions.investmentHistory) {
 							newRowHTML += "<td>Investment Distribution</td>";
 							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
 							newRowHTML += "<td>"+convertAmount(txInfo.info.btc_total, "btc", displayCurrency).plus(balanceAdd).toFormat()+"</td>";
-							//newRowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
-							if (transactionTableOptions.includeTxDetails) {
-								newRowHTML += "<td>Investment: "+txInfo.info.id+"<br>Your Investment Balance: "+txInfo.info.btc_total+"<br>Your Investment Ownership: "+txInfo.info.ownership_percent+"</td>";
-							} else {
-								newRowHTML += "<td></td>";
-							}						
-						} else {
-							newRowHTML = "";
-						}
+							newRowHTML += "<td>"+txInfo.info.id+"</td>";
 					} else {
-						newRowHTML = "";						
+						newRowHTML = "";
 					}
 					break;
 				case "affiliate_credit":
@@ -761,12 +752,13 @@ function buildTransactionTable(collatedTxArray) {
 							var rowHTML = "<td>Affiliate Credit - "+txInfo.subType+"</td>";
 							rowHTML += "<td>"+convertAmount(txInfo.info.btc_total, "btc", displayCurrency).toFormat()+"</td>";
 							rowHTML += "<td>"+convertAmount(txInfo.info.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
-							rowHTML += "<td>My Fruit Game</td>";
+              if ((txInfo.info.investment_id != undefined) && (txInfo.info.investment_id != null)) {
+                rowHTML += "<td>"+txInfo.info.investment_id+"</td>";
+              } else {
+                rowHTML += "<td>My Fruit Game</td>";
+              }
 						} catch (err) {
-							rowHTML = "<td>Affiliate Credit - pre-update</td>";
-							rowHTML += "<td>"+convertAmount(txInfo.btc_total, "btc", displayCurrency).toFormat()+"</td>";
-							rowHTML += "<td></td>";
-							rowHTML += "<td>My Fruit Game</td>";
+							rowHTML = "";
 						}
 						newRowHTML += rowHTML;
 					} else {
@@ -775,31 +767,31 @@ function buildTransactionTable(collatedTxArray) {
 					break;
 				case null:
 					//no txInfo object included, this is an unsupported transaction type
-					newRowHTML = ""; 
+					newRowHTML = "";
 					break;
-				default: 
+				default:
 					console.log ("Unsuported transaction info:\n");
 					console.log(JSON.stringify(txInfo));
-					newRowHTML = ""; 
+					newRowHTML = "";
 					break;
-					
+
 			}
 			if (newRowHTML != "") {
 				newRowHTML += "</tr>";
 			}
-		} catch (err) {	
-			newRowHTML = "";			
-		}		
+		} catch (err) {
+			newRowHTML = "";
+		}
 		returnHTML += newRowHTML;
 	}
-	returnHTML += "</tbody></table></div>";		
+	returnHTML += "</tbody></table></div>";
 	return (returnHTML);
 }
 
 function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 	if ((itemsPerPage == null) || (itemsPerPage == undefined) || (isNaN(itemsPerPage))) {
 		itemsPerPage = _txTableItemsPerPage;
-	}	
+	}
 	var returnHTML = "<div id=\"transactionHistory\"><table id=\"transactionHistoryTable\" class=\"tablesorter-blue\">";
 	returnHTML += "<thead><tr>";
 	returnHTML += "<th class=\"header\">Date</th>";
@@ -831,9 +823,9 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 				nextTx = null;
 			}
 			var rowHTML = "<tr>";
-			rowHTML += "<td>"			
+			rowHTML += "<td>"
 			rowHTML += createDateTimeString(new Date(currentTx.timestamp));
-			rowHTML += "</td>";			
+			rowHTML += "</td>";
 			switch (currentTx.type) {
 				case "accountTransactions":
 					if (transactionTableOptions.accountHistory) {
@@ -845,13 +837,13 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 								if (nextTx.type == "winsTransactions") {
 									winDeposit = true;
 								}
-							}							
+							}
 							if (!winDeposit) {
 								rowHTML += "<td>Deposit</td>";
 								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toFormat()+"</td>";
 								rowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
 								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
-								rowHTML += "</tr>";	
+								rowHTML += "</tr>";
 								itemsRendered++;
 							} else {
 								rowHTML = "";
@@ -866,11 +858,11 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 							//only include non-betting withdrawals
 							if (!betWithdrawal) {
 								rowHTML += "<td>Withdrawal</td>";
-								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toFormat()+"</td>";	
-								rowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";	
+								rowHTML += "<td>"+convertAmount(currentTx.delta, "btc", displayCurrency).toFormat()+"</td>";
+								rowHTML += "<td>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</td>";
 								rowHTML += "<td>New account balance: <b>"+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" </td>";
-								rowHTML += "</tr>";	
-								itemsRendered++;	
+								rowHTML += "</tr>";
+								itemsRendered++;
 							} else {
 								rowHTML = "";
 							}
@@ -891,9 +883,9 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 							if (changeBTC != "0") {
 								//0 transactions are usually initial deposits -- omit these for now
 								rowHTML += "<tr>";
-								rowHTML += "<td>"			
+								rowHTML += "<td>"
 								rowHTML += createDateTimeString(new Date(currentTx.timestamp));
-								rowHTML += "</td>";		
+								rowHTML += "</td>";
 								rowHTML += "<td>Investments Transaction</td>";
 								rowHTML += "<td><b>"+convertAmount(changeBTC, "btc", displayCurrency).toFormat()+"</b></td>";
 								rowHTML += "<td>"+convertAmount(userInvestmentBalanceBTC, "btc", displayCurrency).toFormat()+"</td>";
@@ -905,8 +897,8 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 								rowHTML += "\""+investmentID+"\" distribution: <b>"+convertAmount(userInvestmentBaseBTC, "btc", displayCurrency).toFormat()+"</b> "+displayCurrency+" book value / ";
 								rowHTML += "<b>"+convertAmount(userInvestmentBalanceBTC, "btc", displayCurrency).toFormat()+" "+displayCurrency+"</b> current value.";
 								rowHTML += "</td>";
-								rowHTML += "</tr>";	
-							} 
+								rowHTML += "</tr>";
+							}
 						}
 						if (rowHTML != "") {
 							itemsRendered++;
@@ -916,14 +908,14 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 					}
 					break;
 				case "affiliateTransactions":
-					if (transactionTableOptions.affiliateHistory) {						
-						var currentAffiliateCont = getAffiliateContribution(currentTx.balance, previousAffiliateCont);						
+					if (transactionTableOptions.affiliateHistory) {
+						var currentAffiliateCont = getAffiliateContribution(currentTx.balance, previousAffiliateCont);
 						//track previous transaction to determine if it's a deposit or withdrawals
 						rowHTML += "<td>Affiliate Transaction</td>";
 						rowHTML += "<td>"+convertAmount(currentAffiliateCont.btc, "btc", displayCurrency).toFormat()+"</td>";
 						rowHTML += "<td>"+convertAmount(currentAffiliateCont.btc_total, "btc", displayCurrency).toFormat()+"</td>";
 						rowHTML += "<td>Referral: <b>"+currentAffiliateCont.account+"</b></td>";
-						rowHTML += "</tr>";	
+						rowHTML += "</tr>";
 						previousAffiliateCont = currentTx.balance;
 						itemsRendered++;
 					} else {
@@ -938,7 +930,7 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 						rowHTML += "<td>"+convertAmount(currentTx.bet.btc, "btc", displayCurrency).times(minusOne).toFormat()+"</td>";
 						rowHTML += "<td>"+convertAmount(currentTx.bet.btc_user_balance, "btc", displayCurrency).toFormat()+"</td>";
 						rowHTML += "<td></td>";
-						rowHTML += "</tr>";	
+						rowHTML += "</tr>";
 						itemsRendered++;
 					} else {
 						rowHTML = "";
@@ -966,9 +958,9 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 						rowHTML = "";
 					}
 					break;
-				default:	
+				default:
 					break;
-			}			
+			}
 			returnHTML += rowHTML;
 		} catch (err) {
 		}
@@ -976,13 +968,13 @@ function buildTransactionTable_old (collatedTxArray, itemsPerPage, direction) {
 			//end of available items
 			itemsRendered = itemsPerPage;
 			_txTableTopItemIndex = collatedTxArray.length - 1;
-		}	
+		}
 		if (_txTableTopItemIndex < 0) {
 			itemsRendered = itemsPerPage;
 			_txTableTopItemIndex = 0;
 		}
 	}
-	returnHTML += "</tbody></table></div>";	
+	returnHTML += "</tbody></table></div>";
 	if (itemsRendered == 0) {
 		return (null);
 	}
@@ -1045,7 +1037,7 @@ function collateTransactions(txResults) {
 		newestTxType = null;
 		itemExtracted = false;
 		for (var txTypes in txResults) {
-			var txArray = txResults[txTypes];			
+			var txArray = txResults[txTypes];
 			for (var count = 0; count < txArray.length; count++) {
 				itemsRemaining = true;
 				var currentTx = txArray[count];
@@ -1061,7 +1053,7 @@ function collateTransactions(txResults) {
 		}
 		if (newestTxArray != null) {
 			returnArray.push(newestTxArray.splice(newestTxIndex, 1));
-			
+
 		}
 		if (itemExtracted == false) {
 			//if no item found with newest date, reset back to beginning
@@ -1092,7 +1084,7 @@ function collateTransactions(txResults) {
 				previousInvestmentTx = currentTx;
 				break;
 			default: break;
-		}		
+		}
 	}
 	return (returnArray);
 }
@@ -1229,7 +1221,7 @@ function onGetReferralInfo(returnData) {
 	} else {
 		try {
 			var tableHeader = "<div id=\"total\"><b>Affiliate history for:</b> "+returnData.result.referral+"</div><br/>";
-			var infoTable = "<div id=\"details\"><table id=\"affiliateContributionsTable\" class=\"tablesorter-blue\">";	
+			var infoTable = "<div id=\"details\"><table id=\"affiliateContributionsTable\" class=\"tablesorter-blue\">";
 			infoTable += "<thead><tr>";
 			switch (displayCurrency) {
 				case "btc" :
@@ -1300,7 +1292,7 @@ function onDepositClick(event) {
 	updateObj.investment_id = $("#investmentSelectorDeposit").val();
 	updateObj.transaction = new Object();
 	updateObj.transaction.deposit = new Object();
-	updateObj.transaction.deposit.btc = depositBTC.toString();	
+	updateObj.transaction.deposit.btc = depositBTC.toString();
 	clearAllFields();
 	callServerMethod("updateInvestorInfo", updateObj, onCompleteDeposit);
 }
@@ -1330,7 +1322,7 @@ function onWithdrawClick(event) {
 	updateObj.investment_id = $("#investmentSelectorWithdraw").val();
 	updateObj.transaction = new Object();
 	updateObj.transaction.withdraw = new Object();
-	updateObj.transaction.withdraw.btc = withdrawBTC.toString();	
+	updateObj.transaction.withdraw.btc = withdrawBTC.toString();
 	clearAllFields();
 	callServerMethod("updateInvestorInfo", updateObj, onCompleteWithdraw);
 }
@@ -1430,7 +1422,7 @@ function onDisplayCurrencyUpdate(event) {
 function onSettingsChanged(event) {
 	var loggedOut = false;
 	try {
-		if ((localStorage.playerAccount == null) ||	(localStorage.playerPassword == null) || 
+		if ((localStorage.playerAccount == null) ||	(localStorage.playerPassword == null) ||
 			(localStorage.playerAccount == undefined) || (localStorage.playerPassword == undefined) ||
 			(localStorage.playerAccount == "") || (localStorage.playerPassword == "")) {
 				loggedOut = true;
@@ -1449,7 +1441,7 @@ function onSettingsChanged(event) {
 /**
 * Asserts any found primitive value (sring, number, boolean) to another value recursively within any complex object type. This function is NOT safe to use with circular references!
 *
-* @param valueToReplace The primitive value to recursively find and replace. 
+* @param valueToReplace The primitive value to recursively find and replace.
 * @param replaceValue The value to replace 'valueToReplace' by wherever found.
 * @param dataObject The object within which to recursively search for 'valueToReplace' and replace with 'replaceValue'.
 */
@@ -1491,17 +1483,17 @@ function onUpdatePasswordClick(event) {
 	if (localStorage.getItem("lastPasswordUpdate") != null) {
 		var lastUpdateObj = new Date(localStorage.lastPasswordUpdate);
 		var lastUpdated = lastUpdateObj.valueOf()+(passwordUpdateInterval*60000); //passwordUpdateInterval is in minutes
-		var deltaMinutes = (lastUpdated - Date.now()) / 60000;	
-		if (deltaMinutes > 0) {			
+		var deltaMinutes = (lastUpdated - Date.now()) / 60000;
+		if (deltaMinutes > 0) {
 		//	alert("You must wait at least "+String(Math.ceil(deltaMinutes))+" minute(s) before another password reset attempt.");
 		//	return;
 		}
 	}
 	var currentPassword = new String($("#updatePassword #currentPassword").val());
 	var newPassword = new String($("#updatePassword #newPassword").val());
-	var confirmPassword = new String($("#updatePassword #confirmPassword").val());	
+	var confirmPassword = new String($("#updatePassword #confirmPassword").val());
 	if ((currentPassword.split(" ").join("") == "") || (newPassword.split(" ").join("") == "") || (confirmPassword.split(" ").join("") == "")){
-		alert ("Password fields must not be empty.");		
+		alert ("Password fields must not be empty.");
 		return;
 	};
 	try {
@@ -1511,24 +1503,24 @@ function onUpdatePasswordClick(event) {
 		}
 	} catch (err) {
 		accountUpdateObj = new Object();
-	}	
+	}
 	accountUpdateObj.playerPassword = newPassword;
 	localStorage.accountUpdate = JSON.stringify(accountUpdateObj);
-	var params = new Object();				  
+	var params = new Object();
 	params.email = accountInfo.playerEmail;
 	params.account = accountInfo.playerAccount;
 	params.password = newPassword;
 	params.currentPassword = currentPassword;
 	params.resetCode = ""; //required parameter
-	callServerMethod("passwordReset", params, onResetPassword);  
+	callServerMethod("passwordReset", params, onResetPassword);
 }
 
-function onResetPassword(resultData) {	
+function onResetPassword(resultData) {
 	if (resultData.error != null) {
 		alert(resultData.error.message);
 	} else {
 		var accountUpdateObj = JSON.parse(localStorage.accountUpdate);
-		dateObj = new Date();		
+		dateObj = new Date();
 		localStorage.lastPasswordUpdate = dateObj.toISOString();
 		localStorage.playerPassword = accountUpdateObj.playerPassword;
 		alert("Password successfully updated.");
@@ -1541,7 +1533,7 @@ function start() {
 	accountInfo.playerAccount = localStorage.playerAccount;
 	accountInfo.playerPassword = localStorage.playerPassword;
 	accountInfo.playerEmail = localStorage.getItem("playerEmail");
-	accountInfo.gameServerURL = localStorage.gameServerURL;	
+	accountInfo.gameServerURL = localStorage.gameServerURL;
 	$("#depositButton").button();
     $("#depositButton").click(onDepositClick);
 	$("#withdrawButton").button();

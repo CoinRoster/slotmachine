@@ -25,7 +25,7 @@ const bitcoin = require('bitcoinjs-lib');
 const bip32 = require('bip32-utils');
 
 //Global databse information:
-require("./db_info.js"); 
+require("./db_info.js");
 
 //Global game server configuration:
 var serverConfig = require("./game_server_config.js");
@@ -84,24 +84,24 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 	var serviceResponse = yield getNewAccountAddress(generator);
 	//Hard-coded address response for testing:
 	//var serviceResponse = new Object();
-	//serviceResponse.address = "TEST2";
+	//serviceResponse.address = "AFFILIATE_ACCOUNT"; //create a testing account (any blockchain operations with this address will obviously fail)
 	if ((serviceResponse["error"] != null) && (serviceResponse["error"] != undefined)) {
-		trace ("API error response on RPC_newGamingAccount: "+serviceResponse.error);		
+		trace ("API error response on RPC_newGamingAccount: "+serviceResponse.error);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_API_ERROR, "Experiencing one or more API failures when creating an account.");
 		return;
 	}
-	var filterResult = yield plugins.RPC_newAccount(requestData, generator);	
+	var filterResult = yield plugins.RPC_newAccount(requestData, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
 	}
 	if ((serviceResponse["address"] == null) || (serviceResponse["address"] == undefined)) {
-		trace ("API error response on RPC_newGamingAccount: "+serviceResponse);		
+		trace ("API error response on RPC_newGamingAccount: "+serviceResponse);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_API_ERROR, "Experiencing one or more API failures when creating an account.");
 		return;
-	}	
+	}
 	responseData.account=serviceResponse.address;
 	var affiliateID = requestData.params.affiliateID; //updated by affiliate plugin, will be null if no valid affiliate exists
 	trace ("Created new account address: "+responseData.account);
@@ -126,7 +126,7 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 	insertFields += "`affiliate`";
 	insertFields += ")";
 	var insertValues = "("
-	insertValues += "\""+responseData.account+"\","; 
+	insertValues += "\""+responseData.account+"\",";
 	insertValues += "\"0\",";
 	insertValues += "\"0\",";
 	insertValues += "\"{}\",";
@@ -137,9 +137,9 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 		insertValues += "\""+affiliateID+"\"";
 	}
 	insertValues += ")";
-	var queryResult = yield db.query("INSERT INTO `gaming`.`accounts` "+insertFields+" VALUES "+insertValues, generator);	
+	var queryResult = yield db.query("INSERT INTO `gaming`.`accounts` "+insertFields+" VALUES "+insertValues, generator);
 	if (queryResult.error != null) {
-		trace ("Database error on RPC_newGamingAccount!: "+queryResult.error);		
+		trace ("Database error on RPC_newGamingAccount!: "+queryResult.error);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was an error creating a new account address.");
 		return;
@@ -150,7 +150,7 @@ function *RPC_newGamingAccount (postData, requestObj, responseObj, batchResponse
 		var currentAPI = serverConfig.APIInfo[APIName];
 		var satoshiPerBTC = new BigNumber("100000000");
 		responseData.fees.bitcoin = currentAPI.minerFee.dividedBy(satoshiPerBTC).toString(10);
-		responseData.fees.satoshis = currentAPI.minerFee.toString(10);		
+		responseData.fees.satoshis = currentAPI.minerFee.toString(10);
 	}
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
@@ -171,7 +171,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 	var requestData = JSON.parse(postData);
 	var responseData = new Object();
 	checkParameter(requestData, "account");
-	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);	
+	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
 	if (queryResult.error != null) {
 		trace ("Database error on RPC_checkAccountDeposit: "+queryResult.error);
 		trace ("   Request ID: "+requestData.id);
@@ -182,22 +182,22 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "No matching account.", requestData.params.account);
 		return;
 	}
-	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);	
+	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
 	}
 	trace ("Checking last check interval...");;
-	var lastCheckDateObj = new Date(queryResult.rows[0].last_deposit_check);	
+	var lastCheckDateObj = new Date(queryResult.rows[0].last_deposit_check);
 	if ((Date.now() - lastCheckDateObj.valueOf()) < (serverConfig.depositCheckInterval * 1000)) {
 		trace ("...not yet time for a live update.");
 		//deposit check interval has not elapsed yet
 		responseData.balance = new Object();
 		responseData.balance.bitcoin = String(queryResult.rows[0].btc_balance_verified);
-		responseData.balance.bitcoin_unconfirmed = String(queryResult.rows[0].btc_balance_available);		
-		responseData.deposit_complete = queryResult.rows[0].deposit_complete; 
-		responseData.deposit_updated = false; 
-		var tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed.toString(10));	
+		responseData.balance.bitcoin_unconfirmed = String(queryResult.rows[0].btc_balance_available);
+		responseData.deposit_complete = queryResult.rows[0].deposit_complete;
+		responseData.deposit_updated = false;
+		var tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed.toString(10));
 		tokens = tokens.times(serverConfig.tokensPerBTC);
 		responseData.balance.tokens = tokens.toString(10);
 		replyResult(postData, requestObj, responseObj, batchResponses, responseData);
@@ -225,17 +225,17 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 		uc_bitcoinAmount = Number(uc_bitcoinAmount);
 		var total_oc_bitcoin =new BigNumber(accountInfo.final_balance);
 		total_oc_bitcoin = total_oc_bitcoin.times(btc_per_satoshis);
-		total_oc_bitcoin = Number(total_oc_bitcoin.toString(10));				
+		total_oc_bitcoin = Number(total_oc_bitcoin.toString(10));
 		if (serverConfig.allowUnconfirmedDeposit) {
 			if ((uc_bitcoinAmount > 0) || (bitcoinAmount > 0)) {
 				var btcDeposited = null;
 				if (bitcoinAmount == 0) {
 					btcDeposited = String(uc_bitcoinAmount);
-					var dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(uc_bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_deposit_check`=NOW(),`last_login`=NOW()";	
+					var dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(uc_bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_deposit_check`=NOW(),`last_login`=NOW()";
 				} else {
 					//uncofirmed balance may be 0 at this point
 					btcDeposited = String(bitcoinAmount);
-					dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_deposit_check`=NOW(),`last_login`=NOW()";	
+					dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_deposit_check`=NOW(),`last_login`=NOW()";
 				}
 				if (queryResult.rows[0].auth_status == 2) {
 					var accountPlugin = plugins.getPlugin("Portable Account Plugin");
@@ -267,7 +267,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				if (deltaBTC.isGreaterThan(0)) {
 					var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 					if (accountUpdateResult.error != null) {
-						trace ("Database error on RPC_checkAccountDeposit: "+accountUpdateResult.error);		
+						trace ("Database error on RPC_checkAccountDeposit: "+accountUpdateResult.error);
 						trace ("   Request ID: "+requestData.id);
 						global.logTx ("   Could not record to database!");
 						replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
@@ -277,20 +277,20 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				responseData.balance = new Object();
 				responseData.balance.bitcoin = String(bitcoinAmount);
 				responseData.balance.bitcoin_unconfirmed = String(uc_bitcoinAmount);
-				tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);	
+				tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);
 				tokens = tokens.times(serverConfig.tokensPerBTC);
 				responseData.balance.tokens = tokens.toString(10);
 				responseData.deposit_complete = true;
 				responseData.deposit_updated = true;
 			}
 		} else {
-			if (bitcoinAmount > 0) {		
+			if (bitcoinAmount > 0) {
 				responseData.balance = new Object();
 				responseData.balance.bitcoin = String(bitcoinAmount);
 				responseData.balance.bitcoin_unconfirmed = String(uc_bitcoinAmount);
-				tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);	
+				tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);
 				tokens = tokens.times(serverConfig.tokensPerBTC);
-				responseData.balance.tokens = tokens.toString(10);				
+				responseData.balance.tokens = tokens.toString(10);
 				currentBTCTotal = new BigNumber(queryResult.rows[0].btc_balance_total);
 				liveBTCTotal = new BigNumber(accountInfo.final_balance);
 				deltaBTC = liveBTCTotal.minus(currentBTCTotal);
@@ -300,10 +300,10 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				txInfo.info = new Object();
 				txInfo.info.btc = deltaBTC.toString(10);
 				if (deltaBTC.isGreaterThan(0)) {
-					var dbUpdates = "`btc_balance_verified`=\""+responseData.balance.bitcoin+"\",`btc_balance_available`=\""+responseData.balance.bitcoin+"\",`last_deposit_check`=NOW(),`deposit_complete`=TRUE,`last_login`=NOW()";					
+					var dbUpdates = "`btc_balance_verified`=\""+responseData.balance.bitcoin+"\",`btc_balance_available`=\""+responseData.balance.bitcoin+"\",`last_deposit_check`=NOW(),`deposit_complete`=TRUE,`last_login`=NOW()";
 					accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 					if (accountUpdateResult.error != null) {
-						trace ("Database error on RPC_checkAccountDeposit: "+accountUpdateResult.error);		
+						trace ("Database error on RPC_checkAccountDeposit: "+accountUpdateResult.error);
 						trace ("   Request ID: "+requestData.id);
 						replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 						return;
@@ -322,7 +322,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				return;
 			}
 			var btc_per_satoshis = new BigNumber("0.00000001");
-			var blockchainBTCBalance = new BigNumber(accountInfo.balance); //convert from Satoshis to Bitcoin		
+			var blockchainBTCBalance = new BigNumber(accountInfo.balance); //convert from Satoshis to Bitcoin
 			blockchainBTCBalance = blockchainBTCBalance.times(btc_per_satoshis);
 			var uc_blockchainBTCBalance = new BigNumber(accountInfo.unconfirmed_balance);
 			uc_blockchainBTCBalance = uc_blockchainBTCBalance.times(btc_per_satoshis);
@@ -330,18 +330,18 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 			total_oc_bitcoin = total_oc_bitcoin.times(btc_per_satoshis);
 			var verifiedBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_verified);
 			var availableBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_available);
-			var current_oc_bitcoin = new BigNumber(queryResult.rows[0].btc_balance_total);			
-			var deltaBTC = total_oc_bitcoin.minus(current_oc_bitcoin);				
+			var current_oc_bitcoin = new BigNumber(queryResult.rows[0].btc_balance_total);
+			var deltaBTC = total_oc_bitcoin.minus(current_oc_bitcoin);
 			availableBTCBalance = availableBTCBalance.plus(deltaBTC);
 			verifiedBTCBalance = blockchainBTCBalance;
 			if ((total_oc_bitcoin.equals(current_oc_bitcoin) == false)) {
-				//new deposit detected			
+				//new deposit detected
 				var dbUpdates = "`btc_balance_verified`=\""+verifiedBTCBalance.toString(10)+"\",";
-				dbUpdates += "`btc_balance_available`=\""+availableBTCBalance.toString(10)+"\",";	
+				dbUpdates += "`btc_balance_available`=\""+availableBTCBalance.toString(10)+"\",";
 				dbUpdates += "`btc_balance_total`=\""+total_oc_bitcoin.toString(10)+"\",";
 				dbUpdates += "`btc_balance_total_previous`=\""+total_oc_bitcoin.toString(10)+"\",";
-				dbUpdates += "`last_login`=NOW(),";	
-				dbUpdates += "`last_deposit_check`=NOW()";	
+				dbUpdates += "`last_login`=NOW(),";
+				dbUpdates += "`last_deposit_check`=NOW()";
 				if (queryResult.rows[0].auth_status == 2) {
 					var accountPlugin = plugins.getPlugin("Portable Account Plugin");
 					var dateStr = new Date().toISOString();
@@ -349,7 +349,7 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 					message += "Confirmed blockchain balance (BTC): "+blockchainBTCBalance.toString(10)+"\n";
 					message += "Unconfirmed blockchain balance (BTC): "+uc_blockchainBTCBalance.toString(10)+"\n";
 					message += "Available balance (BTC): "+availableBTCBalance.toString(10);
-					accountPlugin.sendEmail("myfruitgame@gmail.com", queryResult.rows[0].email, "New Deposit", message);						
+					accountPlugin.sendEmail("myfruitgame@gmail.com", queryResult.rows[0].email, "New Deposit", message);
 				}
 				//update gaming.accounts
 				var txInfo = new Object();
@@ -359,13 +359,13 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				if (deltaBTC.isGreaterThan(0)) {
 					accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 				}
-			} else {				
+			} else {
 				var dbUpdates = "`btc_balance_verified`=\""+blockchainBTCBalance.toString(10)+"\",";
-				dbUpdates += "`btc_balance_available`=\""+availableBTCBalance.toString(10)+"\",";	
+				dbUpdates += "`btc_balance_available`=\""+availableBTCBalance.toString(10)+"\",";
 				dbUpdates += "`btc_balance_total`=\""+total_oc_bitcoin.toString(10)+"\",";
 				dbUpdates += "`btc_balance_total_previous`=\""+total_oc_bitcoin.toString(10)+"\",";
-				dbUpdates += "`last_login`=NOW(),";	
-				dbUpdates += "`last_deposit_check`=NOW()";	
+				dbUpdates += "`last_login`=NOW(),";
+				dbUpdates += "`last_deposit_check`=NOW()";
 				//update gaming.accounts
 				var txInfo = new Object();
 				txInfo.type = "balance_check";
@@ -375,10 +375,10 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 			}
 			responseData.balance = new Object();
 			responseData.balance.bitcoin = String(verifiedBTCBalance.toString(10));
-			responseData.balance.bitcoin_unconfirmed = String(availableBTCBalance.toString(10));		
-			responseData.deposit_complete = queryResult.rows[0].deposit_complete; 
-			responseData.deposit_updated = true; 
-			tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);	
+			responseData.balance.bitcoin_unconfirmed = String(availableBTCBalance.toString(10));
+			responseData.deposit_complete = queryResult.rows[0].deposit_complete;
+			responseData.deposit_updated = true;
+			tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);
 			tokens = tokens.times(serverConfig.tokensPerBTC);
 			responseData.balance.tokens = tokens.toString(10);
 		} else {
@@ -391,8 +391,8 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 		var currentAPI = serverConfig.APIInfo[APIName];
 		var satoshiPerBTC = new BigNumber("100000000");
 		responseData.fees.bitcoin = currentAPI.minerFee.dividedBy(satoshiPerBTC).toString(10);
-		responseData.fees.satoshis = currentAPI.minerFee.toString(10);		
-	}	
+		responseData.fees.satoshis = currentAPI.minerFee.toString(10);
+	}
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 
@@ -411,8 +411,8 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 	var generator = yield;
 	var requestData = JSON.parse(postData);
 	checkParameter(requestData, "account");
-	var responseData = new Object();	
-	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);	
+	var responseData = new Object();
+	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
 	if (queryResult.error != null) {
 		trace ("Database error on RPC_getAccountBalance: "+queryResult.error);
 		trace ("   Request ID: "+requestData.id);
@@ -422,8 +422,8 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 	if (queryResult.rows.length == 0) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "No matching account.", requestData.params.account);
 		return;
-	}	
-	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);		
+	}
+	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
@@ -431,11 +431,11 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 	var current_btc_balance_conf = new BigNumber(queryResult.rows[0].btc_balance_verified);
 	var current_btc_balance_total = new BigNumber(queryResult.rows[0].btc_balance_total);
 	var current_btc_balance_avail = new BigNumber(queryResult.rows[0].btc_balance_available);
-	var current_btc_balance_total_previous = new BigNumber(queryResult.rows[0].btc_balance_total_previous);	
+	var current_btc_balance_total_previous = new BigNumber(queryResult.rows[0].btc_balance_total_previous);
 	responseData.account = requestData.params.account;
 	responseData.balance = new Object();
 	var live = false;
-	if ((requestData.params["refresh"] == true) || (requestData.params["refresh"] == 1)) {		
+	if ((requestData.params["refresh"] == true) || (requestData.params["refresh"] == 1)) {
 		var btc_per_satoshis = new BigNumber("0.00000001");
 		live = true;
 		var accountInfo = yield checkAccountBalance(generator, requestData.params.account);
@@ -445,9 +445,9 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 			var update_btc_balance_unc = new BigNumber(String(accountInfo.unconfirmed_balance)); //convert from Satoshis to Bitcoin
 			update_btc_balance_unc = update_btc_balance_unc.times(btc_per_satoshis);
 			var update_btc_balance_total = new BigNumber(String(accountInfo.final_balance));
-			update_btc_balance_total = update_btc_balance_total.times(btc_per_satoshis);			
+			update_btc_balance_total = update_btc_balance_total.times(btc_per_satoshis);
 			if (current_btc_balance_total_previous.equals(update_btc_balance_total) == false) {
-				//a new deposit has been made since last check 
+				//a new deposit has been made since last check
 				var balanceDelta = update_btc_balance_total.minus(current_btc_balance_total_previous); //may be negative
 				var btc_balance_conf = update_btc_balance_conf;
 				var btc_balance_unc = update_btc_balance_unc;
@@ -465,17 +465,17 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 				txInfo.info = new Object();
 				txInfo.info.btc = balanceDelta.toString(10);
 				if (balanceDelta.isGreaterThan(0)) {
-					var dbUpdates = "`btc_balance_verified`=\""+btc_balance_conf.toString(10)+"\",`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`btc_balance_total`=\""+btc_balance_total.toString(10)+"\",`btc_balance_total_previous`=\""+btc_balance_total_previous.toString(10)+"\",`last_login`=NOW()";			
+					var dbUpdates = "`btc_balance_verified`=\""+btc_balance_conf.toString(10)+"\",`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`btc_balance_total`=\""+btc_balance_total.toString(10)+"\",`btc_balance_total_previous`=\""+btc_balance_total_previous.toString(10)+"\",`last_login`=NOW()";
 					var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 					if (accountUpdateResult.error != null) {
-						trace ("Database error on RPC_getAccountBalance: "+accountUpdateResult.error);		
+						trace ("Database error on RPC_getAccountBalance: "+accountUpdateResult.error);
 						//trace ("   SQL: "+updateSQL);
 						trace ("   Request ID: "+requestData.id);
 						replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 						return;
 					}
 				}
-			} else {				
+			} else {
 				btc_balance_conf = update_btc_balance_conf;
 				btc_balance_unc = update_btc_balance_unc;
 				btc_balance_avail = current_btc_balance_avail;
@@ -485,23 +485,23 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 			responseData.balance.bitcoin = btc_balance_avail.toString(10);
 			responseData.balance.bitcoin_unconfirmed = btc_balance_unc.toString(10);
 			responseData.balance.bitcoin_confirmed = btc_balance_conf.toString(10);
-			var tokens = new BigNumber(btc_balance_avail.toString(10));	
+			var tokens = new BigNumber(btc_balance_avail.toString(10));
 			tokens = tokens.times(serverConfig.tokensPerBTC);
 			responseData.balance.tokens = tokens.toString(10);
 		} else {
 			live = false;
 		}
-	} 
+	}
 	if (!live) {
 		responseData.balance.bitcoin = queryResult.rows[0].btc_balance_available;
 		responseData.balance.bitcoin_confirmed = queryResult.rows[0].btc_balance_verified;
-		var tokens = new BigNumber(queryResult.rows[0].btc_balance_available);	
+		var tokens = new BigNumber(queryResult.rows[0].btc_balance_available);
 		tokens = tokens.times(serverConfig.tokensPerBTC);
 		responseData.balance.tokens = tokens.toString(10);
 	}
 	//add jackpot information if provided
 	if ((requestData.params["gameID"] != null) && (requestData.params["gameID"] != undefined) && (requestData.params["gameID"] != "")) {
-		if ((serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != undefined) && 
+		if ((serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != undefined) &&
 			(serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != null) &&
 			(serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != "")) {
 			var jackpotQueryResult = yield db.query("SELECT * FROM `gaming`.`jackpots` WHERE `jackpot_id`=\""+serverConfig.gameConfigs[requestData.params.gameID].jackpotID+"\" LIMIT 1", generator);
@@ -521,7 +521,7 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 		var currentAPI = serverConfig.APIInfo[APIName];
 		var satoshiPerBTC = new BigNumber("100000000");
 		responseData.fees.bitcoin = currentAPI.minerFee.dividedBy(satoshiPerBTC).toString(10);
-		responseData.fees.satoshis = currentAPI.minerFee.toString(10);		
+		responseData.fees.satoshis = currentAPI.minerFee.toString(10);
 	}
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
@@ -533,16 +533,16 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 						account (String): The Bitcoin account to check the balance for.
 						password (String, optional): A password for the associated account.
 						searchParams (Object): An object containing one or more of the following search parameters:
-							txTypes (Array): An array of strings specifying which transaction types to include in the reply. 
+							txTypes (Array): An array of strings specifying which transaction types to include in the reply.
 										Valid types include "account" for account-related transactions, "investment" for investment-related transactions, and
 										"affiliate" for affiliate-related transactions. Other plugins may define new types so this list may not be complete.
 							searchType (String): The type of search to perform. Valid search types are "date" and "recent".
-							search (*): The search to be performed. 
-										If searchType is "date", this must be an object with properties 'start' and 'end' containing ISO date strings of the 
+							search (*): The search to be performed.
+										If searchType is "date", this must be an object with properties 'start' and 'end' containing ISO date strings of the
 										starting and end range to include in the search.
 										is searchType is "recent", this must be a number (integer) denoting the number of most recent items to include in the reply.
 							limitResults (Number, optional): If included, only this many results will be returned in the reply.
-							page (Number, optional): The result page if limitResults is being used, igored otherwise. Default is 0 (first page). Pagination can be 
+							page (Number, optional): The result page if limitResults is being used, igored otherwise. Default is 0 (first page). Pagination can be
 										handled on the client by using the total result count included in the reply.
 * @param requestObj The request object (https://nodejs.org/api/http.html#http_class_http_incomingmessage).
 * @param requestObj The response object (https://nodejs.org/api/http.html#http_class_http_serverresponse).
@@ -575,7 +575,7 @@ function *RPC_getAccountTransactions (postData, requestObj, responseObj, batchRe
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Missing \"searchParams.search\".");
 		return;
 	}
-	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);	
+	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
 	if (queryResult.error != null) {
 		trace ("Database error on RPC_getAccountTransactions: "+queryResult.error);
 		trace ("   Request ID: "+requestData.id);
@@ -585,8 +585,8 @@ function *RPC_getAccountTransactions (postData, requestObj, responseObj, batchRe
 	if (queryResult.rows.length == 0) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "No matching account.", requestData.params.account);
 		return;
-	}	
-	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);		
+	}
+	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
@@ -695,7 +695,7 @@ function *RPC_getAccountTransactions (postData, requestObj, responseObj, batchRe
 				resultObj.deposit_detected = currentResult.deposit_complete;
 				resultObj.btc_verified = currentResult.btc_balance_verified;
 				resultObj.txInfo = currentResult.tx_info;
-				responseData.accountTransactions.push(resultObj);				
+				responseData.accountTransactions.push(resultObj);
 			}
 		}
 	}
@@ -813,7 +813,7 @@ function *RPC_getJackpot (postData, requestObj, responseObj, batchResponses) {
 	checkParameter(requestData, "gameID");
 	var responseData = new Object();
 	//add jackpot information if provided
-	if ((serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != undefined) && 
+	if ((serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != undefined) &&
 		(serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != null) &&
 		(serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != "")) {
 		var jackpotQueryResult = yield db.query("SELECT * FROM `gaming`.`jackpots` WHERE `jackpot_id`=\""+serverConfig.gameConfigs[requestData.params.gameID].jackpotID+"\" LIMIT 1", generator);
@@ -836,11 +836,11 @@ function *RPC_getJackpot (postData, requestObj, responseObj, batchResponses) {
 *
 * @param postData The POST data included with the request. JSON object must contain:
 *						gameID (String): Alpha-numeric game ID for which to get results.
-*						bet (Object): 
+*						bet (Object):
 							tokens (String or Number): Numeric string or numeric value representing the number of tokens in the bet.
 						account (String): The Bitcoin account making the request.
 						password (String, optional): A password for the associated account.
-						nonce (String): A unique nonce for the player (not currently in use but must be included).									
+						nonce (String): A unique nonce for the player (not currently in use but must be included).
 * @param requestObj The request object (https://nodejs.org/api/http.html#http_class_http_incomingmessage).
 * @param requestObj The response object (https://nodejs.org/api/http.html#http_class_http_serverresponse).
 * @param batchResponses An object containing expected responses for a batch. If null, this function is not being called as part of a batch. Usually the contents of this
@@ -853,10 +853,10 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	checkParameter(requestData, "gameID");
 	checkParameter(requestData, "bet");
 	checkParameter(requestData, "account");
-	checkParameter(requestData, "nonce");	
+	checkParameter(requestData, "nonce");
 	requestData.params.gameID = String(requestData.params.gameID);
-	var betAmount = new BigNumber(requestData.params.bet["tokens"]);	
-	var btcBetAmount = betAmount.dividedBy(serverConfig.tokensPerBTC);	
+	var betAmount = new BigNumber(requestData.params.bet["tokens"]);
+	var btcBetAmount = betAmount.dividedBy(serverConfig.tokensPerBTC);
 	if ((serverConfig.gameConfigs[requestData.params.gameID] == null) || (serverConfig.gameConfigs[requestData.params.gameID] == undefined)) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_CONFIG_ERROR, "Game ID \""+requestData.params.gameID+"\" not defined.");
 		return;
@@ -894,7 +894,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	} catch (err) {
 		bankroll_balance_btc = new BigNumber(0);
 	}
-	
+
 	var maxBet = eval(serverConfig.gameConfigs[requestData.params.gameID].maxBet);
 	if (maxBet.lessThan(btcBetAmount)) {
 		var maxBetTokens = maxBet.times(serverConfig.tokensPerBTC);
@@ -923,23 +923,23 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "A game is still in progress.", infoObject);
 		return;
 	}
-	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);	
+	var filterResult = yield plugins.RPC_login(queryResult, postData, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
 	}
 	//---- GENERATE INITIAL RESPONSE OBJECT ----
-	var responseData = new Object();	
-	var filterResult = yield plugins.RPC_bet(queryResult, requestData, generator);		
+	var responseData = new Object();
+	var filterResult = yield plugins.RPC_bet(queryResult, requestData, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
 	}
-	var currentAvailBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_available);	
-	var currentConfBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_verified);	
+	var currentAvailBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_available);
+	var currentConfBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_verified);
 	var currentTokenBalance = currentAvailBTCBalance.times(serverConfig.tokensPerBTC);
 	//---- CHECK & UPDATE ACCOUNT INFORMATION WHEN BALANCE LOW ----
-	if (betAmount.greaterThan(currentTokenBalance)) {		
+	if (betAmount.greaterThan(currentTokenBalance)) {
 		//if balance = 0
 		if (currentTokenBalance.equals(0) && (queryResult.rows[0].deposit_complete != true)) {
 			if (serverConfig.autoDeposit != null) {
@@ -951,7 +951,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 			var bitcoinAmount =  new BigNumber(accountInfo.balance); //convert from Satoshis to Bitcoin
 			bitcoinAmount=bitcoinAmount.times(btc_per_satoshi);
 			var btcDelta = bitcoinAmount.minus(currentConfBTCBalance);
-			bitcoinAmount=Number(bitcoinAmount.toString(10));			
+			bitcoinAmount=Number(bitcoinAmount.toString(10));
 			var uc_bitcoinAmount = new BigNumber(accountInfo.unconfirmed_balance);
 			uc_bitcoinAmount=uc_bitcoinAmount.times(btc_per_satoshi);
 			uc_bitcoinAmount=Number(uc_bitcoinAmount.toString(10));
@@ -961,7 +961,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 			responseData.balance = new Object();
 			responseData.balance.bitcoin = String(queryResult.rows[0].btc_balance_verified);
 			responseData.balance.bitcoin_unconfirmed = String(queryResult.rows[0].btc_balance_available);
-			var tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);	
+			var tokens = new BigNumber(responseData.balance.bitcoin_unconfirmed);
 			tokens = tokens.times(serverConfig.tokensPerBTC);
 			responseData.balance.tokens = tokens.toString(10);
 			if (serverConfig.allowUnconfirmedDeposit) {
@@ -969,14 +969,14 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 				if ((uc_bitcoinAmount > 0) || (bitcoinAmount > 0)) {
 					var newAvailBalance = null;
 					if (bitcoinAmount == 0) {
-						var dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(uc_bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_login`=NOW()";	
+						var dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(uc_bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_login`=NOW()";
 						newAvailBalance = uc_bitcoinAmount.toString(10);
 						currentTokenBalance = new BigNumber(String(uc_bitcoinAmount));
 						currentTokenBalance = currentTokenBalance.times(serverConfig.tokensPerBTC);
 					} else {
 						//uncofirmed balance may be 0 at this point
 						newAvailBalance = bitcoinAmount.toString(10);
-						dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_login`=NOW()";	
+						dbUpdates = "`btc_balance_verified`=\""+String(bitcoinAmount)+"\",`btc_balance_available`=\""+String(bitcoinAmount)+"\",`btc_balance_total`=\""+String(total_oc_bitcoin)+"\",`btc_balance_total_previous`=\""+String(total_oc_bitcoin)+"\",`deposit_complete`=TRUE,`last_login`=NOW()";
 						currentTokenBalance = new BigNumber(String(bitcoinAmount));
 						currentTokenBalance = currentTokenBalance.times(serverConfig.tokensPerBTC);
 					}
@@ -987,7 +987,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 						message += "Confirmed blockchain balance (BTC): "+bitcoinAmount.toString(10)+"\n";
 						message += "Unconfirmed blockchain balance (BTC): "+uc_bitcoinAmount.toString(10)+"\n";
 						message += "Available balance (BTC): "+newAvailBalance;
-						accountPlugin.sendEmail("myfruitgame@gmail.com", queryResult.rows[0].email, "New Deposit", message);						
+						accountPlugin.sendEmail("myfruitgame@gmail.com", queryResult.rows[0].email, "New Deposit", message);
 					}
 					global.logTx("Detected blockchain balance change for account: "+requestData.params.account);
 					global.logTx("   Last live API update of balances: "+queryResult.rows[0].last_deposit_check);
@@ -1006,7 +1006,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 					if (balanceDelta.isGreaterThan(0)) {
 						var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 						if (accountUpdateResult.error != null) {
-							trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);		
+							trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);
 							trace ("   Request ID: "+requestData.id);
 							txLog("    Couldn't update the database!");
 							replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
@@ -1017,13 +1017,13 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 			} else {
 				//currently disabled (in config)
 				if (bitcoinAmount > 0) {
-					var dbUpdates = "`btc_balance_verified`=\""+responseData.balance.bitcoin+"\",`btc_balance_available`=\""+responseData.balance.bitcoin+"\",`deposit_complete`=TRUE,`last_login`=NOW()";	
+					var dbUpdates = "`btc_balance_verified`=\""+responseData.balance.bitcoin+"\",`btc_balance_available`=\""+responseData.balance.bitcoin+"\",`deposit_complete`=TRUE,`last_login`=NOW()";
 					//update gaming.accounts
 					var txInfo = new Object();
 					txInfo.type = "balance_check";
 					var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 					if (accountUpdateResult.error != null) {
-						trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);		
+						trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);
 						trace ("   Request ID: "+requestData.id);
 						replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 						return;
@@ -1039,12 +1039,12 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	}
 	var betInfoObj = new Object();
 	betInfoObj.tokens = betAmount.toString(10);
-	betInfoObj.btc = btcBetAmount.toString(10);	
-	var filterResult = yield plugins.RPC_jackpot(queryResult, requestData, betInfoObj, generator);		
+	betInfoObj.btc = btcBetAmount.toString(10);
+	var filterResult = yield plugins.RPC_jackpot(queryResult, requestData, betInfoObj, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
-	}	
+	}
 	//restore amounts that may have been updated in filter(s)
 	btcBetAmount = new BigNumber(betInfoObj.btc);
 	betAmount = new BigNumber(betInfoObj.tokens);
@@ -1055,8 +1055,8 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	global.logTx("   Total bet amount in Bitcoin: "+betInfoObj.btc);
 	global.logTx("   Total bet amount in tokens: "+betInfoObj.tokens);
 	global.logTx("   Current tokens-per-Bitcoin multiplier: "+serverConfig.tokensPerBTC);
-	//---- UPDATE JACKPOT AMOUNT ----	
-	var gameJackpotID = serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"];	
+	//---- UPDATE JACKPOT AMOUNT ----
+	var gameJackpotID = serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"];
 	betInfoObj = new Object();
 	betInfoObj.btc = btcBetAmount;
 	betInfoObj.deduction = new BigNumber(0);
@@ -1079,30 +1079,30 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 			}
 			if ((betContribution != null) && (betContribution != undefined) && (betContribution != "") && (betContribution != "NULL")) {
 				//var jackpotTotalTokens = new BigNumber(updateJackpotQueryResult.rows[0].total);
-				var jackpotTotalBTC = new BigNumber(updateJackpotQueryResult.rows[0].btc_total);					
-				//var contribution = betAmount.times(betContribution);					
-				var contributionBTC = btcBetAmount.times(betContribution);				
+				var jackpotTotalBTC = new BigNumber(updateJackpotQueryResult.rows[0].btc_total);
+				//var contribution = betAmount.times(betContribution);
+				var contributionBTC = btcBetAmount.times(betContribution);
 				betInfoObj.deduction = contributionBTC;
 				//jackpotTotalTokens = jackpotTotalTokens.add(contribution);
 				jackpotTotalBTC = jackpotTotalBTC.add(contributionBTC);
 				trace ("   Jackpot \""+dbJackpotID+"\" increased to: "+jackpotTotalBTC.toString(10)+" BTC");
 				//var dbUpdates = "`total`="+jackpotTotalTokens.toString(10)+",";
-				var dbUpdates = "`btc_total`=\""+jackpotTotalBTC.toString(10)+"\",";	
-				dbUpdates += "`last_update`=NOW()";	
+				var dbUpdates = "`btc_total`=\""+jackpotTotalBTC.toString(10)+"\",";
+				dbUpdates += "`last_update`=NOW()";
 				var jackpotUpdateResult = yield db.query("UPDATE `gaming`.`jackpots` SET "+dbUpdates+" WHERE `jackpot_id`=\""+dbJackpotID+"\" AND `index`="+updateJackpotQueryResult.rows[0].index+" LIMIT 1", generator);
 				responseData.jackpot = new Object();
 				//responseData.jackpot.tokens = jackpotTotalTokens.toString(10);
 				responseData.jackpot.bitcoin = jackpotTotalBTC.toString(10);
-			}			
-		}		
-	}	
+			}
+		}
+	}
 	var filterResult = yield plugins.RPC_onBet(queryResult, postData, betInfoObj, generator);
 	if (filterResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, filterResult.code, filterResult.message, requestData.params.account);
 		return;
 	}
 	// ---- GENERATE KEYS & IVs ----
-	responseData.reelstopselections = new Array();	
+	responseData.reelstopselections = new Array();
 	var numReels = 3;
 	var keys = new Array();
 	var ivs = new Array();
@@ -1112,10 +1112,10 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	}
 	for (var count1 = 0; count1 < numReels; count1++) {
 		var numReelSymbols = 20;
-		responseData.reelstopselections.push([]);		
+		responseData.reelstopselections.push([]);
 		for (var stopPosition = 0; stopPosition < numReelSymbols; stopPosition++) {
 			var encryptedStopPosition = encrypt(stopPosition, keys[count1], ivs[count1]);
-			responseData.reelstopselections[count1].push(encryptedStopPosition);			
+			responseData.reelstopselections[count1].push(encryptedStopPosition);
 		}
 	}
 	var numShuffles = 5;
@@ -1127,14 +1127,14 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	//---- CALCULATE BET(S) AND UPDATE BALANCE(S) ----
 	var currentTokenBalance = currentTokenBalance.minus(betAmount);
 	currentBTCBalance = currentTokenBalance.dividedBy(serverConfig.tokensPerBTC);
-	//---- UPDATE DATABASE ----		
+	//---- UPDATE DATABASE ----
 	//create array of keys/ivs to store with game data
 	var keysArray = new Array();
 	for (count=0; count<numReels; count++) {
 		var newKeyObj = new Object();
 		newKeyObj.key = keys[count];
 		newKeyObj.iv = ivs[count];
-		keysArray.push(newKeyObj);		
+		keysArray.push(newKeyObj);
 	}
 	requestData.params.bet.btc = new BigNumber(requestData.params.bet.tokens);
 	requestData.params.bet.btc = requestData.params.bet.btc.dividedBy(serverConfig.tokensPerBTC);
@@ -1145,20 +1145,20 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	var updateValues = "\""+requestData.params.account+"\", \""+requestData.params.gameID+"\", ";
 	updateValues += "\""+querystring.escape(JSON.stringify(responseData))+"\", ";
 	updateValues += "\"" +querystring.escape(JSON.stringify(keysArray))+"\", ";
-	updateValues += "\"" +querystring.escape(JSON.stringify(requestData.params.bet))+"\", ";	
+	updateValues += "\"" +querystring.escape(JSON.stringify(requestData.params.bet))+"\", ";
 	updateValues += "false, ";
 	updateValues += "NOW()";
 	//update gaming.games
 	var gamesUpdateResult = yield db.query("INSERT INTO `gaming`.`games` ("+updateFields+") VALUES ("+updateValues+")", generator);
 	if (gamesUpdateResult.error != null) {
-		trace ("Database error on RPC_getGameResults: "+gamesUpdateResult.error);		
+		trace ("Database error on RPC_getGameResults: "+gamesUpdateResult.error);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
 		return;
-	}	
-	var newGamesIndex = gamesUpdateResult.rows.insertId;	
+	}
+	var newGamesIndex = gamesUpdateResult.rows.insertId;
 	var dbUpdates = "`last_game_index`="+newGamesIndex+",";
-	dbUpdates += "`btc_balance_available`=\""+currentBTCBalance.toString(10)+"\",";	
+	dbUpdates += "`btc_balance_available`=\""+currentBTCBalance.toString(10)+"\",";
 	dbUpdates += "`last_login`=NOW()";
 	global.logTx("   New available Bitcoin balance: "+currentBTCBalance.toString(10));
 	//update gaming.accounts
@@ -1168,7 +1168,7 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	txInfo.info.bet = requestData.params.bet;
 	var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 	if (accountUpdateResult.error != null) {
-		trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);		
+		trace ("Database error on RPC_getGameResults: "+accountUpdateResult.error);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
 		return;
@@ -1184,14 +1184,14 @@ function *RPC_getGameResults (postData, requestObj, responseObj, batchResponses)
 	leaderboardData.tokens = requestData.params.bet.tokens;
 	leaderboardData.tokens_per_btc = requestData.params.bet.tokens_per_btc;
 	updateLoaderboardData(leaderboardData);
-	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
+	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 
 /**
 * getGameStatus [RPC/generator]: Retrieves information for an in-progress game if one exists.
 *
 * @param postData The POST data included with the request. JSON object must contain:
-*						gameID (String): Alpha-numeric game ID for which to get results.					
+*						gameID (String): Alpha-numeric game ID for which to get results.
 						account (String): The Bitcoin account making the request.
 						password (String, optional): A password for the associated account.
 						index (String): The primary key index of the game in the database
@@ -1205,8 +1205,8 @@ function *RPC_getGameStatus (postData, requestObj, responseObj, batchResponses) 
 	var requestData = JSON.parse(postData);
 	//---- VERIFY PARAMETERS ----
 	checkParameter(requestData, "index");
-	checkParameter(requestData, "gameID");	
-	checkParameter(requestData, "account");	
+	checkParameter(requestData, "gameID");
+	checkParameter(requestData, "account");
 	var queryString = "SELECT * FROM `gaming`.`games` WHERE ";
 	queryString += "`index`=\""+requestData.params.index+"\" AND";
 	queryString += "`game_id`=\""+requestData.params.gameID+"\" AND";
@@ -1247,8 +1247,8 @@ function *RPC_getGameStatus (postData, requestObj, responseObj, batchResponses) 
 	responseData.balance = new Object();
 	responseData.balance.bitcoin = accountQueryResult.rows[0].btc_balance_available;
 	responseData.balance.tokens = currentTokenBalance.toString(10);
-	responseData.balance.bitcoin_confirmed = accountQueryResult.rows[0].btc_balance_verified;	
-	var tokens = new BigNumber(accountQueryResult.rows[0].btc_balance_available);	
+	responseData.balance.bitcoin_confirmed = accountQueryResult.rows[0].btc_balance_verified;
+	var tokens = new BigNumber(accountQueryResult.rows[0].btc_balance_available);
 	tokens = tokens.times(serverConfig.tokensPerBTC);
 	responseData.balance.tokens = tokens.toString(10);
 	//include fees information
@@ -1269,7 +1269,7 @@ function *RPC_getGameStatus (postData, requestObj, responseObj, batchResponses) 
 *						gameID (String): Alpha-numeric game ID for which to get results.
 						account (String): The Bitcoin account making the request.
 						password (String, optional): A password for the associated account.
-						results (Array): An indexed array with one encrypted selection per reel.									
+						results (Array): An indexed array with one encrypted selection per reel.
 * @param requestObj The request object (https://nodejs.org/api/http.html#http_class_http_incomingmessage).
 * @param requestObj The response object (https://nodejs.org/api/http.html#http_class_http_serverresponse).
 * @param batchResponses An object containing expected responses for a batch. If null, this function is not being called as part of a batch. Usually the contents of this
@@ -1278,8 +1278,8 @@ function *RPC_getGameStatus (postData, requestObj, responseObj, batchResponses) 
 function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) {
 	var generator = yield;
 	var requestData = JSON.parse(postData);
-	//---- VERIFY PARAMETERS ----	
-	checkParameter(requestData, "gameID");	
+	//---- VERIFY PARAMETERS ----
+	checkParameter(requestData, "gameID");
 	checkParameter(requestData, "account");
 	checkParameter(requestData, "results");
 	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
@@ -1332,7 +1332,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 		dataObject.index = queryResult.rows[0].last_game_index;
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "The game is already complete.", dataObject);
 		return;
-	}	
+	}
 	var resultsObject = JSON.parse(querystring.unescape(gamesQueryResult.rows[0].results));
 	if (resultsObject.reelstopselections.length != requestData.params.results.length) {
 		var dataObject = new Object();
@@ -1343,28 +1343,28 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	}
 	//---- VERIFY AGAINST STORED RESULT SELECTIONS ----
 	for (var count=0; count < resultsObject.reelstopselections.length; count++) {
-		var currentReelStops = resultsObject.reelstopselections[count];		
+		var currentReelStops = resultsObject.reelstopselections[count];
 		var currentPlayerSelection = requestData.params.results[count];
 		var found = false;
 		for (var count2=0; count2 < currentReelStops.length; count2++) {
 			if (currentPlayerSelection == currentReelStops[count2]) {
-				found=true;				
+				found=true;
 			}
 		}
 		if (found == false) {
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "Selections do not match available game selections.", resultsObject);
 			return;
 		}
-	}	
-	//---- EXTRACT DECRYPTION KEYS/IVs ----	
-	var rawKeyData = JSON.parse(querystring.unescape(gamesQueryResult.rows[0].keys));	
-	var keysArray = new Array();	
+	}
+	//---- EXTRACT DECRYPTION KEYS/IVs ----
+	var rawKeyData = JSON.parse(querystring.unescape(gamesQueryResult.rows[0].keys));
+	var keysArray = new Array();
 	for (var count=0; count < rawKeyData.length; count++) {
 		var dataType = rawKeyData[count].key.type; //assume same for both key and iv
 		switch (dataType) {
-			case "Buffer" : 
+			case "Buffer" :
 						var keyBuff = new Buffer(rawKeyData[count].key.data);
-						var ivBuff = new Buffer(rawKeyData[count].iv.data);						
+						var ivBuff = new Buffer(rawKeyData[count].iv.data);
 						var keyObject = new Object();
 						keyObject.key = keyBuff;
 						keyObject.iv = ivBuff;
@@ -1372,7 +1372,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 						break;
 			default: break;
 		}
-	}	
+	}
 	var returnData = new Object();
 	returnData.encryptedResults = new Array();
 	returnData.decryptedResults = new Array();
@@ -1383,7 +1383,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 		var decryptedPosition = decrypt(encryptedPosition, keysArray[count].key, keysArray[count].iv);
 		returnData.decryptedResults.push(decryptedPosition);
 	}
-	if ((serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != undefined) && 
+	if ((serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != undefined) &&
 		(serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != null) &&
 		(serverConfig.gameConfigs[requestData.params.gameID]["jackpotID"] != "")) {
 		var jackpotQueryResult = yield db.query("SELECT * FROM `gaming`.`jackpots` WHERE `jackpot_id`=\""+serverConfig.gameConfigs[requestData.params.gameID].jackpotID+"\" LIMIT 1", generator);
@@ -1392,7 +1392,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 		}
 	} else {
 		jackpotQueryResult = null;
-	}	
+	}
 	if (jackpotQueryResult != null) {
 		returnData.jackpot = new Object();
 		//returnData.jackpot.tokens = jackpotQueryResult.rows[0].total;
@@ -1415,9 +1415,9 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	winInfoObj.btc = tokensWon.dividedBy(serverConfig.tokensPerBTC);
 	currentTokenBalance = currentTokenBalance.times(serverConfig.tokensPerBTC);
 	previousTokenBalance = previousTokenBalance.times(serverConfig.tokensPerBTC);
-	currentTokenBalance = currentTokenBalance.add(tokensWon);	
+	currentTokenBalance = currentTokenBalance.add(tokensWon);
 	returnData.balance = new Object();
-	returnData.balance.tokens = currentTokenBalance.toString(10);	
+	returnData.balance.tokens = currentTokenBalance.toString(10);
 	var currentBTCBalance = currentTokenBalance.dividedBy(serverConfig.tokensPerBTC);
 	returnData.balance.bitcoin = currentBTCBalance.toString(10);
 	if ((returnData.reelsInfo.error != null) && (returnData.reelsInfo.error != undefined)) {
@@ -1433,7 +1433,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 		//jackpot has been won ... update the database
 		var jackpotUpdateResult = yield db.query("UPDATE `gaming`.`jackpots` SET "+dbUpdates+" WHERE `jackpot_id`=\""+jackpotQueryResult.rows[0].jackpot_id+"\" AND `index`="+jackpotQueryResult.rows[0].index+" LIMIT 1", generator);
 		if (jackpotUpdateResult.error != null) {
-			trace ("Database error on RPC_selectResult: "+accountUpdateResult.error);		
+			trace ("Database error on RPC_selectResult: "+accountUpdateResult.error);
 			trace ("   Request ID: "+requestData.id);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
 			return;
@@ -1443,7 +1443,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	dbUpdates = "`last_game_index`=NULL,";
 	dbUpdates += "`btc_balance_available`=\""+currentBTCBalance.toString(10)+"\",";
 	var dateObj = new Date();
-	dateObj.setSeconds(dateObj.getSeconds()+2); //forces the transaction to appear after bet/win info in history (NOW()+2 sometimes causes errors)	
+	dateObj.setSeconds(dateObj.getSeconds()+2); //forces the transaction to appear after bet/win info in history (NOW()+2 sometimes causes errors)
 	dbUpdates += "`last_login`=\""+getMySQLTimeStamp(dateObj)+"\"";
 	global.logTx("Win calculated in game \""+requestData.params.gameID+"\" for account: "+requestData.params.account);
 	global.logTx("   Available Bitcoin balance (currently in database): "+queryResult.rows[0].btc_balance_available);
@@ -1463,7 +1463,7 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	txInfo.info.win.btc = winInfoObj.btc;
 	var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 	if (accountUpdateResult.error != null) {
-		trace ("Database error on RPC_selectResult: "+accountUpdateResult.error);		
+		trace ("Database error on RPC_selectResult: "+accountUpdateResult.error);
 		trace ("   Request ID: "+requestData.id);
 		global.logTx("   Couldn't update database!");
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
@@ -1490,11 +1490,11 @@ function *RPC_selectResults (postData, requestObj, responseObj, batchResponses) 
 	var dbUpdates = "`complete`=true,";
 	dbUpdates += "`selections`=\""+querystring.escape(selectionsDBString)+"\",";
 	dbUpdates += "`wins`='"+winsObjString+"',";
-	dbUpdates += "`date_time`=NOW()";	
+	dbUpdates += "`date_time`=NOW()";
 	//update gaming.accounts -- don't add new row as this makes history appear incorrect without requiring a lot of sorting
 	var accountUpdateResult = yield db.query("UPDATE `gaming`.`games` SET "+dbUpdates+" WHERE `account`=\""+requestData.params.account+"\" AND `index`="+gamesQueryResult.rows[0].index+" LIMIT 1", generator);
 	if (accountUpdateResult.error != null) {
-		trace ("Database error on RPC_selectResults 2: "+accountUpdateResult.error);		
+		trace ("Database error on RPC_selectResults 2: "+accountUpdateResult.error);
 		trace ("   Request ID: "+requestData.id);
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when processing the request.");
 		return;
@@ -1611,7 +1611,7 @@ function updateLoaderboardData(updateObj) {
 * @param postData The POST data included with the request. JSON object must contain:
 						account (String): The Bitcoin account making the request.
 						password (String, optional): A password for the associated account.
-						receiver (String): The Bitcoin account to send the available funds to.						
+						receiver (String): The Bitcoin account to send the available funds to.
 * @param requestObj The request object (https://nodejs.org/api/http.html#http_class_http_incomingmessage).
 * @param requestObj The response object (https://nodejs.org/api/http.html#http_class_http_serverresponse).
 * @param batchResponses An object containing expected responses for a batch. If null, this function is not being called as part of a batch. Usually the contents of this
@@ -1620,8 +1620,8 @@ function updateLoaderboardData(updateObj) {
 function *RPC_cashOut (postData, requestObj, responseObj, batchResponses) {
 	var generator = yield;
 	var requestData = JSON.parse(postData);
-	//---- VERIFY PARAMETERS ----	
-	checkParameter(requestData, "account");	
+	//---- VERIFY PARAMETERS ----
+	checkParameter(requestData, "account");
 	checkParameter(requestData, "receiver");
 	var returnData = new Object();
 	trace ("Requesting cash out on account: "+requestData.params.account);
@@ -1643,7 +1643,7 @@ function *RPC_cashOut (postData, requestObj, responseObj, batchResponses) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_NO_RESULTS, "Account \""+requestData.params.account+"\" was not found.");
 		return;
 	}
-	if (Number(queryResult.rows[0].last_game_index) > 0) {		
+	if (Number(queryResult.rows[0].last_game_index) > 0) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "A game is still in progress.");
 		return;
 	}
@@ -1681,7 +1681,7 @@ function *RPC_cashOut (postData, requestObj, responseObj, batchResponses) {
 		var bitcoinAmount =  new BigNumber(accountInfo.balance);
 		bitcoinAmount = bitcoinAmount.times(btc_per_satoshi);
 		bitcoinAmount = Number(bitcoinAmount.toString(10));
-		var uc_bitcoinAmount = new BigNumber(accountInfo.unconfirmed_balance);	
+		var uc_bitcoinAmount = new BigNumber(accountInfo.unconfirmed_balance);
 		uc_bitcoinAmount = uc_bitcoinAmount.times(btc_per_satoshi);
 		uc_bitcoinAmount = Number(uc_bitcoinAmount.toString(10));
 		var total_oc_bitcoin = new BigNumber(accountInfo.final_balance);
@@ -1698,14 +1698,14 @@ function *RPC_cashOut (postData, requestObj, responseObj, batchResponses) {
 		txInfo.info.btc = bitcoinAmount;
 		var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 		if (accountUpdateResult.error != null) {
-			trace ("Database error on RPC_cashOut: "+accountUpdateResult.error);		
+			trace ("Database error on RPC_cashOut: "+accountUpdateResult.error);
 			trace ("   Request ID: "+requestData.id);
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
 			return;
 		}
 		currentBTCBalance = new BigNumber(accountInfo.balance);
 		currentBTCBalance = currentBTCBalance.dividedBy(satoshiPerBTC);
-		currentSatoshiBalance = new BigNumber(accountInfo.balance);		
+		currentSatoshiBalance = new BigNumber(accountInfo.balance);
 		currentAvailSatoshiBalance = currentAvailBTCBalance.times(satoshiPerBTC);
 		currentAvailSatoshiBalance = currentAvailSatoshiBalance.minus(serverConfig.APIInfo.blockcypher.minerFee);
 		currentAvailBTCBalance = currentAvailSatoshiBalance.dividedBy(satoshiPerBTC);
@@ -1714,13 +1714,13 @@ function *RPC_cashOut (postData, requestObj, responseObj, batchResponses) {
 		trace ("      Confirmed balance is 0.");
 		global.logTx ("   Not enough confirmations to cash out.")
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "Your verified BTC balance is 0. More confirmations are necessary before you can cash out.");
-		return;	
+		return;
 	}
 	if (currentAvailSatoshiBalance.lessThanOrEqualTo(0)) {
 		trace ("      Available balance minus miner fee is <= 0.");
 		global.logTx ("   Available balance minus miner fee is less than or equal to 0.")
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "Your available balance, minus the miner fee ("+serverConfig.APIInfo.blockcypher.minerFee.toString()+" satoshis) is insufficient to make a withdrawal.");
-		return;	
+		return;
 	}
 	trace ("   Enough confirmations to withdraw.");
 	if (withdrawalBTC.greaterThanOrEqualTo(serverConfig.maxWithdrawal.btc)) {
@@ -1730,15 +1730,15 @@ function *RPC_cashOut (postData, requestObj, responseObj, batchResponses) {
 		for (var count=0; count < serverConfig.maxWithdrawal.emails.length; count++) {
 			var currentAdminEmail = serverConfig.maxWithdrawal.emails[count];
 			trace ("Sending over-limit notification to: "+currentAdminEmail);
-			accountPlugin.sendEmail("myfruitgame@gmail.com", 
+			accountPlugin.sendEmail("myfruitgame@gmail.com",
 				currentAdminEmail,
-				"Over Limit Withdrawal Request", 
+				"Over Limit Withdrawal Request",
 				"Account "+requestData.params.account+" is requesting a large withdrawal of: "+withdrawalBTC.toString(10)+" BTC.\nAvailable balance: "+currentBTCBalance.toString(10)+" BTC."
 			);
 		}
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_GAME_ACTION_ERROR, "Withdrawal amount exceeds allowable maximum. A request has been sent to the administrators to process this transaction manually.");
-		return;	
-		
+		return;
+
 	}
 	var extraData = JSON.parse(querystring.unescape(queryResult.rows[0].extra_data));
 	if (currentAvailSatoshiBalance.greaterThan(currentSatoshiBalance)) {
@@ -1804,7 +1804,7 @@ function *RPC_cashOut (postData, requestObj, responseObj, batchResponses) {
 				btcBalanceAvail = new BigNumber(0);
 			}
 			//reset the database entry
-			var dbUpdates = "`btc_balance_available`=\""+btcBalanceAvail.toString(10)+"\",";	
+			var dbUpdates = "`btc_balance_available`=\""+btcBalanceAvail.toString(10)+"\",";
 			dbUpdates += "`btc_balance_verified`=\""+btcBalanceVerified.toString(10)+"\",";
 			dbUpdates += "`btc_deposit_account`=\""+requestData.params.receiver+"\",";
 			dbUpdates += "`last_login`=NOW()";
@@ -1848,7 +1848,7 @@ function *updateAccountGen(accountQueryResult, updateObj, txInfo, generator) {
 			var itemValue = updateItemSplit[1];
 			itemValue = itemValue.split("\"").join("");
 			if ((itemValue == "NULL") || (itemValue == "null")) {
-				itemValue = null; 
+				itemValue = null;
 			}
 			accountQueryResult.rows[0][itemName] = itemValue;
 		}
@@ -1879,7 +1879,7 @@ function *updateAccountGen(accountQueryResult, updateObj, txInfo, generator) {
 					} else {
 						//include JavaScript Date object as MySQL timestamp
 						var dateObj = new Date(itemValue);
-						insertValues += JSON.stringify(getMySQLTimeStamp(dateObj))+",";	
+						insertValues += JSON.stringify(getMySQLTimeStamp(dateObj))+",";
 					}
 				} else if (itemType == 1) {
 					//boolean field type
@@ -1897,7 +1897,7 @@ function *updateAccountGen(accountQueryResult, updateObj, txInfo, generator) {
 						case "NO": insertValues += "FALSE,"; break;
 						case "ON": insertValues += "TRUE,"; break;
 						case "OFF": insertValues += "FALSE,"; break;
-						default: 
+						default:
 							var boolValue = new Boolean(itemValueTemp);
 							if (boolValue) {
 								insertValues += "TRUE,";
@@ -1928,8 +1928,8 @@ function *updateAccountGen(accountQueryResult, updateObj, txInfo, generator) {
 		}
 		if (investmentsQueryResult.rows.length > 0) {
 			txInfo.info.investments = JSON.parse(investmentsQueryResult.rows[0].investments);
-		}		
-	}	
+		}
+	}
 	//chop off trailing commas
 //	insertFields = insertFields.substring(0, insertFields.length-1);
 //	insertValues = insertValues.substring(0, insertValues.length-1);
@@ -1978,7 +1978,7 @@ function getMySQLTimeStamp(dateObj) {
 	var returnStr = new String();
 	returnStr += String(now.getFullYear())+"-";
 	returnStr += String(now.getMonth()+1)+"-";
-	returnStr += String(now.getDate())+" ";	
+	returnStr += String(now.getDate())+" ";
 	if (now.getHours() < 10) {
 		returnStr += "0";
 	}
@@ -2019,7 +2019,7 @@ function calculateWin(bet, betFields, multiplier, jackpot) {
 			var jackpotTokens = jackpotBTC.times(serverConfig.tokensPerBTC);
 			switch (currentFieldName) {
 				//only token bets are currently supported
-				case "tokens": 
+				case "tokens":
 					//only add jackpot tokens if bet meets minimum requirement, set in database
 					if (betAmount.greaterThanOrEqualTo(minimumBet)) {
 						//totalWin = totalWin.add(jackpotTokens);
@@ -2047,24 +2047,24 @@ function calculateWin(bet, betFields, multiplier, jackpot) {
 * property includes the information of an associated jackpot, if available, or null otherwise.
 */
 function generateWinInfo(gameConfig, stopPositions, jackpotQueryResult) {
-	var returnInfo = new Object();	
+	var returnInfo = new Object();
 	returnInfo.jackpot = null;
 	if ((gameConfig == null) || (gameConfig == undefined)) {
 		returnInfo.error = "Game configuration does not exist.";
 		return (returnInfo);
-	}	
-	//create symbols array from stop positions	
+	}
+	//create symbols array from stop positions
 	returnInfo.symbols = new Array();
 	returnInfo.stopPositions = new Array();
 	for (var count=0; count < stopPositions.length; count++) {
 		var stopPos = parseInt(stopPositions[count]);
 		returnInfo.stopPositions.push (stopPos);
 		var symbolObject = new Object();
-		symbolObject.index = gameConfig.reels[count][stopPos];		
+		symbolObject.index = gameConfig.reels[count][stopPos];
 		symbolObject.name = gameConfig.symbols[symbolObject.index].name;
 		symbolObject.win = false;
-		returnInfo.symbols.push(symbolObject);		
-	}		
+		returnInfo.symbols.push(symbolObject);
+	}
 	returnInfo.multiplier = 0;
 	//find highest matching multiplier
 	for (count = 0; count < gameConfig.wins.length; count++) {
@@ -2077,8 +2077,8 @@ function generateWinInfo(gameConfig, stopPositions, jackpotQueryResult) {
 				if (winningSymbolIndex == returnInfo.symbols[count2].index) {
 					returnInfo.symbols[count2].win = true;
 					matchesFound++;
-				} 
-			} else {				
+				}
+			} else {
 				matchesFound++;
 			}
 		}
@@ -2138,18 +2138,18 @@ function encrypt(input, key, iv) {
 * @return The decrypted data as a plaintext string.
 */
 function decrypt(input, key, iv) {
-	var encryptedBytes = aesjs.utils.hex.toBytes(input); 
+	var encryptedBytes = aesjs.utils.hex.toBytes(input);
 	var aesCbc = new aesjs.ModeOfOperation.cbc(key, iv);
 	var decryptedBytes = aesCbc.decrypt(encryptedBytes);
 	var decryptedText = aesjs.utils.utf8.fromBytes(decryptedBytes);
-	return (decryptedText);	
+	return (decryptedText);
 }
 
 /**
 * Shuffles an array and returns the shuffled array.
 *
 * @param input The input array to shuffle. May have up to 65535 elements.
-* 
+*
 * @return An array with randomnly shuffled elements of input
 */
 function shuffle(input) {
@@ -2161,7 +2161,7 @@ function shuffle(input) {
 		output.push(input.splice(swapIndex,1)[0]);
 		offset+=2;
 	}
-	return (output);		
+	return (output);
 }
 
 var busyAccounts = [];
@@ -2182,16 +2182,16 @@ function checkAccountBalance(generator, account) {
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/addrs/"+account+"/full",
 		method: "GET",
-		json: true		
-	}, function (error, response, body) {		
+		json: true
+	}, function (error, response, body) {
 		for (var count=0; count < busyAccounts.length; count++) {
 			if (busyAccounts[count] == account) {
 				busyAccounts.splice(count, 1);
 				break;
 			}
 		}
-		generator.next(body);				
-	});	
+		generator.next(body);
+	});
 }
 
 /**
@@ -2205,7 +2205,7 @@ function *setBalance(account, verifiedBalance, availableBalance) {
 	var generator = yield;
 	var dbUpdates = "`btc_balance_verified`=\""+verifiedBalance+"\",`btc_balance_available`=\""+availableBalance+"\"";
 	var txInfo = new Object();
-	txInfo.type = "balance_update";	
+	txInfo.type = "balance_update";
 	var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 	if (accountUpdateResult.error != null) {
 		trace ("Database error on setBalance: "+accountUpdateResult.error);
@@ -2214,21 +2214,21 @@ function *setBalance(account, verifiedBalance, availableBalance) {
 
 /**
 * Invokes an external service in order to generate a new Bitcoin account address.
-* 
+*
 * @param generator The generator function invoking this method and expecting the resulting data.
 */
-function getNewAccountAddress(generator) {			
-	request({			  
+function getNewAccountAddress(generator) {
+	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/addrs",
 		method: "POST",
-		json: true    
-	}, function (error, response, body){   
+		json: true
+	}, function (error, response, body){
 		/*
 		body.address: newly-generated address
 		body.private: private key
 		body.public: public key
 		body.wif: Wallet Import Format account data (https://en.bitcoin.it/wiki/Wallet_import_format)
-		*/		
+		*/
 		generator.next(body);
 	});
 	//ShapeShift.io...
@@ -2238,16 +2238,16 @@ function getNewAccountAddress(generator) {
 		url: "https://shapeshift.io/shift",
 		method: "POST",
 		{"withdrawal":"de0B295669a9FD93d5F28D9Ec85E40f4cb697BAe", "pair":"btc_eth"},
-		json: true    
-	}, function (error, response, body){   		
+		json: true
+	}, function (error, response, body){
 		generator.next(body);
-	});	
+	});
 	*/
-} 
+}
 
 /**
 *  Update affiliate-attributed bet amount(s).
-* 
+*
 * @param generator The generator function invoking this method and expecting the resulting data.
 * @param affiliateInfo An affiliate info object from the gaming.affiliates table structured as a row result from a db.query call.
 * @param attributionUpdates An name-value object containing all of the attributed earning(s) to apply to the database.
@@ -2259,8 +2259,8 @@ function updateAffiliateAttribution(generator, affiliateInfo, attributionUpdates
 	if ((affiliateInfo == null) || (attributionUpdates == null) || (affiliateInfo == undefined) || (attributionUpdates == undefined)) {
 		generator.next();
 		return;
-	}	
-	var dbUpdates = new String();	
+	}
+	var dbUpdates = new String();
 	for (var attributionField in attributionUpdates) {
 		var existingValue = new BigNumber(affiliateInfo[attributionField]);
 		var newValue = new BigNumber(attributionUpdates[attributionField]);
@@ -2277,7 +2277,7 @@ function updateAffiliateAttribution(generator, affiliateInfo, attributionUpdates
 			case "minus" :
 				newValue = existingValue.minus(newValue);
 				break;
-			default: 
+			default:
 				newValue = existingValue;
 				break;
 		}
@@ -2289,7 +2289,7 @@ function updateAffiliateAttribution(generator, affiliateInfo, attributionUpdates
 
 /**
 *  Retrieves affiliate information for a specific affiliate.
-* 
+*
 * @param generator The generator function invoking this method and expecting the resulting data.
 * @param affiliatteID The ID of the affiliate to retrieve.
 *
@@ -2302,10 +2302,10 @@ function getAffiliateInfo(generator, affiliatteID) {
 
 /**
 *  Retrieves an affiliate ID for an account address.
-* 
+*
 * @param generator The generator function invoking this method and expecting the resulting data.
 * @param account The account for which to retrieve the affiliate information, if any.
-* @param accountType The account type represented by the contents of the 'account' paramater. This should match a 
+* @param accountType The account type represented by the contents of the 'account' paramater. This should match a
 * 	field name in the gaming.accounts database. Default is "btc_account".
 *
 * @return An information object containing the result of a db.query call. Typically, if the result object's 'rows' property has a length of 0,
@@ -2332,7 +2332,7 @@ function getIncomingTransactionsForAccount(generator, btc_account) {
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/addrs/"+btc_account+"/full?limit=50&txlimit=10000",
 		method: "GET",
-		json: true    
+		json: true
 	}, function (error, response, body){
 		var transactions = null;
 		if (error == null) {
@@ -2404,7 +2404,7 @@ function deriveAddress(rootAddressXPRV, index, derivePath) {
 		new bip32.Chain(external.neutered()),
 		new bip32.Chain(internal.neutered())
 	])
-	trace ("root="+root.getAddress());	
+	trace ("root="+root.getAddress());
 	trace ("account.getChainAddress(0)="+account.getChainAddress(0));
 	child.xprv = rootAddressXPRV;
 	child.xpub = account.derive(account.getChainAddress(0)).toBase58();
@@ -2416,7 +2416,7 @@ function deriveAddress(rootAddressXPRV, index, derivePath) {
 		url: "https://api.blockcypher.com/v1/btc/main/wallets/hd?token=fb7cf8296b9143a889913b1ce43688aa",
 		method: "POST",
 		body: {"name": "dev1", "extended_public_key": "xpub6CKPU4Z2znVZz7vVoadaBird7Pt3mAVVFPtUmkkXqDwrMAbVWRkSD16uLuArpjp3VypKg8reWXm3ygsh7PDGJgKwEdntfX8cmWZz7Fn564x"},
-		json: true    
+		json: true
 	}, function (error, response, body){
 		console.log(error);
 		console.log(JSON.stringify(body));
@@ -2425,12 +2425,12 @@ function deriveAddress(rootAddressXPRV, index, derivePath) {
 	request({
 			url: "https://api.blockcypher.com/v1/btc/main/wallets/hd/dev1/addresses/derive?token=fb7cf8296b9143a889913b1ce43688aa",
 			method: "POST",
-			json: true    
+			json: true
 		}, function (error, response, body){
 			console.log(error);
 			console.log(JSON.stringify(body));
 		});
-		
+
 		//{"chains":[{"chain_addresses":[{"address":"19vgSNKNAKFmHzxv4d4K8bm6bhrVc7dhnj","public":"03892a1b527a3786e62dddea187f7c5b2f5eb8a35038beaf838bb02536f5d6dd72","path":"m/0"}]}]}
 	*/
 	return (child);
@@ -2449,7 +2449,7 @@ function getTxSkeleton (generator, fromAddr, toAddr, sathoshis) {
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/new?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
 		body:{"inputs":[{"addresses":[fromAddr]}], "outputs":[{"addresses":[toAddr], "value": Number(sathoshis)}], "fees":Number(serverConfig.APIInfo.blockcypher.minerFee.toString(10))},
-		json: true  
+		json: true
 	}, function (error, response, body){
 		generator.next(body);
 	});
@@ -2497,7 +2497,7 @@ function sendTransaction(generator, txObject) {
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/send?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
 		body: txObject,
-		json: true    
+		json: true
 	}, function (error, response, body){
 		generator.next(body);
 	});
@@ -2518,7 +2518,7 @@ function processRequest(postData, requestObj, responseObj) {
 	} catch (err) {
 		replyError(postData, requestObj, responseObj, null, serverConfig.JSONRPC_PARSE_ERROR, "JSON-RPC data could not be parsed.");
 		return;
-	}	
+	}
 	if ((requestData["length"] != null) && (requestData["length"] != undefined)) {
 		if (isNaN(requestData.length)) {
 			invokeRPCFunction(postData, requestObj, responseObj, null);
@@ -2536,7 +2536,7 @@ function processRequest(postData, requestObj, responseObj) {
 		}
 	} else {
 		invokeRPCFunction(postData, requestObj, responseObj, null);
-	}	
+	}
 }
 
 /**
@@ -2555,11 +2555,11 @@ function invokeRPCFunction(postData, requestObj, responseObj, batchResponses) {
 		return;
 	}
 	if (requestData["method"] == undefined) {
-		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_REQUEST_ERROR, "Not a valid JSON-RPC 2.0 request. Request object must include a \"method\" endpoint.");	
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_REQUEST_ERROR, "Not a valid JSON-RPC 2.0 request. Request object must include a \"method\" endpoint.");
 		return;
 	}
 	if (requestData["method"] == null) {
-		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_REQUEST_ERROR, "Not a valid JSON-RPC 2.0 request. The \"method\" endpoint must not be Null.");	
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_REQUEST_ERROR, "Not a valid JSON-RPC 2.0 request. The \"method\" endpoint must not be Null.");
 		return;
 	}
 	//TODO: Make general exclusion list for functions we don't want to trace out here
@@ -2568,19 +2568,19 @@ function invokeRPCFunction(postData, requestObj, responseObj, batchResponses) {
 			trace ("invokeRPCFunction(\""+requestData.method+"\") -> "+requestObj.socket.remoteAddress+":"+requestObj.socket.remotePort);
 		} catch (err) {
 			//will this ever happen? should we throw an exception?
-			trace ("invokeRPCFunction(\""+requestData.method+"\") request from unknown host.");		
+			trace ("invokeRPCFunction(\""+requestData.method+"\") request from unknown host.");
 		}
 	}
 	requestData.method = new String(requestData.method);
 	if (requestData.method.split(" ").join("").indexOf("rpc:") == 0) {
 		trace ("   ...rejected \"rpc:\" system extension call is unsupported.");
-		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_REQUEST_ERROR, "System extensions (\"rpc:\" methods) are not currently supported.");	
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_REQUEST_ERROR, "System extensions (\"rpc:\" methods) are not currently supported.");
 		return;
 	}
 	try {
-		var gen;		
+		var gen;
 		switch (String(requestData.method)) {
-			case "newGamingAccount": 
+			case "newGamingAccount":
 				gen = RPC_newGamingAccount(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
@@ -2590,43 +2590,43 @@ function invokeRPCFunction(postData, requestObj, responseObj, batchResponses) {
 				gen.next();
 				gen.next(gen);
 				break;
-			case "getAccountBalance": 
-				gen = RPC_getAccountBalance(postData, requestObj, responseObj, batchResponses);			
+			case "getAccountBalance":
+				gen = RPC_getAccountBalance(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
 				break;
 			case "getAccountTransactions":
-				gen = RPC_getAccountTransactions(postData, requestObj, responseObj, batchResponses);			
+				gen = RPC_getAccountTransactions(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
-				break;	
+				break;
 			case "getJackpot":
 				gen = RPC_getJackpot(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
 				break;
-			case "getGameResults": 
-				gen = RPC_getGameResults(postData, requestObj, responseObj, batchResponses);			
+			case "getGameResults":
+				gen = RPC_getGameResults(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
 				break;
 			case "getGameStatus":
-				gen = RPC_getGameStatus(postData, requestObj, responseObj, batchResponses);			
+				gen = RPC_getGameStatus(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
 				break;
 			case "selectResults":
-				gen = RPC_selectResults(postData, requestObj, responseObj, batchResponses);			
+				gen = RPC_selectResults(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
-				break;			
+				break;
 			case "cashOut":
 				gen = RPC_cashOut(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
 				break;
 			case "getLeaderboard":
-				gen = RPC_getLeaderboard(postData, requestObj, responseObj, batchResponses);			
+				gen = RPC_getLeaderboard(postData, requestObj, responseObj, batchResponses);
 				gen.next();
 				gen.next(gen);
 				break;
@@ -2634,11 +2634,11 @@ function invokeRPCFunction(postData, requestObj, responseObj, batchResponses) {
 				if (plugins.rpcMethodExists(String(requestData.method))) {
 					plugins.rpc_invoke(String(requestData.method), postData, requestObj, responseObj, batchResponses, replyResult, replyError);
 				} else {
-					replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_METHOD_NOT_FOUND_ERROR, "Method \""+requestData.method+"\" not implemented.");			
+					replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_METHOD_NOT_FOUND_ERROR, "Method \""+requestData.method+"\" not implemented.");
 				}
-				break;				
+				break;
 		}
-	} catch (err) {	
+	} catch (err) {
 		trace (err);
 		var messageSplit = String(err.message).split(":::");
 		if (messageSplit.length == 1) {
@@ -2661,7 +2661,7 @@ function invokeRPCFunction(postData, requestObj, responseObj, batchResponses) {
 * @param data A Primitive or Structured value that contains additional information about the error. This may be omitted.
 * The value of this member is defined by the Server (e.g. detailed error information, nested errors etc.).
 */
-function replyError(postData, requestObj, responseObj, batchResponses, code, message, data) {	
+function replyError(postData, requestObj, responseObj, batchResponses, code, message, data) {
 	trace ("replyError: "+code+" "+message);
 	try {
 		var requestData=JSON.parse(postData);
@@ -2681,8 +2681,8 @@ function replyError(postData, requestObj, responseObj, batchResponses, code, mes
 	if (data != undefined) {
 		responseData.error.data = data;
 	}
-	if (batchResponses != null) {			
-		batchResponses.responses.push(responseData);				
+	if (batchResponses != null) {
+		batchResponses.responses.push(responseData);
 		if (batchResponses.total == batchResponses.responses.length) {
 			setDefaultHeaders(responseObj);
 			responseObj.end(JSON.stringify(batchResponses.responses));
@@ -2690,7 +2690,7 @@ function replyError(postData, requestObj, responseObj, batchResponses, code, mes
 	} else {
 		setDefaultHeaders(responseObj);
 		responseObj.end(JSON.stringify(responseData));
-	}	
+	}
 }
 
 /**
@@ -2714,15 +2714,15 @@ function replyResult(postData, requestObj, responseObj, batchResponses, result) 
 	} else {
 		responseData.id = requestData.id;
 	}
-	responseData.result = result;	
+	responseData.result = result;
 	if (batchResponses != null) {
-		batchResponses.responses.push(responseData);		
+		batchResponses.responses.push(responseData);
 		if (batchResponses.total == batchResponses.responses.length) {
-			setDefaultHeaders(responseObj);			
+			setDefaultHeaders(responseObj);
 			responseObj.end(JSON.stringify(batchResponses.responses));
 		}
 	} else {
-		setDefaultHeaders(responseObj);		
+		setDefaultHeaders(responseObj);
 		responseObj.end(JSON.stringify(responseData));
 	}
 }
@@ -2802,7 +2802,7 @@ function createTimeDateStamp() {
 		dateStamp += "0";
 	}
 	dateStamp += String(dateObj.getSeconds())+".";
-	dateStamp += String(dateObj.getMilliseconds());		
+	dateStamp += String(dateObj.getMilliseconds());
 	return (dateStamp);
 }
 
@@ -2894,7 +2894,7 @@ global.logTx = function (transaction) {
 *
 * @return An object containing name-value pairs of parsed configuration objects. Each name is equal to the 'ID' property found within
 * each JSON object. Null is returned if an 'ID' property can't be found, is empty, or if there was an error parsing the JSON data.
-*/ 
+*/
 function readGameConfigs(configPaths) {
 	var configs = new Object();
 	for (var count=0; count < configPaths.length; count++) {
@@ -2969,9 +2969,9 @@ function *backupDatabase() {
 		var tableName = tablesResult[count];
 		trace ("   Exporting \""+tableName+"\" table...");
 		var queryResult = yield db.query ("SELECT * FROM `gaming`.`"+tableName+"`", generator);
-		backupObj.databases.gaming.tables[tableName] = queryResult;		
+		backupObj.databases.gaming.tables[tableName] = queryResult;
 	}
-	var backupFilePath = serverConfig.databaseBackupPath.trim();	
+	var backupFilePath = serverConfig.databaseBackupPath.trim();
 	if (backupFilePath.substr(backupFilePath.length-1, 1) != "/") {
 		//add trailing slash
 		backupFilePath += "/";
@@ -2993,7 +2993,7 @@ global.backupDatabase = backupDatabase;
 /**
 * Asserts any primitive value (string, number, boolean) to another value recursively within any complex object type. This function is NOT safe to use with circular references!
 *
-* @param valueToReplace The primitive value to recursively find and replace. 
+* @param valueToReplace The primitive value to recursively find and replace.
 * @param replaceValue The value to replace 'valueToReplace' by wherever found.
 * @param dataObject The object within which to recursively search for 'valueToReplace' and replace with 'replaceValue'.
 */
@@ -3033,16 +3033,16 @@ global.assertAnyValue = function (valueToReplace, replaceValue, dataObject) {
 /**
 * Attempts to start the main JSON-RPC server daemon script.
 */
-function startRPCServer() {	
+function startRPCServer() {
 	trace ("Starting plugins manager...");
-	plugins.start(trace, this);	
+	plugins.start(trace, this);
 	var gen = loadLeaderboardData();
 	gen.next();
 	gen.next(gen);
 	trace ("Starting up JSON-RPC server...");
 	rpc_server = http.createServer(handleHTTPRequest);
 	try {
-		rpc_server.listen(serverConfig.rpc_options.port, onRPCServerStart);		
+		rpc_server.listen(serverConfig.rpc_options.port, onRPCServerStart);
 		//var now = new Date();
 		//var time = now.getHours()+":"+now.getMinutes();
 		var time = "00:10";
@@ -3078,21 +3078,21 @@ function onRPCServerStart() {
 * @param requestObj HTTP request object (https://nodejs.org/api/http.html#http_class_http_incomingmessage).
 * @param responseObj HTTP response object (https://nodejs.org/api/http.html#http_class_http_serverresponse).
 */
-function handleHTTPRequest(requestObj, responseObj){	
+function handleHTTPRequest(requestObj, responseObj){
 	//only headers received at this point so read following POST data in chunks...
-	if (requestObj.method == 'POST') {  
+	if (requestObj.method == 'POST') {
 		var postData=new String();
 		requestObj.on('data', function(chunk) {
 			//reading message body...
 			if ((chunk!=undefined) && (chunk!=null)) {
 				postData+=chunk;
 			}
-		});		
-		requestObj.on('end', function() {		  
+		});
+		requestObj.on('end', function() {
 			//message body fully read
 			processRequest(postData, requestObj, responseObj)
 		});
-	 }    
+	 }
 }
 
 /**
@@ -3108,7 +3108,7 @@ function *loadLeaderboardData() {
 	if (queryResult.error == null) {
 		for (var count=0; count < queryResult.rows.length; count++) {
 			var currentResult = queryResult.rows[count];
-			
+
 			try {
 				var betData = JSON.parse(querystring.unescape(currentResult.bet));
 			} catch (err) {
@@ -3210,4 +3210,3 @@ serverConfig.gameConfigs = readGameConfigs(serverConfig.gameConfigPaths);
 if (serverConfig.gameConfigs != null) {
 	db.connect(onConnect, onConnectFail);
 }
-	
