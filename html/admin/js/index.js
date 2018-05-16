@@ -323,6 +323,9 @@ function buildDividendTransactionsTable(resultArray) {
 				currentRowHTML += "<td>Affiliate Credit - "+currentInvestment.name+"</td>"; //Description
 				currentRowHTML += "<td>"+currentInvestment.gross_dividend_btc+"</td>"; //Gross Dividend
 				currentRowHTML += "<td>"+currentInvestment.rake_amount_btc+"</td>"; //Rake Amount
+				if ((currentInvestment["affiliate_amount_inv_btc"] == null) || (currentInvestment["affiliate_amount_inv_btc"] == undefined)) {
+					currentInvestment["affiliate_amount_inv_btc"] = "0";
+				}
 				currentRowHTML += "<td>"+currentInvestment.affiliate_amount_inv_btc+"</td>"; //Dividend Affiliate Amount
 				currentRowHTML += "<td>"+currentInvestment.net_dividend_btc+"</td>"; //Net Dividend
 				currentRowHTML += "<td>"+currentInvestment.balance_btc+"</td>"; //Balance
@@ -336,6 +339,9 @@ function buildDividendTransactionsTable(resultArray) {
 			for (count2 = 0; count2 < investmentsArr.length; count2++) {
 				currentInvestment = investmentsArr[count2];
 				var balanceAmount = new BigNumber(currentInvestment.balance_btc);
+				if ((currentInvestment["affiliate_amount_game_btc"] == null) || (currentInvestment["affiliate_amount_game_btc"] == undefined)) {
+					currentInvestment["affiliate_amount_game_btc"] = "0";
+				}
 				var deduction = new BigNumber(currentInvestment.affiliate_amount_game_btc);
 				currentRowHTML += "<td>Affiliate Credit - game</td>"; //Description
 				currentRowHTML += "<td>0</td>"; //Gross Dividend
