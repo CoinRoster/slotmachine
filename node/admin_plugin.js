@@ -52,7 +52,7 @@ exports.pluginInfo = {
 	"activeInstalls":0
 }
 
-exports.install = (onInstallCallback) => {	
+exports.install = (onInstallCallback) => {
 	trace ("Triggered install process in "+exports.pluginInfo.name);
 	exports.pluginInfo.onInstallCallback = onInstallCallback;
 	db.connect(exports.onDBConnect, exports.onDBConnectFail);
@@ -67,15 +67,15 @@ exports.onDBConnect = (connection) => {
 			exports.pluginInfo.activeInstalls++;
 			exports.createColumn (columnName, columnType, connection, global.database_name, tableName);
 		}
-	}	
+	}
 }
 
 exports.onDBConnectFail = () => {
 	exports.pluginInfo.onInstallCallback(false, "Could not establish connection to database.");
 }
 
-exports.onCreateColumn = () => {	
-	exports.pluginInfo.activeInstalls--;	
+exports.onCreateColumn = () => {
+	exports.pluginInfo.activeInstalls--;
 	if (exports.pluginInfo.activeInstalls == 0) {
 		db.closeAll();
 		exports.pluginInfo.onInstallCallback(true, exports.pluginInfo);
@@ -83,7 +83,7 @@ exports.onCreateColumn = () => {
 }
 
 exports.createColumn = (columnName, columnSchema, connection, databaseName, tableName) => {
-	console.log("   Attempting to create new column: \""+columnName+"\" ("+JSON.stringify(columnSchema)+")");	
+	console.log("   Attempting to create new column: \""+columnName+"\" ("+JSON.stringify(columnSchema)+")");
 	db.query("ALTER TABLE `"+databaseName+"`.`"+tableName+"` ADD `"+columnName+"` " + columnSchema.toString(), function(result) {
 		if (result.error == null) {
 			console.log ("      Column \"" + columnName + "\" successfully created on table \"" + tableName + "\".");
@@ -93,7 +93,7 @@ exports.createColumn = (columnName, columnSchema, connection, databaseName, tabl
 			console.log ("      Error creating column \""+columnName+"\" on table \"" + tableName + " \": "+error);
 		}
 		exports.onCreateColumn();
-	});	
+	});
 }
 
 exports.onInstallComplete = () => {
@@ -104,14 +104,14 @@ exports.onInstallComplete = () => {
 
 exports.start = (traceFunc) => {
 	trace = traceFunc;
-	trace (exports.pluginInfo.name+" v "+exports.pluginInfo.version+" started."); 
+	trace (exports.pluginInfo.name+" v "+exports.pluginInfo.version+" started.");
 }
 
 function checkParameter (requestData, param) {
 	if ((requestData["params"] == null) || (requestData["params"] == null)) {
-		return (false);		
+		return (false);
 	}
-	if (requestData.params[param] == undefined) {		
+	if (requestData.params[param] == undefined) {
 		return (false);
 	}
 	return (true);
@@ -119,9 +119,9 @@ function checkParameter (requestData, param) {
 
 var rpc_getRakeStats = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);		
-	var responseData = new Object();		
-	var rakeQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\"RAKE_ACCOUNT\" ORDER BY `last_update` DESC", generator);	
+	var requestData = JSON.parse(postData);
+	var responseData = new Object();
+	var rakeQueryResult = yield db.query("SELECT * FROM `gaming`.`investment_txs` WHERE `account`=\"RAKE_ACCOUNT\" ORDER BY `last_update` DESC", generator);
 	if (rakeQueryResult.error != null) {
 		trace ("Database error on rpc_getRakeStats: "+rakeQueryResult.error);
 		trace ("   Request ID: "+requestData.id);
@@ -137,8 +137,8 @@ var rpc_getRakeStats = function* (postData, requestObj, responseObj, batchRespon
 		responseData.transactions.push(txObj);
 	}
 	global.assertAnyValue("Infinity", "0", responseData);
-	global.assertAnyValue("NaN", "0", responseData);	
-	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
+	global.assertAnyValue("NaN", "0", responseData);
+	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 exports.rpc_getRakeStats = rpc_getRakeStats;
 
@@ -147,9 +147,9 @@ exports.rpc_getRakeStats = rpc_getRakeStats;
 */
 var rpc_getInvestmentsHistory = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);		
-	var responseData = new Array();		
-	var historyQueryResult = yield db.query("SELECT * FROM `gaming`.`investments_history` ORDER BY `last_update` DESC", generator);	
+	var requestData = JSON.parse(postData);
+	var responseData = new Array();
+	var historyQueryResult = yield db.query("SELECT * FROM `gaming`.`investments_history` ORDER BY `last_update` DESC", generator);
 	if (historyQueryResult.error != null) {
 		trace ("Database error on rpc_getInvestmentsHistory: "+historyQueryResult.error);
 		trace ("   Request ID: "+requestData.id);
@@ -162,13 +162,13 @@ var rpc_getInvestmentsHistory = function* (postData, requestObj, responseObj, ba
 		historyObj.timestamp = historyQueryResult.rows[count].last_update;
 		responseData.push(historyObj);
 	}
-	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
+	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 exports.rpc_getInvestmentsHistory = rpc_getInvestmentsHistory;
 
 var rpc_getAccounts = function* (postData, requestObj, responseObj, batchResponses, replyResult, replyError) {
 	var generator = yield;
-	var requestData = JSON.parse(postData);	
+	var requestData = JSON.parse(postData);
 	if (checkParameter(requestData, "type") == false) {
 		trace ("Database error on rpc_getAccounts: "+rakeQueryResult.error);
 		trace ("   Request ID: "+requestData.id);
@@ -182,7 +182,7 @@ var rpc_getAccounts = function* (postData, requestObj, responseObj, batchRespons
 			case "havebalance":
 				//var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `btc_balance_available`=\"0\" AND `deposit_complete`=1 AND `btc_deposit_account` IS NULL AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
 				var SQL = "SELECT * FROM `gaming`.`accounts` WHERE `deposit_complete`=1 AND (`btc_balance_available`!=\"0\" OR `btc_balance_verified`!=\"0\") AND `index` IN (SELECT MAX(`index`) FROM `gaming`.`accounts` GROUP BY `btc_account`)";
-				var accountsQueryResult = yield db.query(SQL, generator);	
+				var accountsQueryResult = yield db.query(SQL, generator);
 				if (accountsQueryResult.error != null) {
 					trace ("Database error on rpc_getAccounts: "+accountsQueryResult.error);
 					trace ("   Request ID: "+requestData.id);
@@ -231,22 +231,22 @@ var rpc_getAccounts = function* (postData, requestObj, responseObj, batchRespons
 					}
 				}
 				break;
-			default: 
+			default:
 				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_INVALID_PARAMS_ERROR, "Unrecognized accounts type: \""+accountTypes[count].split(" ").join("")+"\"");
 				return;
 				break;
 		}
 	}
-	replyResult(postData, requestObj, responseObj, batchResponses, responseData);	
+	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 exports.rpc_getAccounts = rpc_getAccounts;
 
 var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, batchResponses) {
 	var generator = yield;
 	var requestData = JSON.parse(postData);
-	//---- VERIFY PARAMETERS ----	
-	checkParameter(requestData, "account");	
-	checkParameter(requestData, "btc");	
+	//---- VERIFY PARAMETERS ----
+	checkParameter(requestData, "account");
+	checkParameter(requestData, "btc");
 	checkParameter(requestData, "receiver");
 	var returnData = new Object();
 	var queryResult = yield db.query("SELECT * FROM `gaming`.`accounts` WHERE `btc_account`=\""+requestData.params.account+"\" ORDER BY `index` DESC LIMIT 1", generator);
@@ -311,6 +311,7 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	trace(JSON.stringify(sentTx));
 	trace(" ");
 	returnData = sentTx;
+	/*
 	if ((sentTx["tx"] != undefined) && (sentTx["tx"] != null)) {
 		if ((sentTx.tx["hash"] != null) && (sentTx.tx["hash"] != undefined) && (sentTx.tx["hash"] != "") && (sentTx.tx["hash"] != "NULL")) {
 			var btcBalanceVerified = currentBTCBalance.minus(withdrawalBTC);
@@ -334,6 +335,7 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 			var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 		}
 	}
+	*/
 	replyResult(postData, requestObj, responseObj, batchResponses, returnData);
 }
 exports.rpc_transferAccountFunds = rpc_transferAccountFunds;
@@ -351,7 +353,7 @@ function getTxSkeleton (generator, fromAddr, toAddr, sathoshis) {
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/new?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
 		body:{"inputs":[{"addresses":[fromAddr]}], "outputs":[{"addresses":[toAddr], "value": Number(sathoshis)}], "fees":Number(serverConfig.APIInfo.blockcypher.minerFee.toString(10))},
-		json: true  
+		json: true
 	}, function (error, response, body){
 		generator.next(body);
 	});
@@ -360,7 +362,7 @@ function getTxSkeleton (generator, fromAddr, toAddr, sathoshis) {
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/new?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
 		body:{"inputs":[{"addresses":[fromAddr]}], "outputs":[{"addresses":[toAddr], "value": Number(sathoshis)}], "fees":1},
-		json: true  
+		json: true
 	}, function (error, response, body){
 		generator.next(body);
 	});
@@ -408,7 +410,7 @@ function sendTransaction(generator, txObject) {
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/txs/send?token="+serverConfig.APIInfo.blockcypher.token,
 		method: "POST",
 		body: txObject,
-		json: true    
+		json: true
 	}, function (error, response, body){
 		generator.next(body);
 	});
@@ -426,7 +428,7 @@ function sendTransaction(generator, txObject) {
 * @param data A Primitive or Structured value that contains additional information about the error. This may be omitted.
 * The value of this member is defined by the Server (e.g. detailed error information, nested errors etc.).
 */
-function replyError(postData, requestObj, responseObj, batchResponses, code, message, data) {	
+function replyError(postData, requestObj, responseObj, batchResponses, code, message, data) {
 	trace ("replyError: "+code+" "+message);
 	try {
 		var requestData=JSON.parse(postData);
@@ -446,8 +448,8 @@ function replyError(postData, requestObj, responseObj, batchResponses, code, mes
 	if (data != undefined) {
 		responseData.error.data = data;
 	}
-	if (batchResponses != null) {			
-		batchResponses.responses.push(responseData);				
+	if (batchResponses != null) {
+		batchResponses.responses.push(responseData);
 		if (batchResponses.total == batchResponses.responses.length) {
 			setDefaultHeaders(responseObj);
 			responseObj.end(JSON.stringify(batchResponses.responses));
@@ -455,7 +457,7 @@ function replyError(postData, requestObj, responseObj, batchResponses, code, mes
 	} else {
 		setDefaultHeaders(responseObj);
 		responseObj.end(JSON.stringify(responseData));
-	}	
+	}
 }
 
 /**
@@ -479,15 +481,15 @@ function replyResult(postData, requestObj, responseObj, batchResponses, result) 
 	} else {
 		responseData.id = requestData.id;
 	}
-	responseData.result = result;	
+	responseData.result = result;
 	if (batchResponses != null) {
-		batchResponses.responses.push(responseData);		
+		batchResponses.responses.push(responseData);
 		if (batchResponses.total == batchResponses.responses.length) {
-			setDefaultHeaders(responseObj);			
+			setDefaultHeaders(responseObj);
 			responseObj.end(JSON.stringify(batchResponses.responses));
 		}
 	} else {
-		setDefaultHeaders(responseObj);		
+		setDefaultHeaders(responseObj);
 		responseObj.end(JSON.stringify(responseData));
 	}
 }
