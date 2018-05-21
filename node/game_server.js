@@ -848,7 +848,8 @@ function *RPC_getJackpot (postData, requestObj, responseObj, batchResponses) {
 	}
 	if (jackpotQueryResult != null) {
 		responseData.jackpot = new Object();
-		responseData.jackpot.tokens = jackpotQueryResult.rows[0].total;
+		//responseData.jackpot.tokens = jackpotQueryResult.rows[0].total;
+		//responseData.jackpot.tokens = jackpotQueryResult.rows[0].total;
 		responseData.jackpot.bitcoin = jackpotQueryResult.rows[0].btc_total;
 	}
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
