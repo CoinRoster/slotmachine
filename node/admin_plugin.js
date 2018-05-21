@@ -263,16 +263,21 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	//---- SET UP MAIN ACCOUNT VARIABLES ----
 	var currentBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_verified);
 	var currentAvailBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_available);
+	var currentTotalBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_total);
+	var previousTotalBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_total_previous);
 	var satoshiPerBTC = new BigNumber("100000000");
 	var currentSatoshiBalance = currentBTCBalance.times(satoshiPerBTC);
 	var currentAvailSatoshiBalance = currentAvailBTCBalance.times(satoshiPerBTC);
-	currentAvailBTCBalance = currentAvailBTCBalance.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //subtract miner fee
-	currentAvailSatoshiBalance = currentAvailSatoshiBalance.minus(serverConfig.APIInfo.blockcypher.minerFee);
 	//var withdrawalBTC = new BigNumber(queryResult.rows[0].btc_balance_verified); //withdraw full amount according to our records
 	var withdrawalBTC = new BigNumber(requestData.params.btc); //withdraw amount specified by admin interface (may not match our records!)
+	currentTotalBTCBalance = currentTotalBTCBalance.minus(withdrawalBTC);
+	previousTotalBTCBalance = previousTotalBTCBalance.minus(withdrawalBTC);
+	currentBTCBalance = currentBTCBalance.minus(withdrawalBTC);
 	//withdrawalBTC = withdrawalBTC.minus(new BigNumber("0.00000001")); //subtract 1 satoshi miner's fee
 	withdrawalBTC = withdrawalBTC.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC)); //subtract standard miner's fee
 	var withdrawalSatoshis = withdrawalBTC.times(satoshiPerBTC);
+	currentAvailBTCBalance = currentAvailBTCBalance.minus (withdrawalBTC);
+	currentAvailSatoshiBalance = currentAvailBTCBalance.minus (withdrawalSatoshis);
 	var extraData = JSON.parse(querystring.unescape(queryResult.rows[0].extra_data));
 	wif = extraData.wif;
 	txSkeleton = yield getTxSkeleton (generator, queryResult.rows[0].btc_account, requestData.params.receiver, withdrawalSatoshis.toString(10));
@@ -311,31 +316,17 @@ var rpc_transferAccountFunds = function* (postData, requestObj, responseObj, bat
 	trace(JSON.stringify(sentTx));
 	trace(" ");
 	returnData = sentTx;
-	/*
-	if ((sentTx["tx"] != undefined) && (sentTx["tx"] != null)) {
-		if ((sentTx.tx["hash"] != null) && (sentTx.tx["hash"] != undefined) && (sentTx.tx["hash"] != "") && (sentTx.tx["hash"] != "NULL")) {
-			var btcBalanceVerified = currentBTCBalance.minus(withdrawalBTC);
-			btcBalanceVerified = btcBalanceVerified.minus(serverConfig.APIInfo.blockcypher.minerFee.dividedBy(satoshiPerBTC));
-			if (btcBalanceVerified.lessThan(0)) {
-				//more than original deposit withdrawn (via bankroll account)
-				btcBalanceVerified = new BigNumber(0);
-			}
-			//reset the database entry
-			var dbUpdates =  "`btc_balance_verified`=\"0\",";
-			dbUpdates +=  "`btc_balance_total`=\"0\",";
-			dbUpdates +=  "`btc_balance_total_previous`=\"0\",";
-			dbUpdates += "`btc_deposit_account`=\""+requestData.params.receiver+"\",";
-			dbUpdates += "`last_login`=NOW()";
-			//update gaming.accounts
-			var txInfo = new Object();
-			txInfo.type = "withdrawal";
-			txInfo.subType = "internal";
-			txInfo.info = new Object();
-			txInfo.info.btc = withdrawalBTC.toString(10);
-			var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
-		}
+	var txInfo = new Object();
+	txInfo.type = "admin";
+	txInfo.subType = "address management";
+	var dbUpdates = "`btc_balance_verified`=\""+currentBTCBalance.toString(10)+"\",`btc_balance_total`=\""+currentTotalBTCBalance.toString(10)+"\",`btc_balance_total_previous`=\""+previousTotalBTCBalance.toString(10)+"\",`last_login`=NOW()";
+	var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
+	if (accountUpdateResult.error != null) {
+		trace ("Database error on rpc_updateInvestorInfo: "+accountUpdateResult.error);
+		trace ("   Request ID: "+requestData.id);
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
+		return;
 	}
-	*/
 	replyResult(postData, requestObj, responseObj, batchResponses, returnData);
 }
 exports.rpc_transferAccountFunds = rpc_transferAccountFunds;

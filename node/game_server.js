@@ -321,19 +321,26 @@ function *RPC_checkAccountDeposit (postData, requestObj, responseObj, batchRespo
 				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_API_ERROR, "An external API cannot be reached.");
 				return;
 			}
-			var btc_per_satoshis = new BigNumber("0.00000001");
-			var blockchainBTCBalance = new BigNumber(accountInfo.balance); //convert from Satoshis to Bitcoin
-			blockchainBTCBalance = blockchainBTCBalance.times(btc_per_satoshis);
-			var uc_blockchainBTCBalance = new BigNumber(accountInfo.unconfirmed_balance);
-			uc_blockchainBTCBalance = uc_blockchainBTCBalance.times(btc_per_satoshis);
-			var total_oc_bitcoin = new BigNumber(accountInfo.final_balance);
-			total_oc_bitcoin = total_oc_bitcoin.times(btc_per_satoshis);
-			var verifiedBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_verified);
-			var availableBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_available);
-			var current_oc_bitcoin = new BigNumber(queryResult.rows[0].btc_balance_total);
-			var deltaBTC = total_oc_bitcoin.minus(current_oc_bitcoin);
-			availableBTCBalance = availableBTCBalance.plus(deltaBTC);
-			verifiedBTCBalance = blockchainBTCBalance;
+			try {
+				var btc_per_satoshis = new BigNumber("0.00000001");
+				var blockchainBTCBalance = new BigNumber(accountInfo.balance); //convert from Satoshis to Bitcoin
+				blockchainBTCBalance = blockchainBTCBalance.times(btc_per_satoshis);
+				var uc_blockchainBTCBalance = new BigNumber(accountInfo.unconfirmed_balance);
+				uc_blockchainBTCBalance = uc_blockchainBTCBalance.times(btc_per_satoshis);
+				var total_oc_bitcoin = new BigNumber(accountInfo.final_balance);
+				total_oc_bitcoin = total_oc_bitcoin.times(btc_per_satoshis);
+				var verifiedBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_verified);
+				var availableBTCBalance = new BigNumber(queryResult.rows[0].btc_balance_available);
+				var current_oc_bitcoin = new BigNumber(queryResult.rows[0].btc_balance_total);
+				var deltaBTC = total_oc_bitcoin.minus(current_oc_bitcoin);
+				availableBTCBalance = availableBTCBalance.plus(deltaBTC);
+				verifiedBTCBalance = blockchainBTCBalance;
+			} catch (err) {
+				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_API_ERROR, "An external API returned an error.");
+				return;
+			}
+			trace ("   total_oc_bitcoin="+total_oc_bitcoin);
+			trace ("   current_oc_bitcoin="+current_oc_bitcoin);
 			if ((total_oc_bitcoin.equals(current_oc_bitcoin) == false)) {
 				//new deposit detected
 				var dbUpdates = "`btc_balance_verified`=\""+verifiedBTCBalance.toString(10)+"\",";
@@ -451,9 +458,14 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 				var balanceDelta = update_btc_balance_total.minus(current_btc_balance_total_previous); //may be negative
 				var btc_balance_conf = update_btc_balance_conf;
 				var btc_balance_unc = update_btc_balance_unc;
+				trace ("current_btc_balance_total_previous="+current_btc_balance_total_previous);
+				trace ("update_btc_balance_total="+update_btc_balance_total);
+				trace ("current_btc_balance_avail="+current_btc_balance_avail);
 				var btc_balance_avail = current_btc_balance_avail.plus(balanceDelta);
 				var btc_balance_total = current_btc_balance_total.plus(balanceDelta);
 				var btc_balance_total_previous = update_btc_balance_total;
+				trace ("btc_balance_avail="+btc_balance_avail);
+				trace ("balanceDelta="+balanceDelta);
 				global.logTx("Detected blockchain balance change for account: "+requestData.params.account);
 				global.logTx("   Last live API update of balances: "+queryResult.rows[0].last_deposit_check);
 				global.logTx("   Confirmed BTC balance: "+btc_balance_conf.toString(10));
@@ -467,6 +479,16 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 				if (balanceDelta.isGreaterThan(0)) {
 					var dbUpdates = "`btc_balance_verified`=\""+btc_balance_conf.toString(10)+"\",`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`btc_balance_total`=\""+btc_balance_total.toString(10)+"\",`btc_balance_total_previous`=\""+btc_balance_total_previous.toString(10)+"\",`last_login`=NOW()";
 					var accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
+					if (accountUpdateResult.error != null) {
+						trace ("Database error on RPC_getAccountBalance: "+accountUpdateResult.error);
+						//trace ("   SQL: "+updateSQL);
+						trace ("   Request ID: "+requestData.id);
+						replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_SQL_ERROR, "There was a database error when updating the account.");
+						return;
+					}
+				} else {
+					dbUpdates = "`btc_balance_verified`=\""+btc_balance_conf.toString(10)+"\",`btc_balance_total`=\""+btc_balance_total.toString(10)+"\",`btc_balance_total_previous`=\""+btc_balance_total_previous.toString(10)+"\",`last_login`=NOW()";
+					accountUpdateResult = yield global.updateAccount(queryResult, dbUpdates, txInfo, generator);
 					if (accountUpdateResult.error != null) {
 						trace ("Database error on RPC_getAccountBalance: "+accountUpdateResult.error);
 						//trace ("   SQL: "+updateSQL);
@@ -523,6 +545,7 @@ function *RPC_getAccountBalance (postData, requestObj, responseObj, batchRespons
 		responseData.fees.bitcoin = currentAPI.minerFee.dividedBy(satoshiPerBTC).toString(10);
 		responseData.fees.satoshis = currentAPI.minerFee.toString(10);
 	}
+	trace (JSON.stringify(responseData));
 	replyResult(postData, requestObj, responseObj, batchResponses, responseData);
 }
 
@@ -2173,22 +2196,31 @@ var busyAccounts = [];
 * @param account The Bitcoin account to check a balance for.
 */
 function checkAccountBalance(generator, account) {
+	/*
 	for (var count=0; count < busyAccounts.length; count++) {
 		if (busyAccounts[count] == account) {
 			setTimeout(function(){generator.next(null);}, 1);
 		}
 	}
-	busyAccounts.push(account);
+	*/
+	//busyAccounts.push(account);
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/addrs/"+account+"/full",
 		method: "GET",
 		json: true
 	}, function (error, response, body) {
+		/*
 		for (var count=0; count < busyAccounts.length; count++) {
 			if (busyAccounts[count] == account) {
 				busyAccounts.splice(count, 1);
 				break;
 			}
+		}
+		*/
+		//is this a BlockCypher bug?
+		if (body["unconfirmed_balance"] < 0) {
+			body.unconfirmed_balance = body.balance + body.unconfirmed_balance;
+			body.unconfirmed_balance = 0; //assume transaction has gone through
 		}
 		generator.next(body);
 	});

@@ -6,6 +6,7 @@ var _txTableTopItemIndex = 0; //index of the currently display top item in the t
 var _txTableItemsPerPage = 5; //items per page of the transaction history table
 var currentTransactionsData = null; //currently loaded transactions data
 var transactionTableOptions = new Object(); //transaction history filter options
+var serverCallActive = false; //is a server request currently active? if so, the next one is ignore until this flag is cleared
 transactionTableOptions.accountHistory = true;
 transactionTableOptions.gameHistory = true;
 transactionTableOptions.investmentHistory = true;
@@ -24,10 +25,18 @@ var numberFormat = {
 BigNumber.config({ EXPONENTIAL_AT: 1e+9, DECIMAL_PLACES: 8, ROUNDING_MODE: BigNumber.ROUND_FLOOR, FORMAT:numberFormat });
 
 function callServerMethod(methodName, params, resultCallback) {
+  if (serverCallActive) {
+    alert ("Waiting for result of last request...");
+    return;
+  }
 	var request = {"jsonrpc":"2.0", "id":String(rpcMsgID), "method":methodName, "params":params};
+  serverCallActive = true;
 	$.post(accountInfo.gameServerURL,
 			JSON.stringify(request),
-			resultCallback);
+			function(arg1, arg2, arg3, arg4){
+        serverCallActive = false;
+        resultCallback(arg1, arg2, arg3, arg4);
+      });
 	request.callback = resultCallback;
 	rpcMsgID++;
 	return (request);
@@ -58,6 +67,7 @@ function getAccountBalance() {
 			console.log("Can't get account balance. User is logged out.");
 			return;
 	}
+  //ensure that "refresh" is true so that we're getting latest blockchain data (otherwise values may not be the latest / correct)
 	callServerMethod("getAccountBalance", {"account":accountInfo.playerAccount,"password":accountInfo.playerPassword,"refresh":true}, onGetAccountBalance);
 }
 
@@ -142,6 +152,7 @@ function clearAllFields() {
 }
 
 function onGetAccountBalance(returnData) {
+  console.log (JSON.stringify(returnData));
 	if ((returnData["error"] != undefined) && (returnData["error"] != null) && (returnData["error"] != "")) {
 		alert(returnData.error.message);
 	} else {
@@ -238,6 +249,7 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 		}
 		var availBalance = new BigNumber(accountInfo.availableBTCBalance);
 		var unconfirmedBalance = new BigNumber(accountInfo.unconfirmedBTCBalance);
+    availBalance = availBalance.minus(unconfirmedBalance);
 		returnHTML += "<tr class=\"static\"><td><b>Available Balance:</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td><b>"+convertAmount(availBalance, "btc", displayCurrency).toFormat()+"</b></td><td></td></tr>";
 		totalUserInvestmentBase = totalUserInvestmentBase.plus(availBalance);
 		totalInvestmentsBalance = totalInvestmentsBalance.plus(availBalance);
@@ -269,7 +281,7 @@ function buildInvestmentsTable(allInvestmentsArr, ownedInvestmentsArr) {
 				userInvestmentBase = userInvestmentObj.user_investment_base_btc;
 				userInvestmentTotal = userInvestmentObj.user_investment_btc;
 				userInvestmentExclude = userInvestmentObj.user_investment_exclude_btc;
-				if ((currentInvestment.id == "smb") && (isNaN(userInvestmentObj["bankroll_multiplier"]) == false)) {
+				if ((currentInvestment.id == "bankroll") && (isNaN(userInvestmentObj["bankroll_multiplier"]) == false)) {
 					//update multiplier inputs
 					$("#bankrollMultiplier #multiplierInputForm #multiplierNumberInput").val(userInvestmentObj.bankroll_multiplier);
 					$("#bankrollMultiplier #multiplierInputForm #multiplierRangeInput").val(Number(userInvestmentObj.bankroll_multiplier));
@@ -1332,7 +1344,7 @@ function onUpdateBRMClick(event) {
 	var updateObj = new Object();
 	updateObj.account = accountInfo.playerAccount;
 	updateObj.password = accountInfo.playerPassword;
-	updateObj.investment_id = "smb"
+	updateObj.investment_id = "bankroll";
 	updateObj.bankroll_multiplier = Number($("#bankrollMultiplier #multiplierInputForm #multiplierNumberInput").val());
 	updateObj.transaction = new Object();
 	updateObj.transaction.deposit = new Object();

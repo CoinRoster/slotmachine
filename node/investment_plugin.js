@@ -405,6 +405,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	var generator = yield;
 	var requestData = JSON.parse(postData);
 	var responseData = new Object();
+	var btc_per_satoshis = new BigNumber("0.00000001");
 	var checkResult = exports.checkParameter(requestData, "account");
 	if (checkResult != null) {
 		replyError(postData, requestObj, responseObj, batchResponses, checkResult.code, checkResult.message);
@@ -481,13 +482,43 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	var btc_balance_conf = new BigNumber(accountQueryResult.rows[0].btc_balance_verified);
 	var btc_balance_avail = new BigNumber(accountQueryResult.rows[0].btc_balance_available);
 	var btc_balance_total = new BigNumber(accountQueryResult.rows[0].btc_balance_total);
+	var btc_balance_total_previous = new BigNumber(accountQueryResult.rows[0].btc_balance_total_previous);
 	var btc_investment_balance = new BigNumber(investmentQueryResult.rows[0].btc_balance);
 	if ((investmentQueryResult.rows[0].btc_total_balance == null) || (investmentQueryResult.rows[0].btc_total_balance == "NULL") || (investmentQueryResult.rows[0].btc_total_balance == "")) {
 		var btc_investment_total_balance = new BigNumber(investmentQueryResult.rows[0].btc_balance);
 	} else {
 		var btc_investment_total_balance = new BigNumber(investmentQueryResult.rows[0].btc_total_balance);
 	}
-	if (btc_balance_conf.equals(0)) {
+	var accountInfo = yield checkAccountBalance(generator, requestData.params.account);
+	if ((accountInfo != undefined) && (accountInfo != null)) {
+		var update_btc_balance_conf = new BigNumber(String(accountInfo.balance)); //convert from Satoshis to Bitcoin
+		update_btc_balance_conf = update_btc_balance_conf.times(btc_per_satoshis);
+		var update_btc_balance_unc = new BigNumber(String(accountInfo.unconfirmed_balance)); //convert from Satoshis to Bitcoin
+		update_btc_balance_unc = update_btc_balance_unc.times(btc_per_satoshis);
+		var update_btc_balance_total = new BigNumber(String(accountInfo.final_balance));
+		update_btc_balance_total = update_btc_balance_total.times(btc_per_satoshis);
+	} else {
+		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_API_ERROR, "An external API could not be reached.");
+		return;
+	}
+
+	var btc_available_balance_change = update_btc_balance_total.minus(btc_balance_total_previous); //this is the unconfirmed deposit amount since last check
+
+	//update row with new information; to be used with future calculations
+	if (btc_available_balance_change.isGreaterThan(0)) {
+		//available balance only changes with deposits
+		accountQueryResult.rows[0].btc_balance_available = btc_balance_avail.plus(btc_available_balance_change).toString(10);
+	}
+	accountQueryResult.rows[0].btc_balance_verified = update_btc_balance_conf.toString(10);
+	accountQueryResult.rows[0].btc_balance_total = update_btc_balance_total.toString(10);
+	accountQueryResult.rows[0].btc_balance_total_previous = update_btc_balance_total.toString(10);
+
+	if (!depositing) {
+		update_btc_balance_unc = new BigNumber(0);
+	}
+
+	var available_investment_balance = btc_balance_avail;
+	if (available_investment_balance.equals(0)) {
 		replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_ACTION_ERROR, "Deposit not yet confirmed.");
 		return;
 	}
@@ -514,23 +545,9 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 	var current_btc_balance_total = new BigNumber(accountQueryResult.rows[0].btc_balance_total);
 	var current_btc_balance_avail = new BigNumber(accountQueryResult.rows[0].btc_balance_available);
 	var current_btc_balance_total_previous = new BigNumber(accountQueryResult.rows[0].btc_balance_total_previous);
-	var btc_per_satoshis = new BigNumber("0.00000001");
-	if (depositing) {
-		var accountInfo = yield checkAccountBalance(generator, requestData.params.account);
-		if ((accountInfo != undefined) && (accountInfo != null)) {
-			var update_btc_balance_conf = new BigNumber(String(accountInfo.balance)); //convert from Satoshis to Bitcoin
-			update_btc_balance_conf = update_btc_balance_conf.times(btc_per_satoshis);
-			var update_btc_balance_unc = new BigNumber(String(accountInfo.unconfirmed_balance)); //convert from Satoshis to Bitcoin
-			update_btc_balance_unc = update_btc_balance_unc.times(btc_per_satoshis);
-			var update_btc_balance_total = new BigNumber(String(accountInfo.final_balance));
-		} else {
-			update_btc_balance_unc = new BigNumber(0);
-		}
-	} else {
-		update_btc_balance_unc = new BigNumber(0);
-	}
 	var btc_balance_conf = current_btc_balance_conf;
-	var btc_balance_avail = current_btc_balance_avail;
+	//remove change in available balance (remove any unconfirmed amount), to make it the effective available investment balance; this is added back before commiting to the database
+	var btc_balance_avail = current_btc_balance_avail.minus(btc_available_balance_change);
 	var btc_balance_total = current_btc_balance_total;
 	var btc_balance_total_previous = current_btc_balance_total_previous;
 	if (depositing) {
@@ -538,7 +555,8 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		btc_balance_avail = btc_balance_avail.minus(btc_tx_amount);
 		btc_investment_balance = btc_investment_balance.plus(btc_tx_amount);
 		btc_investment_total_balance = btc_investment_total_balance.plus(btc_tx_amount);
-		if (btc_balance_avail.minus(update_btc_balance_unc).lessThan(0)) {
+		//if (btc_balance_avail.minus(update_btc_balance_unc).lessThan(0)) {
+		if (btc_balance_avail.lessThan(0)) {
 			replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_ACTION_ERROR, "Requested transaction exceeds available balance.");
 			return;
 		}
@@ -624,7 +642,7 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 				replyError(postData, requestObj, responseObj, batchResponses, serverConfig.JSONRPC_ACTION_ERROR, "No investment record for account found.");
 				return;
 			}
-			trace ("No existing investment_txs rows  to update. Creating new one for user.");
+			trace ("No existing investment_txs rows to update. Creating new one for user.");
 			//no existing rows to update so create new one (to be added below)
 			var investmentObj = new Object();
 			investmentObj.investment_id = requestData.params.investment_id;
@@ -643,7 +661,8 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 		}
 	}
 	//update 'accounts' table
-	var dbUpdates = "`btc_balance_available`=\""+btc_balance_avail.toString(10)+"\",`last_login`=NOW()";
+	//add back available balance change (uncomfirmed amount) since it was excluded for investment functionality
+	var dbUpdates = "`btc_balance_available`=\""+btc_balance_avail.plus(btc_available_balance_change).toString(10)+"\",`last_login`=NOW()";
 	var txInfo = new Object();
 	if (depositing) {
 		txInfo.type = "deposit";
@@ -755,11 +774,17 @@ var rpc_updateInvestorInfo = function* (postData, requestObj, responseObj, batch
 exports.rpc_updateInvestorInfo = rpc_updateInvestorInfo;
 
 function checkAccountBalance(generator, account) {
+	//trace ("https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/addrs/"+account+"/full");
 	request({
 		url: "https://api.blockcypher.com/v1/"+serverConfig.APIInfo.blockcypher.network+"/addrs/"+account+"/full",
 		method: "GET",
 		json: true
 	}, function (error, response, body){
+		//is this a BlockCkypher bug?
+		if (body["unconfirmed_balance"] < 0) {
+			body.unconfirmed_balance = body.balance + body.unconfirmed_balance;
+			body.unconfirmed_balance = 0; //assume transaction has gone through
+		}
 		generator.next(body);
 	});
 }
