@@ -93,7 +93,6 @@ var timer_payDividends = function *(context)  {
 			var uniqueCurrentResults = excludeDuplicate("account", newestTxQueryResult.rows); //unique newest results
 			var validRakeAccountResult = null; //the valid or allowable investment_txs table row for the rake account, if any.
 			var currentRakeAccountResult = null; //the most recent investment_txs table row for the rake account, if any.
-
 			if ((investmentsQueryResult.rows[invCount]["btc_balance_snapshot"] == "NULL") || (investmentsQueryResult.rows[invCount]["btc_balance_snapshot"] == null) || (investmentsQueryResult.rows[invCount]["btc_balance_snapshot"] == "")) {
 				investmentsQueryResult.rows[invCount].btc_balance_snapshot = "0";
 				snapshot_available = false;
@@ -112,7 +111,9 @@ var timer_payDividends = function *(context)  {
 			}
 			var investment_btc_balance = new BigNumber(investmentsQueryResult.rows[invCount].btc_balance);
 			var investment_btc_balance_snapshot = new BigNumber(investmentsQueryResult.rows[invCount].btc_balance_snapshot);
-			var investment_btc_balance_delta = investment_btc_balance.minus(investment_btc_balance_snapshot);
+			//causes doubling of base investment value when snapshot is 0
+			//var investment_btc_balance_delta = investment_btc_balance.minus(investment_btc_balance_snapshot);
+			var investment_btc_balance_delta = new BigNumber(0);
 			var investment_btc_total_balance = new BigNumber(investmentsQueryResult.rows[invCount].btc_total_balance);
 			var investment_btc_effective_balance = new BigNumber(0);
 			var investment_btc_gains = new BigNumber(investmentsQueryResult.rows[invCount].btc_gains);
