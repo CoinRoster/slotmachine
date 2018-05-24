@@ -39,17 +39,17 @@ exports.maxWithdrawal = {
 exports.withdrawalAccounts = [
 	{
 		"type":"btc",
-		"account":"1HjSwXFqL4B2GWB6Umt34PX9R69xvPRzUz", 
+		"account":"1HjSwXFqL4B2GWB6Umt34PX9R69xvPRzUz",
 		"privateKey":"c3b2f4aabb1c9e7a2174f45466ca55dbf58885eec6b88f0a4cb68d7c18fe0bc9",
 		"publicKey":"0272f3649c2c94d565e649a5245d07b9196d01c6ce82bcf0e56b774464a061cac9",
 		"wif":"L3n8AF1T3efSHM7eP3E3P5QZbhkhir39bDsJzUn2neBCSk1YoSUC"
 	},
-	{	
+	{
 		"type":"tbtc",
-		"account":"mvmkrMFVQHvt9DpK8W2HfNbDE1Vsrbe46N", 
-		"privateKey":"f0c3f19d0658ceba4dc73566fecef4a8f2b9dcfb2f51e0f8ad97cf2f48921465",
-		"publicKey":"037fa9561bfef79b5232aa91fcd31dcd26a2e4c899bc30f7c237065c920b423d52",
-		"wif":"cVeic2pFk4jABM6syWG9hw2ZHJ6zkDytoMHLkHP1izsAsesyKCAG"
+		"account":"mzJCTYvviNC8qwmbyKXCovjaJDyCVDqj9n",
+		"privateKey":"b4f8355ecedfd50528ad87745c4e60d35e85899475d858f56e79aef84a654b4e",
+		"publicKey":"0395af41acdd8c11b32654dbe5920bf15faf454d2cc55cd8957f4b530039fff2f8",
+		"wif":"cTeUxUhauBiMvKEf4h8HmSUtGBvKt3b7Vyg7cnwfJ7purZPyviV1"
 	}
 ];
 
@@ -59,7 +59,7 @@ exports.coldStorageAccounts = [
 		"type":"btc",
 		"account":""
 	},
-	{	
+	{
 		"type":"tbtc",
 		"account":"n3128z4TbBy36nYzrcQjXJZRDmNeYjZLCe"
 	}
@@ -83,7 +83,7 @@ exports.APIInfo={
 		"network":"btc/test3",
 		//default miner fee in Satoshis (must be a BigNumber!)
 		"minerFee": new BigNumber("1000")}
-}; 
+};
 
 //Available game definition paths:
 exports.gameConfigPaths = [
