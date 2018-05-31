@@ -679,16 +679,27 @@ function buildTransactionTable(collatedTxArray) {
 				case "deposit":
 					if (txInfo.subType == "investment") {
 						if (transactionTableOptions.investmentHistory) {
-							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);
-							newRowHTML += "<td>Investment Deposit</td>";
-							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
-							newRowHTML += "<td>"+balanceAmount.toFormat()+"</td>";
-							if (transactionTableOptions.includeTxDetails) {
-								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
-								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
-							} else {
-								newRowHTML += "<td>Investment ID: "+txInfo.info.investments[0].investment_id+"</td>";
-							}
+              try {
+  							var balanceAmount = convertAmount(currentTx.btc_balance, "btc", displayCurrency);
+  							newRowHTML += "<td>Investment Deposit</td>";
+  							newRowHTML += "<td>"+convertAmount(txInfo.info.btc, "btc", displayCurrency).toFormat()+"</td>";
+  							newRowHTML += "<td>"+balanceAmount.toFormat()+"</td>";
+  							if (transactionTableOptions.includeTxDetails) {
+  								newRowHTML += "<td>Available balance (BTC): "+convertAmount(currentTx.btc_balance, "btc", displayCurrency).toFormat()+"<br/>";
+  								newRowHTML += "Total investments balance (BTC): "+convertAmount(balanceAdd, "btc", displayCurrency).toFormat()+"</td>";
+  							} else {
+                  if ((txInfo.info["investments"] != undefined) && (txInfo.info["investments"] != null)) {
+                    //subsequent investment deposit
+                      newRowHTML += "<td>"+txInfo.info.investments[0].investment_id+"</td>";
+                  } else {
+                    //initial investment deposit
+                    newRowHTML += "<td>"+txInfo.info.investment_id+"</td>";
+                  }
+  							}
+                alert (newRowHTML);
+              } catch (err) {
+                console.log(err.stack);
+              }
 						} else {
 							newRowHTML = "";
 						}
@@ -792,6 +803,8 @@ function buildTransactionTable(collatedTxArray) {
 				newRowHTML += "</tr>";
 			}
 		} catch (err) {
+      alert (newRowHTML);
+      alert (err.stack);
 			newRowHTML = "";
 		}
 		returnHTML += newRowHTML;
