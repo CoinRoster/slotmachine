@@ -696,7 +696,6 @@ function buildTransactionTable(collatedTxArray) {
                     newRowHTML += "<td>"+txInfo.info.investment_id+"</td>";
                   }
   							}
-                alert (newRowHTML);
               } catch (err) {
                 console.log(err.stack);
               }
@@ -803,8 +802,6 @@ function buildTransactionTable(collatedTxArray) {
 				newRowHTML += "</tr>";
 			}
 		} catch (err) {
-      alert (newRowHTML);
-      alert (err.stack);
 			newRowHTML = "";
 		}
 		returnHTML += newRowHTML;
